@@ -1,4 +1,4 @@
-﻿-- 1. BloodBank
+﻿-- 1. BloodBank trước khi chạy nhớ tạo database Blood_Donation_System
 CREATE TABLE BloodBank (
   BloodTypeId INT PRIMARY KEY,
   BloodTypeName NVARCHAR(50),
