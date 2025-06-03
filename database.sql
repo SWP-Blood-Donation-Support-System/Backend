@@ -1,4 +1,7 @@
-﻿-- 1. BloodBank trước khi chạy nhớ tạo database Blood_Donation_System
+﻿Create Database Blood_Donation_System;
+USE Blood_Donation_System;
+
+-- 1. BloodBank trước khi chạy nhớ tạo database Blood_Donation_System
 CREATE TABLE BloodBank (
   BloodTypeId INT PRIMARY KEY,
   BloodTypeName NVARCHAR(50),
@@ -9,7 +12,8 @@ CREATE TABLE BloodBank (
 CREATE TABLE Hospital (
   HospitalId INT PRIMARY KEY,
   Name NVARCHAR(100),
-  Address NVARCHAR(200)
+  Address NVARCHAR(200),
+  HospitalImage NVARCHAR(MAX)
 );
 
 -- 3. User
@@ -48,8 +52,8 @@ CREATE TABLE Notification (
   BloodTypeId INT FOREIGN KEY REFERENCES BloodBank(BloodTypeId)
 );
 
--- 6. DonationAppointment
-CREATE TABLE DonationAppointment (
+-- 6. AppointmentList
+CREATE TABLE AppointmentList (
   AppointmentId INT IDENTITY(1,1) PRIMARY KEY,
   AppointmentDate DATE,
   AppointmentTime TIME,
@@ -88,6 +92,7 @@ CREATE TABLE Blog (
   BlogId INT IDENTITY(1,1) PRIMARY KEY,
   BlogTitle NVARCHAR(100),
   BlogContent NVARCHAR(MAX),
+  BlogImage NVARCHAR(MAX),
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username)
 );
 
