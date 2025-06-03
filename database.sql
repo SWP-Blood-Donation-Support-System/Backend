@@ -110,7 +110,7 @@ CREATE TABLE BloodMove (
 CREATE TABLE AppointmentHistory (
   AppointmentHistoryId INT IDENTITY(1,1) PRIMARY KEY,
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
-  AppointmentId INT FOREIGN KEY REFERENCES DonationAppointment(AppointmentId),
+  AppointmentId INT FOREIGN KEY REFERENCES AppointmentList(AppointmentId),
   AppointmentDate DATETIME,
   Status NVARCHAR(50)
 );
