@@ -1,4 +1,7 @@
 
+using BloodDonationAPI.Service;
+using Microsoft.EntityFrameworkCore;
+
 namespace BloodDonationAPI
 {
     public class Program
@@ -7,12 +10,19 @@ namespace BloodDonationAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // ?? Add DbContext with connection string from appsettings.json
+            builder.Services.AddDbContext<BloodDonationSystemContext>(options =>
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
+
             // Add services to the container.
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
             builder.Services.AddEndpointsApiExplorer();
             builder.Services.AddSwaggerGen();
+
+            builder.Services.AddScoped<IUserService, UserService>();
+
 
             var app = builder.Build();
 
