@@ -53,6 +53,25 @@ namespace BloodDonationAPI.Service
 
             return "Success";
         }
-    
+        public async Task<List<AppointmentHistoryDto>> GetByUsernameAsync(string username)
+        {
+            return await _context.AppointmentHistories
+                .Where(h => h.Username == username)
+                .Include(h => h.Appointment)
+                .OrderByDescending(h => h.AppointmentDate)
+                .Select(h => new AppointmentHistoryDto
+                {
+                    AppointmentHistoryId = h.AppointmentHistoryId,
+                    AppointmentDate = h.AppointmentDate,
+                    AppointmentStatus = h.AppointmentStatus,
+                    AppointmentDateOfAppointment = h.Appointment != null ? h.Appointment.AppointmentDate : null,
+                    AppointmentTime = h.Appointment != null ? h.Appointment.AppointmentTime : null,
+                    AppointmentTitle = h.Appointment != null ? h.Appointment.AppointmentTitle : null,
+                    AppointmentContent = h.Appointment != null ? h.Appointment.AppointmentContent : null,
+                })
+                .ToListAsync();
+        }
+
+
     }
 }

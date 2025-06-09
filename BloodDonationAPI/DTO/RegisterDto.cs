@@ -19,7 +19,7 @@ namespace BloodDonationAPI.DTO
         public DateOnly? DateOfBirth { get; set; }
 
         public string? Gender { get; set; }
-        [Phone]
+        
         public string? Phone { get; set; }
 
         public string? Address { get; set; }
