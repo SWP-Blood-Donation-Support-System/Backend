@@ -9,7 +9,7 @@ public partial class DonationHistory
 
     public string? Username { get; set; }
 
-    public int? BloodTypeId { get; set; }
+    public string? BloodType { get; set; }
 
     public DateOnly? DonationDate { get; set; }
 
@@ -17,7 +17,7 @@ public partial class DonationHistory
 
     public int? DonationUnit { get; set; }
 
-    public virtual BloodBank? BloodType { get; set; }
+    public virtual ICollection<BloodBank> BloodBanks { get; set; } = new List<BloodBank>();
 
     public virtual Certificate? Certificate { get; set; }
 

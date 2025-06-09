@@ -13,7 +13,7 @@ public partial class AppointmentHistory
 
     public DateTime? AppointmentDate { get; set; }
 
-    public string? Status { get; set; }
+    public string? AppointmentStatus { get; set; }
 
     public virtual AppointmentList? Appointment { get; set; }
 
