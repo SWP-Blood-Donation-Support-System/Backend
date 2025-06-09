@@ -82,6 +82,9 @@ namespace BloodDonationAPI
 
             app.UseHttpsRedirection();
 
+            // Bật CORS với policy đã khai báo
+            app.UseCors("AllowReactApp");
+
             app.UseAuthentication();
             app.UseAuthorization();
 
