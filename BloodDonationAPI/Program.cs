@@ -14,6 +14,18 @@ namespace BloodDonationAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
+            // Thêm CORS
+            builder.Services.AddCors(options =>
+            {
+                options.AddPolicy("AllowReactApp", policy =>
+                {
+                    policy.WithOrigins("http://localhost:3000")
+                          .AllowAnyHeader()
+                          .AllowAnyMethod();
+                });
+            });
+
+
             // ?? Add DbContext with connection string from appsettings.json
             builder.Services.AddDbContext<BloodDonationSystemContext>(options =>
                 options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
@@ -72,6 +84,8 @@ namespace BloodDonationAPI
                 });
 
             var app = builder.Build();
+            
+
 
             // Configure the HTTP request pipeline.
             if (app.Environment.IsDevelopment())
@@ -81,6 +95,9 @@ namespace BloodDonationAPI
             }
 
             app.UseHttpsRedirection();
+
+             // Bật CORS với policy đã khai báo
+            app.UseCors("AllowReactApp");
 
             app.UseAuthentication();
             app.UseAuthorization();

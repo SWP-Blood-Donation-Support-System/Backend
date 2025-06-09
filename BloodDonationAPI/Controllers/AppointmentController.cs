@@ -39,5 +39,19 @@ namespace BloodDonationAPI.Controllers
 
             else return BadRequest(new { message = result });
         }
+
+        [HttpGet("history/{username}")]
+        public async Task<IActionResult> GetAppointmentHistoryByUsername(string username)
+        {
+            var histories = await _appointmentService.GetByUsernameAsync(username);
+
+            if (histories == null || !histories.Any())
+            {
+                return NotFound(new { message = "No appointment history found for this user." });
+            }
+
+            return Ok(histories);
+        }
+
     }
 }
