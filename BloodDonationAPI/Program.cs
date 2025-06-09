@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using BloodDonationAPI.Entities;
 using Microsoft.OpenApi.Models;
 
 namespace BloodDonationAPI
