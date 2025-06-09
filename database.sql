@@ -149,10 +149,10 @@ INSERT INTO [User] (
   Username, Password, Email, Role, FullName,
   DateOfBirth, Gender, Phone, Address, ProfileStatus, BloodTypeId
 ) VALUES
-(N'user1', N'pass123', N'user1@example.com', N'donor', N'Nguyễn Văn A',
+(N'user1', N'pass123', N'user1@example.com', N'staff', N'Nguyễn Văn A',
  '1995-05-10', N'Nam', N'0912345678', N'TP. Hồ Chí Minh', N'Đang hoạt động', 1),
 
-(N'user2', N'pass456', N'user2@example.com', N'donor', N'Trần Thị B',
+(N'user2', N'pass456', N'user2@example.com', N'user', N'Trần Thị B',
  '1998-07-20', N'Nữ', N'0987654321', N'Hà Nội', N'Đang hoạt động', 4),
 
 (N'admin1', N'admin123', N'admin@example.com', N'admin', N'Quản trị viên',
