@@ -7,11 +7,13 @@ public partial class Hospital
 {
     public int HospitalId { get; set; }
 
-    public string? Name { get; set; }
+    public string? HospitalName { get; set; }
 
-    public string? Address { get; set; }
+    public string? HospitalAddress { get; set; }
 
     public string? HospitalImage { get; set; }
+
+    public string? HospitalPhone { get; set; }
 
     public virtual ICollection<BloodMove> BloodMoves { get; set; } = new List<BloodMove>();
 

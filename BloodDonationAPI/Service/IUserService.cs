@@ -39,7 +39,7 @@ namespace BloodDonationAPI.Service
                 Gender = registerDto.Gender,
                 Phone = registerDto.Phone,
                 Address = registerDto.Address,
-                BloodTypeId = registerDto.BloodTypeId,
+                BloodType = registerDto.BloodTypeId,
                 ProfileStatus = "Active",
                 Role = "User"
             };

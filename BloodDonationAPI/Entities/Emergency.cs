@@ -9,9 +9,9 @@ public partial class Emergency
 
     public string? Username { get; set; }
 
-    public int? BloodTypeId { get; set; }
-
     public DateOnly? EmergencyDate { get; set; }
+
+    public string? BloodType { get; set; }
 
     public string? EmergencyStatus { get; set; }
 
@@ -21,13 +21,9 @@ public partial class Emergency
 
     public int? HospitalId { get; set; }
 
-    public virtual BloodBank? BloodType { get; set; }
-
     public virtual Hospital? Hospital { get; set; }
 
-    public virtual Notification? Notification { get; set; }
-
-    public virtual ICollection<NotificationRecipient> NotificationRecipients { get; set; } = new List<NotificationRecipient>();
+    public virtual ICollection<Notification> Notifications { get; set; } = new List<Notification>();
 
     public virtual User? UsernameNavigation { get; set; }
 }

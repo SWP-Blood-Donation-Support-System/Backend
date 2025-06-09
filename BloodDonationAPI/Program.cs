@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
+using BloodDonationAPI.Entities;
 using Microsoft.OpenApi.Models;
 
 namespace BloodDonationAPI
@@ -55,6 +56,7 @@ namespace BloodDonationAPI
 
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtService>();
+            builder.Services.AddScoped<IAppointmentServiece, AppointmentServiece>();
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>

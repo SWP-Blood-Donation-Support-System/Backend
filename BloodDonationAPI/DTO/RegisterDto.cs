@@ -9,7 +9,7 @@ namespace BloodDonationAPI.DTO
 
         [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
         public string Password { get; set; }
-
+        [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
         public string? Email { get; set; }
 
        
@@ -19,13 +19,13 @@ namespace BloodDonationAPI.DTO
         public DateOnly? DateOfBirth { get; set; }
 
         public string? Gender { get; set; }
-
+        [Phone]
         public string? Phone { get; set; }
 
         public string? Address { get; set; }
 
        
 
-        public int? BloodTypeId { get; set; }
+        public string? BloodTypeId { get; set; }
     }
 }
