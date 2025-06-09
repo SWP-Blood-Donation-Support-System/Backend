@@ -60,5 +60,20 @@ namespace BloodDonationAPI.Controllers
             if (storedPassword == null) return false;
             return inputPassword == storedPassword; // Đây chỉ là ví dụ, nên dùng proper password hashing
         }
+
+        [HttpPost("register")]
+        public IActionResult Register([FromBody] RegisterDto registerDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var result = _userService.Register(registerDto);
+            if (result == "Username already exists.")
+            {
+                return Conflict(result);
+            }
+            return Ok(result);
+        }
     }
 }
