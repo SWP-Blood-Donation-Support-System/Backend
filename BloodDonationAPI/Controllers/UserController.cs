@@ -33,5 +33,20 @@ namespace BloodDonationAPI.Controllers
                 DateOfBirth = user.DateOfBirth,
             });
         }
+
+        [HttpPost("register")]
+        public IActionResult Register([FromBody] RegisterDto registerDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+            var result = _userService.Register(registerDto);
+            if (result == "Username already exists.")
+            {
+                return Conflict(result);
+            }
+            return Ok(result);
+        }
     }
 }
