@@ -14,12 +14,13 @@ namespace BloodDonationAPI
         {
             var builder = WebApplication.CreateBuilder(args);
 
-            // Thêm CORS
+            // Thêm CORS sau nay sua lai cho phu hop voi thuc te
+            // /✅ Cho phép tất cả origin
             builder.Services.AddCors(options =>
             {
-                options.AddPolicy("AllowReactApp", policy =>
+                options.AddDefaultPolicy(policy =>
                 {
-                    policy.WithOrigins("http://localhost:3000")
+                    policy.AllowAnyOrigin()
                           .AllowAnyHeader()
                           .AllowAnyMethod();
                 });
@@ -96,9 +97,9 @@ namespace BloodDonationAPI
 
             app.UseHttpsRedirection();
 
-             // Bật CORS với policy đã khai báo
-            app.UseCors("AllowReactApp");
-
+            // Bật CORS với tat ca các origin, headers và methods
+            app.UseCors();
+            // toi day het cors
             app.UseAuthentication();
             app.UseAuthorization();
 
