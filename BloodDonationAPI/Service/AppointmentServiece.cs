@@ -45,13 +45,13 @@ namespace BloodDonationAPI.Service
                 Username = userName,
                 AppointmentId = Dto.appointmentId,
                 AppointmentDate = DateTime.Now,
-                AppointmentStatus = "Đã đăng ký"
+                AppointmentStatus = "registered"
             };
 
-            _context.AppointmentHistories.Add(history);
-            await _context.SaveChangesAsync();
+                _context.AppointmentHistories.Add(history);
+                await _context.SaveChangesAsync();
 
-            return "Success";
+                return "Success";
         }
         public async Task<List<AppointmentHistoryDto>> GetByUsernameAsync(string username)
         {
@@ -72,6 +72,18 @@ namespace BloodDonationAPI.Service
                 .ToListAsync();
         }
 
+        public async Task<bool> CancelAppointmentAsync(int appointmentId)
+        {
+            var appoinment = await _context.AppointmentHistories.FirstOrDefaultAsync(a => a.AppointmentHistoryId == appointmentId);
 
+            if (appoinment == null || appoinment.AppointmentStatus=="Canceled")
+            {
+                return false; // Lịch hẹn không tồn tại
+            }
+
+            appoinment.AppointmentStatus = "Canceled"; // Cập nhật trạng thái lịch hẹn
+            await _context.SaveChangesAsync(); // Lưu thay đổi vào cơ sở dữ liệu
+            return true; // Trả về true nếu cập nhật thành công
+        }
     }
 }

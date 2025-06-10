@@ -9,5 +9,8 @@ namespace BloodDonationAPI.Service
         Task<string> RegisterAppointment( string userName , RegisterAppointmentDto Dto);
 
         Task<List<AppointmentHistoryDto>> GetByUsernameAsync(string username);
+
+        Task<bool> CancelAppointmentAsync(int appointmentId);
+
     }
 }
