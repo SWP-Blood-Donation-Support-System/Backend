@@ -159,7 +159,19 @@ VALUES
 (N'Bệnh viện Từ Dũ', N'284 Cống Quỳnh, Quận 1, TP.HCM', N'https://example.com/images/tudu.jpg', '02854042525'),
 (N'Bệnh viện Phụ sản Hà Nội', N'929 La Thành, Ba Đình, Hà Nội', N'https://example.com/images/phusanhanoi.jpg', '02438343223');
 
-
+INSERT INTO [Blood_Donation_System].[dbo].[AppointmentList]
+    ([AppointmentDate], [AppointmentTime], [AppointmentTitle], [AppointmentContent])
+VALUES
+    ('2023-06-15', '09:00:00', 'Hiến máu định kỳ', 'Đợt hiến máu định kỳ quý II năm 2023 tại bệnh viện A'),
+    ('2023-06-20', '13:30:00', 'Hiến máu nhân đạo', 'Chương trình hiến máu nhân đạo hỗ trợ bệnh nhân ung thư'),
+    ('2023-07-05', '08:00:00', 'Ngày hội hiến máu', 'Ngày hội hiến máu "Giọt hồng trao đời" tại trường Đại học B'),
+    ('2023-07-12', '10:00:00', 'Hiến máu cấp cứu', 'Kêu gọi hiến máu khẩn cấp cho bệnh nhân tai nạn giao thông'),
+    ('2023-08-01', '14:00:00', 'Hiến máu hè', 'Chiến dịch hiến máu hè "Một giọt máu - Vạn niềm vui"'),
+    ('2023-08-15', '09:30:00', 'Hiến máu định kỳ', 'Đợt hiến máu định kỳ quý III năm 2023 tại bệnh viện C'),
+    ('2023-09-10', '08:30:00', 'Hiến máu thiện nguyện', 'Chương trình hiến máu "Trao máu - Trao sự sống"'),
+    ('2023-09-25', '15:00:00', 'Hiến máu đột xuất', 'Kêu gọi hiến máu cho ca mổ tim khẩn cấp'),
+    ('2023-10-05', '10:30:00', 'Ngày hội hiến máu', 'Ngày hội hiến máu "Sẻ giọt máu đào - Cứu người nguy nan"'),
+    ('2023-10-20', '13:00:00', 'Hiến máu nhân đạo', 'Chương trình hiến máu hỗ trợ trẻ em bệnh viện Nhi');
 
 INSERT INTO [User] (
   Username, Password, Email, Role, FullName,
