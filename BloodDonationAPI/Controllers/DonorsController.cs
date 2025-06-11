@@ -14,9 +14,7 @@ namespace BloodDonationAPI.Controllers
         public DonorsController(IDonorSearchService donorSearchService)
         {
             _donorSearchService = donorSearchService;
-        }
-
-        /// <summary>
+        }        /// <summary>
         /// Tìm kiếm người hiến máu gần đây theo vị trí
         /// </summary>
         /// <param name="bloodType">Nhóm máu cần tìm (A+, A-, B+, B-, AB+, AB-, O+, O-)</param>
@@ -25,7 +23,7 @@ namespace BloodDonationAPI.Controllers
         /// <param name="radius">Bán kính tìm kiếm (km, tối đa 1000km)</param>
         /// <returns>Danh sách người hiến máu gần đây sắp xếp theo khoảng cách</returns>
         [HttpGet("nearby")]
-        [Authorize]
+        [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> GetNearbyDonors(
             [FromQuery] string bloodType,
             [FromQuery] double lat,
