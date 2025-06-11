@@ -17,7 +17,7 @@ public partial class BloodBank
 
     public string? Status { get; set; }
 
-    public virtual ICollection<BloodMove> BloodMoves { get; set; } = new List<BloodMove>();
-
     public virtual DonationHistory? DonationHistory { get; set; }
+
+    public virtual ICollection<BloodMove> BloodMoves { get; set; } = new List<BloodMove>();
 }
