@@ -4,7 +4,10 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using BloodDonationAPI.Entities;
+using BloodDonationAPI.Service.Impl;
+using Microsoft.OpenApi.Any;
 using Microsoft.OpenApi.Models;
+using Swashbuckle.AspNetCore.SwaggerGen;
 
 namespace BloodDonationAPI
 {
@@ -65,10 +68,14 @@ namespace BloodDonationAPI
                         []
                     }
                 });
+
+                // Thêm cấu hình để hiển thị enum dưới dạng string
+                c.SchemaFilter<EnumSchemaFilter>();
             });            builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<IAppointmentServiece, AppointmentServiece>();
             builder.Services.AddScoped<IDonorSearchService, DonorSearchService>();
+            builder.Services.AddScoped<IBloodInventoryService, BloodInventoryService>();
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
@@ -105,6 +112,22 @@ namespace BloodDonationAPI
             app.MapControllers();
 
             app.Run();
+        }
+
+        // Thêm class EnumSchemaFilter vào project (có thể tạo file mới)
+        public class EnumSchemaFilter : ISchemaFilter
+        {
+            public void Apply(OpenApiSchema schema, SchemaFilterContext context)
+            {
+                if (context.Type.IsEnum)
+                {
+                    schema.Enum.Clear();
+                    foreach (var enumName in Enum.GetNames(context.Type))
+                    {
+                        schema.Enum.Add(new OpenApiString(enumName));
+                    }
+                }
+            }
         }
     }
 }
