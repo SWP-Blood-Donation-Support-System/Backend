@@ -52,6 +52,15 @@ namespace BloodDonationAPI.Controllers
 
             return Ok(histories);
         }
+        [HttpPut("CancelAppointment/{id}")]
+        public async Task<IActionResult> CancelAppointment(int id)
+        {
+            var result = await _appointmentService.CancelAppointmentAsync(id);
 
+            if (!result)
+                return NotFound(new { message = "Lịch hẹn không tồn tại hoặc đã bị hủy." });
+
+            return Ok(new { message = "Đã hủy lịch hẹn thành công." });
+        }
     }
 }

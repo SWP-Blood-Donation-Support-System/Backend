@@ -65,11 +65,10 @@ namespace BloodDonationAPI
                         []
                     }
                 });
-            });
-
-            builder.Services.AddScoped<IUserService, UserService>();
+            });            builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<IAppointmentServiece, AppointmentServiece>();
+            builder.Services.AddScoped<IDonorSearchService, DonorSearchService>();
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>

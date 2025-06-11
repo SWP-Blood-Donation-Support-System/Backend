@@ -7,7 +7,7 @@ public partial class NotificationRecipient
 {
     public int NotificationRecipientId { get; set; }
 
-    public int? NotifivationId { get; set; }
+    public int? NotificationId { get; set; }
 
     public string? Username { get; set; }
 
@@ -15,7 +15,7 @@ public partial class NotificationRecipient
 
     public DateTime? ResponseDate { get; set; }
 
-    public virtual Notification? Notifivation { get; set; }
+    public virtual Notification? Notification { get; set; }
 
     public virtual User? UsernameNavigation { get; set; }
 }

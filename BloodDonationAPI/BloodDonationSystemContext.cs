@@ -40,6 +40,7 @@ public partial class BloodDonationSystemContext : DbContext
     public virtual DbSet<Report> Reports { get; set; }
 
     public virtual DbSet<User> Users { get; set; }
+    public IEnumerable<object> BloodDonations { get; internal set; }
 
     protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
@@ -198,13 +199,13 @@ public partial class BloodDonationSystemContext : DbContext
 
             entity.ToTable("NotificationRecipient");
 
-            entity.Property(e => e.NotifivationId).HasColumnName("NotifivationID");
+            entity.Property(e => e.NotificationId).HasColumnName("NotificationID");
             entity.Property(e => e.ResponseDate).HasColumnType("datetime");
             entity.Property(e => e.ResponseStatus).HasMaxLength(50);
             entity.Property(e => e.Username).HasMaxLength(50);
 
-            entity.HasOne(d => d.Notifivation).WithMany(p => p.NotificationRecipients)
-                .HasForeignKey(d => d.NotifivationId)
+            entity.HasOne(d => d.Notification).WithMany(p => p.NotificationRecipients)
+                .HasForeignKey(d => d.NotificationId)
                 .HasConstraintName("FK__Notificat__Notif__6C190EBB");
 
             entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.NotificationRecipients)
