@@ -137,13 +137,13 @@ CREATE TABLE NotificationRecipient (
 --1
 INSERT INTO [User] (Username, Password, Email, Role, FullName,DateOfBirth, Gender, Phone, Address, ProfileStatus, BloodType) VALUES
 (N'user1', N'pass1', N'user1@example.com', N'Staff', N'Nguyễn Văn A',
- '1995-05-10', N'Nam', N'0912345678', N'TP. Hồ Chí Minh', N'Đang hoạt động', 'A-'),
+ '1995-05-10', N'Nam', N'0912345678', N'TP. Hồ Chí Minh', N'Active', 'A-'),
 
 (N'user2', N'pass2', N'user2@example.com', N'User', N'Trần Thị B',
- '1998-07-20', N'Nữ', N'0987654321', N'Hà Nội', N'Đang hoạt động', 'B-'),
+ '1998-07-20', N'Nữ', N'0987654321', N'Hà Nội', N'Active', 'B-'),
 
 (N'admin1', N'admin1', N'admin@example.com', N'Admin', N'Quản trị viên',
- '1990-01-01', N'Nam', N'0909090909', N'Đà Nẵng', N'Đang hoạt động', 'AB-'),
+ '1990-01-01', N'Nam', N'0909090909', N'Đà Nẵng', N'Active', 'AB-'),
 
 (N'user3', N'pass3', N'user1@email.com', N'User', N'Nguyễn Văn A', 
  N'1990-05-15', N'Nam', N'0912345678', N'123 Đường Lê Lợi, Q1, TP.HCM', N'Active', N'A+'),
@@ -174,23 +174,23 @@ VALUES
 --2
 INSERT INTO AppointmentList(AppointmentDate, AppointmentTime, AppointmentTitle, AppointmentContent)
 VALUES
-    ('2023-06-15', '09:00:00', N'Hiến máu định kỳ', N'Đợt hiến máu định kỳ quý II năm 2023 tại bệnh viện A'),
-    ('2023-06-20', '13:30:00', N'Hiến máu nhân đạo', N'Chương trình hiến máu nhân đạo hỗ trợ bệnh nhân ung thư'),
-    ('2023-07-05', '08:00:00', N'Ngày hội hiến máu', N'Ngày hội hiến máu "Giọt hồng trao đời" tại trường Đại học B'),
-    ('2023-07-12', '10:00:00', N'Hiến máu cấp cứu', N'Kêu gọi hiến máu khẩn cấp cho bệnh nhân tai nạn giao thông'),
-    ('2023-08-01', '14:00:00', N'Hiến máu hè', N'Chiến dịch hiến máu hè "Một giọt máu - Vạn niềm vui"'),
-    ('2023-08-15', '09:30:00', N'Hiến máu định kỳ', N'Đợt hiến máu định kỳ quý III năm 2023 tại bệnh viện C'),
-    ('2023-09-10', '08:30:00', N'Hiến máu thiện nguyện', N'Chương trình hiến máu "Trao máu - Trao sự sống"'),
-    ('2023-09-25', '15:00:00', N'Hiến máu đột xuất', N'Kêu gọi hiến máu cho ca mổ tim khẩn cấp'),
-    ('2023-10-05', '10:30:00', N'Ngày hội hiến máu', N'Ngày hội hiến máu "Sẻ giọt máu đào - Cứu người nguy nan"'),
-    ('2023-10-20', '13:00:00', N'Hiến máu nhân đạo', N'Chương trình hiến máu hỗ trợ trẻ em bệnh viện Nhi');
+    ('2025-06-15', '09:00:00', N'Hiến máu định kỳ', N'Đợt hiến máu định kỳ quý II năm 2023 tại bệnh viện A'),
+    ('2025-06-20', '13:30:00', N'Hiến máu nhân đạo', N'Chương trình hiến máu nhân đạo hỗ trợ bệnh nhân ung thư'),
+    ('2025-07-05', '08:00:00', N'Ngày hội hiến máu', N'Ngày hội hiến máu "Giọt hồng trao đời" tại trường Đại học B'),
+    ('2025-07-12', '10:00:00', N'Hiến máu cấp cứu', N'Kêu gọi hiến máu khẩn cấp cho bệnh nhân tai nạn giao thông'),
+    ('2025-08-01', '14:00:00', N'Hiến máu hè', N'Chiến dịch hiến máu hè "Một giọt máu - Vạn niềm vui"'),
+    ('2025-08-15', '09:30:00', N'Hiến máu định kỳ', N'Đợt hiến máu định kỳ quý III năm 2023 tại bệnh viện C'),
+    ('2025-09-10', '08:30:00', N'Hiến máu thiện nguyện', N'Chương trình hiến máu "Trao máu - Trao sự sống"'),
+    ('2025-09-25', '15:00:00', N'Hiến máu đột xuất', N'Kêu gọi hiến máu cho ca mổ tim khẩn cấp'),
+    ('2025-10-05', '10:30:00', N'Ngày hội hiến máu', N'Ngày hội hiến máu "Sẻ giọt máu đào - Cứu người nguy nan"'),
+    ('2025-10-20', '13:00:00', N'Hiến máu nhân đạo', N'Chương trình hiến máu hỗ trợ trẻ em bệnh viện Nhi');
 
 --2
 INSERT INTO Report (Username, ReportDate, ReportType, ReportContent)
 VALUES 
-(N'user2', '2023-03-15', N'Khiếu nại', N'Thái độ nhân viên chưa tốt khi đi hiến máu'),
-(N'user3', '2023-04-20', N'Góp ý', N'Đề nghị cải thiện cơ sở vật chất tại điểm hiến máu'),
-(N'user4', '2023-07-05', N'Báo cáo', N'Báo cáo hoạt động hiến máu quý 2 năm 2023');
+(N'user2', '2025-03-15', N'Khiếu nại', N'Thái độ nhân viên chưa tốt khi đi hiến máu'),
+(N'user3', '2025-04-20', N'Góp ý', N'Đề nghị cải thiện cơ sở vật chất tại điểm hiến máu'),
+(N'user4', '2025-07-05', N'Báo cáo', N'Báo cáo hoạt động hiến máu quý 2 năm 2023');
 
 --2
 INSERT INTO Blog (BlogTitle, BlogContent, BlogImage, Username)
@@ -225,16 +225,16 @@ VALUES
 --3
 INSERT INTO Emergency (Username, EmergencyDate, bloodType, EmergencyStatus, EmergencyNote, RequiredUnits, HospitalId)
 VALUES 
-(N'user2', '2023-10-01', N'A+', N'Khẩn cấp', N'Cần gấp máu cho ca phẫu thuật tim', 5, 1),
-(N'user3', '2023-10-05', N'O+', N'Khẩn cấp', N'Cần máu cho bệnh nhân tai nạn giao thông', 3, 2),
-(N'user4', '2023-10-10', N'B+', N'Khẩn cấp', N'Cần gấp máu cho sản phụ', 4, 3);
+(N'user2', '2025-10-01', N'A+', N'Khẩn cấp', N'Cần gấp máu cho ca phẫu thuật tim', 5, 1),
+(N'user3', '2025-10-05', N'O+', N'Khẩn cấp', N'Cần máu cho bệnh nhân tai nạn giao thông', 3, 2),
+(N'user4', '2025-10-10', N'B+', N'Khẩn cấp', N'Cần gấp máu cho sản phụ', 4, 3);
 
 --4
 INSERT INTO Notification (EmergencyId, NotificationStatus, NotificationTitle, NotificationContent, NotificationDate)
 VALUES 
-(1, N'Đã gửi', N'Yêu cầu hiến máu khẩn cấp', N'Cần gấp 5 đơn vị máu A+ cho bệnh nhân phẫu thuật tim tại Bệnh viện Hữu nghị Việt Đức', '2023-10-01'),
-(2, N'Đã gửi', N'Yêu cầu hiến máu', N'Cần 3 đơn vị máu O+ cho bệnh nhân tai nạn giao thông tại Bệnh viện Bạch Mai', '2023-10-05'),
-(3, N'Đã gửi', N'Yêu cầu hiến máu khẩn cấp', N'Cần gấp 4 đơn vị máu B+ cho sản phụ tại Bệnh viện Phụ sản Trung ương', '2023-10-10');
+(1, N'Đã gửi', N'Yêu cầu hiến máu khẩn cấp', N'Cần gấp 5 đơn vị máu A+ cho bệnh nhân phẫu thuật tim tại Bệnh viện Hữu nghị Việt Đức', '2025-10-01'),
+(2, N'Đã gửi', N'Yêu cầu hiến máu', N'Cần 3 đơn vị máu O+ cho bệnh nhân tai nạn giao thông tại Bệnh viện Bạch Mai', '2025-10-05'),
+(3, N'Đã gửi', N'Yêu cầu hiến máu khẩn cấp', N'Cần gấp 4 đơn vị máu B+ cho sản phụ tại Bệnh viện Phụ sản Trung ương', '2025-10-10');
 
 --4
 INSERT INTO BloodBank (BloodTypeName, Unit, DonationHistoryId, ExpiryDate, [Status])
@@ -253,24 +253,24 @@ VALUES
 --4
 INSERT INTO Certificate (DonationHistoryId, CertificateCode, IssueDate)
 VALUES 
-(1, N'CERT-2023-0001', '2023-01-15'),
-(2, N'CERT-2023-0002', '2023-02-20'),
-(3, N'CERT-2023-0003', '2023-05-10'),
-(4, N'CERT-2023-0004', '2023-06-25'),
-(5, N'CERT-2023-0005', '2023-08-12');
+(1, N'CERT-2023-0001', '2025-01-15'),
+(2, N'CERT-2023-0002', '2025-02-20'),
+(3, N'CERT-2023-0003', '2025-05-10'),
+(4, N'CERT-2023-0004', '2025-06-25'),
+(5, N'CERT-2023-0005', '2025-08-12');
 
 --5
 INSERT INTO BloodMove (BloodTypeId, Unit, HospitalId, DateMove, Note)
 VALUES 
-(1, 5, 1, '2023-09-01', N'Chuyển máu từ ngân hàng máu đến Bệnh viện Chợ Rẫy'),
-(2, 3, 2, '2023-09-05', N'Chuyển máu từ ngân hàng máu đến Bệnh viện Bạch Mai'),
-(3, 7, 3, '2023-09-10', N'Chuyển máu từ ngân hàng máu đến Bệnh viện Trung ương Huế');
+(1, 5, 1, '2025-09-01', N'Chuyển máu từ ngân hàng máu đến Bệnh viện Chợ Rẫy'),
+(2, 3, 2, '2025-09-05', N'Chuyển máu từ ngân hàng máu đến Bệnh viện Bạch Mai'),
+(3, 7, 3, '2025-09-10', N'Chuyển máu từ ngân hàng máu đến Bệnh viện Trung ương Huế');
 
 --5
 INSERT INTO NotificationRecipient (NotificationID, Username, ResponseStatus, ResponseDate)
 VALUES 
-(2, N'user2', N'Chấp nhận', '2023-10-01 10:30:00'),
-(1, N'user3', N'Từ chối', '2023-10-01 11:15:00'),
+(2, N'user2', N'Chấp nhận', '2025-10-01 10:30:00'),
+(1, N'user3', N'Từ chối', '2025-10-01 11:15:00'),
 (3, N'user4', N'Chưa phản hồi', NULL),
-(1, N'user4', N'Chấp nhận', '2023-10-05 09:20:00'),
-(3, N'user3', N'Chấp nhận', '2023-10-10 14:45:00');
+(1, N'user4', N'Chấp nhận', '2025-10-05 09:20:00'),
+(3, N'user3', N'Chấp nhận', '2025-10-10 14:45:00');
