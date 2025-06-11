@@ -225,9 +225,9 @@ VALUES
 --3
 INSERT INTO Emergency (Username, EmergencyDate, bloodType, EmergencyStatus, EmergencyNote, RequiredUnits, HospitalId)
 VALUES 
-(N'user2', '2025-10-01', N'A+', N'Khẩn cấp', N'Cần gấp máu cho ca phẫu thuật tim', 5, 1),
-(N'user3', '2025-10-05', N'O+', N'Khẩn cấp', N'Cần máu cho bệnh nhân tai nạn giao thông', 3, 2),
-(N'user4', '2025-10-10', N'B+', N'Khẩn cấp', N'Cần gấp máu cho sản phụ', 4, 3);
+(N'user2', '2025-10-01', N'A+', N'Chưa xét duyệt', N'Cần gấp máu cho ca phẫu thuật tim', 5, 1),
+(N'user3', '2025-10-05', N'O+', N'Đã xét duyệt', N'Cần máu cho bệnh nhân tai nạn giao thông', 3, 2),
+(N'user4', '2025-10-10', N'B+', N'Đã đáp ứng', N'Cần gấp máu cho sản phụ', 4, 3);
 
 --4
 INSERT INTO Notification (EmergencyId, NotificationStatus, NotificationTitle, NotificationContent, NotificationDate)
