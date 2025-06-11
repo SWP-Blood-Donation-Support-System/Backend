@@ -87,5 +87,22 @@ namespace BloodDonationAPI.Service
 
 
         }
+
+        public async Task<List<DonationHistoryDto>> GetDonationHistoryByUserNameAsync(string username)
+        {
+            return await _context.DonationHistories
+                .Where(d => d.Username == username)
+                .Select(d => new DonationHistoryDto
+                {
+                    DonationHistoryId = d.DonationHistoryId,
+                    Username = d.Username,
+                    BloodType = d.BloodType,
+                    DonationDate = d.DonationDate,
+                    DonationStatus = d.DonationStatus,
+                    DonationUnit = d.DonationUnit
+                })
+                .OrderByDescending(d => d.DonationDate)
+                .ToListAsync();
+        }
     }
 }

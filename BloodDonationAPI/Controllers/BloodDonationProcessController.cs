@@ -90,6 +90,22 @@ namespace BloodDonationAPI.Controllers
             }
            
         }
+
+        [HttpGet("GetDonationHistoryByUserName/{username}")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> GetDonationHistoryByUserName(string username)
+        {
+            if (string.IsNullOrEmpty(username))
+            {
+                return BadRequest("Username cannot be null or empty.");
+            }
+            var result = await _service.GetDonationHistoryByUserNameAsync(username);
+            if (result == null || !result.Any())
+            {
+                return NotFound("No donation history found for this user.");
+            }
+            return Ok(result);
+        }
     }
 
 }

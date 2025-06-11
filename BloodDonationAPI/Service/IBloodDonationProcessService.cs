@@ -12,5 +12,7 @@ namespace BloodDonationAPI.Service
         Task<bool> AddDonationHistoryAsync(CreateDonationHistoryDto registrationDto);
 
         Task<BloodBank> AddBloodToBankAsync(AddBloodBankDto dto);
+
+        Task<List<DonationHistoryDto>> GetDonationHistoryByUserNameAsync(string username);
     }
 }
