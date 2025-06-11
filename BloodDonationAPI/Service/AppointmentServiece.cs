@@ -62,6 +62,7 @@ namespace BloodDonationAPI.Service
                 .Select(h => new AppointmentHistoryDto
                 {
                     AppointmentHistoryId = h.AppointmentHistoryId,
+                    AppointmentId = h.AppointmentId, 
                     AppointmentDate = h.AppointmentDate,
                     AppointmentStatus = h.AppointmentStatus,
                     AppointmentDateOfAppointment = h.Appointment != null ? h.Appointment.AppointmentDate : null,
