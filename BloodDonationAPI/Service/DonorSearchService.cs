@@ -11,8 +11,12 @@ namespace BloodDonationAPI.Service
         public DonorSearchService(BloodDonationSystemContext context)
         {
             _context = context;
-        }
-
+        }        /// <summary>
+        /// Tìm kiếm người hiến máu gần đây theo vị trí, nhóm máu và bán kính
+        /// Chỉ tìm những người dùng có Role="User" (người hiến máu thông thường) và ProfileStatus="Active"
+        /// </summary>
+        /// <param name="request">Thông tin tìm kiếm: nhóm máu, vị trí, bán kính</param>
+        /// <returns>Danh sách người hiến máu phù hợp</returns>
         public async Task<DonorSearchResponse> FindNearbyDonorsAsync(DonorSearchRequest request)
         {            // Lấy tất cả người dùng có role là User (người hiến máu) và có ProfileStatus Active
             var potentialDonors = await _context.Users
