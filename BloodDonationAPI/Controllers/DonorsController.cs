@@ -7,6 +7,7 @@ namespace BloodDonationAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
+    [Authorize] // Keep general authorization for the controller
     public class DonorsController : ControllerBase
     {
         private readonly IDonorSearchService _donorSearchService;
@@ -20,7 +21,7 @@ namespace BloodDonationAPI.Controllers
         /// <param name="bloodType">Nhóm máu cần tìm (A+, A-, B+, B-, AB+, AB-, O+, O-)</param>
         /// <returns>Danh sách người hiến máu có nhóm máu phù hợp</returns>
         [HttpGet("findByBloodType")]
-        [Authorize(Roles = "Staff,Admin")]
+        [AllowAnonymous] // Add this to allow anonymous access to this specific endpoint
         public async Task<IActionResult> GetDonorsByBloodType(
             [FromQuery] string bloodType)
         {            try
