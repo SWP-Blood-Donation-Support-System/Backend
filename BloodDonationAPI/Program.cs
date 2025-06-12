@@ -1,10 +1,11 @@
-using BloodDonationAPI.Service;
-using Microsoft.EntityFrameworkCore;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
-using Microsoft.IdentityModel.Tokens;
-using System.Text;
 using BloodDonationAPI.Entities;
+using BloodDonationAPI.Service;
+using BloodDonationAPI.Service.Impl;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
 using Microsoft.OpenApi.Models;
+using System.Text;
 
 namespace BloodDonationAPI
 {
@@ -70,7 +71,10 @@ namespace BloodDonationAPI
             builder.Services.AddScoped<IAppointmentServiece, AppointmentServiece>();
             
             builder.Services.AddScoped<IDonorSearchService, DonorSearchService>();
-
+            builder.Services.AddScoped < IBloodDonationProcessService, BloodDonationProcessService >();
+            builder.Services.AddScoped<IEmergencyService, EmergencyService>();
+            builder.Services.AddScoped<INotificationService, NotificationService>();
+            builder.Services.AddScoped<IBloodInventoryService, BloodInventoryService>();
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
