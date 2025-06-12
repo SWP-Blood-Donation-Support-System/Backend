@@ -16,7 +16,7 @@ namespace BloodDonationAPI.Service
             _logger = logger;
         }
 
-        public async Task<string> RegisterEmergency(string username, RegisterEmergencyDto dto)
+        public async Task<string> RegisterEmergency(string username, string role, RegisterEmergencyDto dto)
         {
             try
             {
@@ -44,12 +44,15 @@ namespace BloodDonationAPI.Service
                     return "Hospital ID is required.";
                 }
 
+                // Set emergency status based on user role
+                string emergencyStatus = (role == "Staff" || role == "Admin") ? "Đã xét duyệt" : "Chờ xét duyệt";
+
                 var emergency = new Emergency
                 {
                     Username = username,
                     EmergencyDate = DateOnly.FromDateTime(DateTime.Now),
                     BloodType = dto.BloodType,
-                    EmergencyStatus = "Chờ xét duyệt",
+                    EmergencyStatus = emergencyStatus,
                     EmergencyNote = $"Cần {dto.RequiredUnits} đơn vị nhóm máu {dto.BloodType} tại {hospital.HospitalName}",
                     RequiredUnits = dto.RequiredUnits,
                     HospitalId = dto.HospitalId
