@@ -18,7 +18,7 @@ namespace BloodDonationAPI.Controllers
         }
 
 
-        [HttpGet("GetRegistrationsByAppointmentID/{AppointmentID}")]
+        [HttpGet("GetRegisterListByEventID/{AppointmentID}")]
         [Authorize(Roles = "Staff")]
         public async Task<IActionResult> GetRegistrationsByAppointmentID(int AppointmentID)
         {

@@ -17,10 +17,10 @@ namespace BloodDonationAPI.Controllers
             _appointmentService = appointmentService;
         }
 
-        [HttpGet("GetAppointmentLists")]
+        [HttpGet("GetEventsLists")]
         public async Task<IActionResult> GetAppointmentLists()
         {
-           var appointmentLists = await _appointmentService.GetAppointmentLists();
+           var appointmentLists = await _appointmentService.GetEventsLists();
             if (appointmentLists == null || !appointmentLists.Any())
             {
                 return NotFound(new { message = "No appointments found." });
@@ -40,7 +40,7 @@ namespace BloodDonationAPI.Controllers
             else return BadRequest(new { message = result });
         }
 
-        [HttpGet("history/{username}")]
+        [HttpGet("AppointmentHistory/{username}")]
         public async Task<IActionResult> GetAppointmentHistoryByUsername(string username)
         {
             var histories = await _appointmentService.GetByUsernameAsync(username);
