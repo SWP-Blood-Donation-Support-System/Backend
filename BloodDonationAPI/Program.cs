@@ -35,17 +35,10 @@ namespace BloodDonationAPI
 
             builder.Services.AddControllers();
             // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
-            builder.Services.AddEndpointsApiExplorer();            builder.Services.AddSwaggerGen(c =>
+            builder.Services.AddEndpointsApiExplorer();
+            builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Blood Donation API", Version = "v1" });
-                
-                // Include XML comments for Swagger documentation
-                var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
-                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
-                if (File.Exists(xmlPath))
-                {
-                    c.IncludeXmlComments(xmlPath);
-                }
                 
                 // Thêm phần cấu hình JWT cho Swagger
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
@@ -75,9 +68,7 @@ namespace BloodDonationAPI
             });            builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<IAppointmentServiece, AppointmentServiece>();
-            builder.Services.AddScoped<IBloodDonationProcessService, BloodDonationProcessService>();
-              builder.Services.AddScoped<IDonorSearchService, DonorSearchService>();
-            // Blood request search service removed as it's no longer needed
+            builder.Services.AddScoped<IDonorSearchService, DonorSearchService>();
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
