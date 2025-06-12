@@ -29,10 +29,14 @@ namespace BloodDonationAPI.Controllers
                 if (username == null)
                     return Unauthorized(new { message = "User not authenticated." });
 
+                var role = User.FindFirst(ClaimTypes.Role)?.Value;
+                if (role == null)
+                    return Unauthorized(new { message = "User role not found." });
+
                 if (string.IsNullOrEmpty(dto.BloodType))
                     return BadRequest(new { message = "Blood type is required." });
 
-                var result = await _emergencyService.RegisterEmergency(username, dto);
+                var result = await _emergencyService.RegisterEmergency(username, role, dto);
                 if (result == "Emergency registration successful.")
                     return Ok(new { message = result });
 
