@@ -76,8 +76,8 @@ namespace BloodDonationAPI
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<IAppointmentServiece, AppointmentServiece>();
             builder.Services.AddScoped<IBloodDonationProcessService, BloodDonationProcessService>();
-
-            builder.Services.AddScoped<IDonorSearchService, DonorSearchService>();
+              builder.Services.AddScoped<IDonorSearchService, DonorSearchService>();
+            // Blood request search service removed as it's no longer needed
 
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
