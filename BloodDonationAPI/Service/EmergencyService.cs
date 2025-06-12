@@ -32,11 +32,16 @@ namespace BloodDonationAPI.Service
                     return "Invalid blood type.";
 
                 // Validate hospital if provided
+                Hospital? hospital = null;
                 if (dto.HospitalId.HasValue)
                 {
-                    var hospital = await _context.Hospitals.FindAsync(dto.HospitalId.Value);
+                    hospital = await _context.Hospitals.FindAsync(dto.HospitalId.Value);
                     if (hospital == null)
                         return "Invalid hospital ID.";
+                }
+                else
+                {
+                    return "Hospital ID is required.";
                 }
 
                 var emergency = new Emergency
@@ -45,7 +50,7 @@ namespace BloodDonationAPI.Service
                     EmergencyDate = DateOnly.FromDateTime(DateTime.Now),
                     BloodType = dto.BloodType,
                     EmergencyStatus = "Chờ xét duyệt",
-                    EmergencyNote = dto.EmergencyNote,
+                    EmergencyNote = $"Cần {dto.RequiredUnits} đơn vị nhóm máu {dto.BloodType} tại {hospital.HospitalName}",
                     RequiredUnits = dto.RequiredUnits,
                     HospitalId = dto.HospitalId
                 };
