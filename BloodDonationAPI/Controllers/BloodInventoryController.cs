@@ -29,7 +29,7 @@ public class BloodInventoryController : ControllerBase
         var result = await _bloodInventoryService.GetBloodInventoryAsync();
         return Ok(result);
     }
-
+    [Authorize(Roles = "Staff,Admin")]
     [HttpGet("blood-bank")]
     public async Task<ActionResult<List<BloodBankDTO>>> GetAllBloodBank()
     {
@@ -43,7 +43,7 @@ public class BloodInventoryController : ControllerBase
             return StatusCode(500, new { message = "An error occurred while retrieving blood bank data." });
         }
     }
-
+    [Authorize(Roles = "Staff,Admin")]
     [HttpPatch]
     [ProducesResponseType(typeof(BloodBankDTO), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
@@ -63,7 +63,7 @@ public class BloodInventoryController : ControllerBase
             return StatusCode(500, new { message = "An error occurred while adding blood to inventory." });
         }
     }
-
+    [Authorize(Roles = "Staff,Admin")]
     [HttpPost("use")]
     public async Task<ActionResult<UseBloodResponseDTO>> UseBlood([FromBody] UseBloodRequestDTO request)
     {
@@ -81,7 +81,7 @@ public class BloodInventoryController : ControllerBase
             return StatusCode(500, new { message = "An error occurred while processing blood usage." });
         }
     }
-
+    [Authorize(Roles = "Staff,Admin")]
     [HttpPatch("expire")]
     public async Task<ActionResult<BloodBankDTO>> ExpireBlood([FromBody] ExpireBloodRequestDTO request)
     {
