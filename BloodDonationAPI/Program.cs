@@ -66,7 +66,12 @@ namespace BloodDonationAPI
                         []
                     }
                 });
-            });            builder.Services.AddScoped<IUserService, UserService>();
+                var xmlFile = $"{System.Reflection.Assembly.GetExecutingAssembly().GetName().Name}.xml";
+                var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
+                c.IncludeXmlComments(xmlPath);
+
+            });          
+            builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<IAppointmentServiece, AppointmentServiece>();
             builder.Services.AddScoped<IDonorSearchService, DonorSearchService>();

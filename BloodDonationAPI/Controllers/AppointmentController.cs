@@ -16,7 +16,13 @@ namespace BloodDonationAPI.Controllers
         {
             _appointmentService = appointmentService;
         }
-
+        /// <summary>
+        /// Lấy tất cả danh sách các event hiến máu mà chưa tới ngày hiến máu
+        /// </summary>
+        /// <remarks>
+        /// Api này sẻ trả về danh sách các lịch hẹn hiến máu mà chưa tới ngày hiến máu,
+        /// </remarks>
+        /// <returns></returns>
         [HttpGet("GetEventsLists")]
         public async Task<IActionResult> GetAppointmentLists()
         {
@@ -27,7 +33,16 @@ namespace BloodDonationAPI.Controllers
             }
             return Ok(appointmentLists);
         }
-
+        /// <summary>
+        /// Dùng để đăng ký lịch hẹn hiến máu nhập vào eventID và phải là roll user mới được phép đăng ký 
+        /// </summary>
+        /// <remarks>
+        /// API này chạy bằng cách nhập eventID muốn đăng ký vào và lấy username đăng nhập để thêm thông tin vào bảng lưu trữ thông tin 
+        /// 
+        /// (front end sẻ hiển thị mấy hết event ra và có nút dăng ký nó sẻ lấy eventID của cái lịch mà mình bấm vào và gửi vào đây)
+        /// </remarks>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPost("RegisterAppointment")]
         [Authorize(Roles = "User")]
         public async Task<IActionResult> RegisterAppointment([FromBody] RegisterAppointmentDto dto)
@@ -39,7 +54,16 @@ namespace BloodDonationAPI.Controllers
 
             else return BadRequest(new { message = result });
         }
-
+        /// <summary>
+        /// dùng để xem xem user nào đã dăng ký những lịch hẹn nào 
+        /// </summary>
+        /// <remarks>
+        /// API này dùng bằng cách nhập userName vào và sẻ hiển thị tất cả các lịch hẹn đã đăng ký và có thể xem chi tiết lịch hẹn đó 
+        /// 
+        /// FE thì sẻ lấy dữ liệu là usernào đang login thì sẻ cho xem các lịch hẹn đã đăng kí của user đó
+        /// </remarks>
+        /// <param name="username"></param>
+        /// <returns></returns>
         [HttpGet("AppointmentHistory/{username}")]
         public async Task<IActionResult> GetAppointmentHistoryByUsername(string username)
         {
@@ -52,6 +76,16 @@ namespace BloodDonationAPI.Controllers
 
             return Ok(histories);
         }
+        /// <summary>
+        /// dùng để cập nhật trạng thái trong lịch hẹn thành đã hủy
+        /// </summary>
+        /// <remarks>
+        /// API dùng bằng cách nhập RecordID của cái bảng lưu thông tin dăng ký lịch hẹn sau khi nhập vào sẻ sữa status thành Canceled 
+        /// 
+        /// FE thì khi cho xem các lịch hẹn đã đăng ký thì sẽ có nút hủy lịch hẹn, khi bấm vào nó sẻ lấy RecordID của cái lịch hẹn đó và gửi vào đây và chỉnh sửa trạng thái thành Canceled
+        /// </remarks>
+        /// <param name="id"></param>
+        /// <returns></returns>
         [HttpPut("CancelAppointment/{id}")]
         public async Task<IActionResult> CancelAppointment(int id)
         {
