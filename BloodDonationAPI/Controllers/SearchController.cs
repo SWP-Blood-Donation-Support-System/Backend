@@ -21,6 +21,9 @@ namespace BloodDonationAPI.Controllers
         /// <summary>
         /// Tìm kiếm người hiến máu theo nhóm máu
         /// </summary>
+        /// <remarks>
+        /// API này cho phép tìm kiếm người hiến máu theo nhóm máu cụ thể.
+        /// </remarks>
         /// <param name="bloodType">Nhóm máu (A+, A-, B+, B-, AB+, AB-, O+, O-)</param>
         /// <returns>Danh sách người hiến máu có nhóm máu tương thích, sắp xếp theo địa chỉ</returns>
         [HttpGet("donors/byBloodType")]
@@ -57,6 +60,9 @@ namespace BloodDonationAPI.Controllers
         /// <summary>
         /// Tìm kiếm yêu cầu cần máu theo nhóm máu
         /// </summary>
+        /// <remarks>
+        /// API này cho phép tìm kiếm các yêu cầu cần máu theo nhóm máu cụ thể.
+        /// </remarks>
         /// <param name="bloodType">Nhóm máu (A+, A-, B+, B-, AB+, AB-, O+, O-)</param>
         /// <returns>Danh sách người cần máu có nhóm máu đã chỉ định</returns>
         [HttpGet("requests/byBloodType")]
