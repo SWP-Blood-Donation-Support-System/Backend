@@ -18,7 +18,12 @@ namespace BloodDonationAPI.Controllers
             _emergencyService = emergencyService;
             _logger = logger;
         }
-
+        /// <summary>
+        /// Dùng để đăng ký đơn khẩn cấp cần đăng nhập 
+        /// </summary>
+        
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPost("RegisterEmergency")]
         [Authorize(Roles = "User,Staff,Admin")]
         public async Task<IActionResult> RegisterEmergency([FromBody] RegisterEmergencyDto dto)
@@ -48,7 +53,13 @@ namespace BloodDonationAPI.Controllers
                 return StatusCode(500, new { message = "An error occurred while processing your request.", error = ex.Message });
             }
         }
-
+        
+        /// <summary>
+        /// Dùng để hiển thị danh sách các đơn khẩn cấp 
+        /// </summary>
+        
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpGet("GetEmergencies")]
         [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> GetEmergencies()
@@ -65,6 +76,14 @@ namespace BloodDonationAPI.Controllers
             }
         }
 
+        /// <summary>
+        /// Dùng để xét duyệt đơn đăng ký khẩn cấp, nếu admin or staff tạo đơn thì mặc định đã xét duyệt
+        /// </summary>
+        /// <remarks>
+        /// Cần nhập đúng chuỗi "Đã xét duyệt" or "Từ chối"
+        /// </remarks>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPut("UpdateStatus/{emergencyId}")]
         [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> UpdateEmergencyStatus(int emergencyId, [FromBody] string status)
