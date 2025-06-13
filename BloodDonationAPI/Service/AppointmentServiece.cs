@@ -11,7 +11,7 @@ namespace BloodDonationAPI.Service
         {
             _context = context;
         }
-        public async Task<List<AppointmentList>> GetAppointmentLists()
+        public async Task<List<AppointmentList>> GetEventsLists()
         {
             var today = DateOnly.FromDateTime(DateTime.Now);
             return await _context.AppointmentLists
