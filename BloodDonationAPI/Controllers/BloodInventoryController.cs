@@ -20,7 +20,9 @@ public class BloodInventoryController : ControllerBase
         _bloodInventoryService = bloodInventoryService;
         _logger = logger;
     }
-
+    /// <summary>
+    /// Lấy tổng lượng máu trong kho
+    /// </summary>
     [Authorize(Roles = "Staff,Admin")]
     [HttpGet]
     [ProducesResponseType(typeof(BloodInventoryResponseDTO), StatusCodes.Status200OK)]
@@ -29,6 +31,9 @@ public class BloodInventoryController : ControllerBase
         var result = await _bloodInventoryService.GetBloodInventoryAsync();
         return Ok(result);
     }
+    /// <summary>
+    /// Lấy chi tiết lượng máu trong kho
+    /// </summary>
     [Authorize(Roles = "Staff,Admin")]
     [HttpGet("blood-bank")]
     public async Task<ActionResult<List<BloodBankDTO>>> GetAllBloodBank()
@@ -43,6 +48,9 @@ public class BloodInventoryController : ControllerBase
             return StatusCode(500, new { message = "An error occurred while retrieving blood bank data." });
         }
     }
+    /// <summary>
+    /// Thêm lượng máu ngoài vào kho
+    /// </summary>
     [Authorize(Roles = "Staff,Admin")]
     [HttpPatch]
     [ProducesResponseType(typeof(BloodBankDTO), StatusCodes.Status200OK)]
@@ -63,6 +71,9 @@ public class BloodInventoryController : ControllerBase
             return StatusCode(500, new { message = "An error occurred while adding blood to inventory." });
         }
     }
+    /// <summary>
+    /// Chuyển lượng máu đến các bệnh viện hoặc người cần máu 
+    /// </summary>
     [Authorize(Roles = "Staff,Admin")]
     [HttpPost("use")]
     public async Task<ActionResult<UseBloodResponseDTO>> UseBlood([FromBody] UseBloodRequestDTO request)
@@ -81,6 +92,9 @@ public class BloodInventoryController : ControllerBase
             return StatusCode(500, new { message = "An error occurred while processing blood usage." });
         }
     }
+    /// <summary>
+    /// Đánh dấu hết hạn cho máu
+    /// </summary>
     [Authorize(Roles = "Staff,Admin")]
     [HttpPatch("expire")]
     public async Task<ActionResult<BloodBankDTO>> ExpireBlood([FromBody] ExpireBloodRequestDTO request)
