@@ -4,6 +4,12 @@
 Create Database Blood_Donation_System;
 USE Blood_Donation_System;
 
+-- 1. BloodBank
+CREATE TABLE BloodBank (
+  BloodType NVARCHAR(5) PRIMARY KEY,
+  BloodVolumeTotal INT,
+  BloodBankStatus NVARCHAR(100)
+);
 
 -- 2. Hospital
 CREATE TABLE Hospital (
@@ -19,12 +25,12 @@ CREATE TABLE [User] (
   Username NVARCHAR(50) PRIMARY KEY,
   Password NVARCHAR(100),
   Email NVARCHAR(100),
-  Role NVARCHAR(50),
+  [Role] NVARCHAR(50),
   FullName NVARCHAR(100),
   DateOfBirth DATE,
   Gender NVARCHAR(10),
   Phone NVARCHAR(20),
-  Address NVARCHAR(200),
+  [Address] NVARCHAR(200),
   ProfileStatus NVARCHAR(50),
   BloodType NVARCHAR(5)
 );
@@ -34,7 +40,7 @@ CREATE TABLE Emergency (
   EmergencyId INT IDENTITY(1,1) PRIMARY KEY,
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
   EmergencyDate DATE,
-  bloodType nvarchar(5),
+  bloodType NVARCHAR(5),
   EmergencyStatus NVARCHAR(50),
   EmergencyNote NVARCHAR(MAX),
   RequiredUnits INT,
@@ -43,7 +49,7 @@ CREATE TABLE Emergency (
 
 -- 5. Notification
 CREATE TABLE Notification (
-  NotificationId int IDENTITY(1,1) PRIMARY KEY ,
+  NotificationId INT IDENTITY(1,1) PRIMARY KEY,
   EmergencyId INT FOREIGN KEY REFERENCES Emergency(EmergencyId),
   NotificationStatus NVARCHAR(50),
   NotificationTitle NVARCHAR(100),
@@ -60,31 +66,25 @@ CREATE TABLE AppointmentList (
   AppointmentContent NVARCHAR(MAX)
 );
 
--- 7. DonationHistory
-CREATE TABLE DonationHistory (
-  DonationHistoryId INT IDENTITY(1,1) PRIMARY KEY,
+-- 7. UserActivityHistory
+CREATE TABLE UserActivityHistory (
+  HistoryId INT IDENTITY(1,1) PRIMARY KEY,
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
-  BloodType nvarchar(5),
-  DonationDate DATE,
-  DonationStatus NVARCHAR(MAX),
-  DonationUnit INT
+  ActivityType NVARCHAR(100) NOT NULL,
+  ActivityDate DATETIME NOT NULL,
+  Location NVARCHAR(255),
+  BloodType NVARCHAR(10),
+  DonationUnit INT,
+  AppointmentId INT FOREIGN KEY REFERENCES AppointmentList(AppointmentId),
+  AppointmentTitle NVARCHAR(255),
+  Status NVARCHAR(50)
 );
 
 -- 8. Certificate
 CREATE TABLE Certificate (
-  DonationHistoryId INT PRIMARY KEY FOREIGN KEY REFERENCES DonationHistory(DonationHistoryId),
+  HistoryId INT PRIMARY KEY FOREIGN KEY REFERENCES UserActivityHistory(HistoryId),
   CertificateCode NVARCHAR(50),
   IssueDate DATE
-);
-
--- 1. BloodBank trước khi chạy nhớ tạo database Blood_Donation_System
-CREATE TABLE BloodBank (
-  BloodTypeId INT IDENTITY(1,1) PRIMARY KEY,
-  BloodTypeName NVARCHAR(50),
-  Unit INT,
-  DonationHistoryId int FOREIGN KEY REFERENCES DonationHistory(DonationHistoryId),
-  ExpiryDate date,
-  [Status] nvarchar (MAX)
 );
 
 -- 9. Report
@@ -105,34 +105,26 @@ CREATE TABLE Blog (
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username)
 );
 
--- 11. BloodMove
-CREATE TABLE BloodMove (
-  BloodMoveId INT IDENTITY(1,1) PRIMARY KEY,
-  BloodTypeId INT FOREIGN KEY REFERENCES BloodBank(BloodTypeId),
-  Unit INT,
+-- 11. BloodDetail
+CREATE TABLE BloodDetail (
+  BloodDetailId INT IDENTITY(1,1) PRIMARY KEY,
+  BloodType NVARCHAR(5) FOREIGN KEY REFERENCES BloodBank(BloodType),
+  Volume INT,
+  DonationHistoryId INT FOREIGN KEY REFERENCES UserActivityHistory(HistoryId),
   HospitalId INT FOREIGN KEY REFERENCES Hospital(HospitalId),
-  DateMove DATE,
+  BloodDetailDate DATE,
+  BloodDetailStatus NVARCHAR(100),
   [Note] NVARCHAR(MAX)
 );
 
--- 12. AppointmentHistory
-CREATE TABLE AppointmentHistory (
-  AppointmentHistoryId INT IDENTITY(1,1) PRIMARY KEY,
-  Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
-  AppointmentId INT FOREIGN KEY REFERENCES AppointmentList(AppointmentId),
-  AppointmentDate DATETIME,
-  AppointmentStatus NVARCHAR(50)
-);
-
--- 13. NotificationRecipient
+-- 12. NotificationRecipient
 CREATE TABLE NotificationRecipient (
   NotificationRecipientId INT IDENTITY(1,1) PRIMARY KEY,
-  NotificationID int FOREIGN KEY REFERENCES Notification(NotificationID),  
+  NotificationID INT FOREIGN KEY REFERENCES Notification(NotificationID),  
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
   ResponseStatus NVARCHAR(50), -- 'Chưa phản hồi', 'Chấp nhận', 'Từ chối'
   ResponseDate DATETIME
 );
-
 
 --1
 INSERT INTO [User] (Username, Password, Email, Role, FullName,DateOfBirth, Gender, Phone, Address, ProfileStatus, BloodType) VALUES
