@@ -301,7 +301,7 @@ VALUES
 --4
 INSERT INTO Notification (EmergencyId, NotificationStatus, NotificationTitle, NotificationContent, NotificationDate)
 VALUES 
-(1, 'Đã gửi', N'Yêu cầu hiến máu khẩn cấp - Bệnh viện 108', N'Cần 5 đơn vị nhóm máu B- tại Bệnh viện 108', '2025-06-11');
+(1, N'Đã gửi', N'Yêu cầu hiến máu khẩn cấp - Bệnh viện 108', N'Cần 5 đơn vị nhóm máu B- tại Bệnh viện 108', '2025-06-11');
 
 --4
 INSERT INTO BloodBank (BloodType, BloodVolumeTotal, BloodBankStatus)

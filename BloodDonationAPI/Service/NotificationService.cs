@@ -90,7 +90,7 @@ namespace BloodDonationAPI.Service
 
                 // Create notification recipients for users with matching blood type
                 var matchingUsers = await _context.Users
-                    .Where(u => u.BloodType == emergency.BloodType && u.ProfileStatus == "Active")
+                    .Where(u => u.BloodType == emergency.BloodType)
                     .ToListAsync();
 
                 foreach (var user in matchingUsers)
