@@ -13,5 +13,14 @@ namespace BloodDonationAPI.DTO
         public string HospitalName { get; set; }
         public string? ResponseStatus { get; set; }
         public DateTime? ResponseDate { get; set; }
+        public List<NotificationRecipientDto> Recipients { get; set; } = new List<NotificationRecipientDto>();
+    }
+
+    public class NotificationRecipientDto
+    {
+        public string Username { get; set; }
+        public string FullName { get; set; }
+        public string ResponseStatus { get; set; }
+        public DateTime? ResponseDate { get; set; }
     }
 } 
