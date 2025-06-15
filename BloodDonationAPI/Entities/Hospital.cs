@@ -15,7 +15,7 @@ public partial class Hospital
 
     public string? HospitalPhone { get; set; }
 
-    public virtual ICollection<BloodMove> BloodMoves { get; set; } = new List<BloodMove>();
+    public virtual ICollection<BloodDetail> BloodDetails { get; set; } = new List<BloodDetail>();
 
     public virtual ICollection<Emergency> Emergencies { get; set; } = new List<Emergency>();
 }

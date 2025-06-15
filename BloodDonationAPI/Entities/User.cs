@@ -27,11 +27,9 @@ public partial class User
 
     public string? BloodType { get; set; }
 
-    public virtual ICollection<AppointmentHistory> AppointmentHistories { get; set; } = new List<AppointmentHistory>();
+    public virtual ICollection<AppointmentRecord> AppointmentRecords { get; set; } = new List<AppointmentRecord>();
 
     public virtual ICollection<Blog> Blogs { get; set; } = new List<Blog>();
-
-    public virtual ICollection<DonationHistory> DonationHistories { get; set; } = new List<DonationHistory>();
 
     public virtual ICollection<Emergency> Emergencies { get; set; } = new List<Emergency>();
 

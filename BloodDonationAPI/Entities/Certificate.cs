@@ -5,11 +5,11 @@ namespace BloodDonationAPI.Entities;
 
 public partial class Certificate
 {
-    public int DonationHistoryId { get; set; }
+    public int AppointmentId { get; set; }
 
     public string? CertificateCode { get; set; }
 
     public DateOnly? IssueDate { get; set; }
 
-    public virtual DonationHistory DonationHistory { get; set; } = null!;
+    public virtual AppointmentRecord Appointment { get; set; } = null!;
 }
