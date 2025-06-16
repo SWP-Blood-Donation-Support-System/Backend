@@ -65,8 +65,8 @@ namespace BloodDonationAPI.Service
 
             return records.Select(h => new AppointmentHistoryDto
             {
-                AppointmentHistoryId = h.AppointmentId,
-                AppointmentId = h.EventId,
+                AppointmentId = h.AppointmentId,
+                EventId = h.EventId,
                 AppointmentDate = h.RegistrationDate,
                 AppointmentStatus = h.Status,
 
@@ -87,7 +87,7 @@ namespace BloodDonationAPI.Service
 
         public async Task<bool> CancelAppointmentAsync(int appointmentId)
         {
-            var appoinment = await _context.AppointmentRecords.FirstOrDefaultAsync(a => a.EventId == appointmentId);
+            var appoinment = await _context.AppointmentRecords.FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
 
             if (appoinment == null || appoinment.Status=="Hủy")
             {

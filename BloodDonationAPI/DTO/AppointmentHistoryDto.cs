@@ -2,8 +2,8 @@
 {
     public class AppointmentHistoryDto
     {
-        public int AppointmentHistoryId { get; set; }
-        public int? AppointmentId { get; set; }
+        public int AppointmentId { get; set; }
+        public int? EventId { get; set; }
         public DateTime? AppointmentDate { get; set; }
         public string? AppointmentStatus { get; set; }
         

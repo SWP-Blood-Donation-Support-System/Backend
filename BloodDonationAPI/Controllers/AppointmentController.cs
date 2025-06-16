@@ -80,16 +80,16 @@ namespace BloodDonationAPI.Controllers
         /// dùng để cập nhật trạng thái trong lịch hẹn thành đã hủy
         /// </summary>
         /// <remarks>
-        /// API dùng bằng cách nhập RecordID của cái bảng lưu thông tin dăng ký lịch hẹn sau khi nhập vào sẻ sữa status thành Canceled 
+        /// API dùng bằng cách nhập RecordID của cái bảng lưu thông tin dăng ký lịch hẹn sau khi nhập vào sẻ sữa status thành Hủy  
         /// 
-        /// FE thì khi cho xem các lịch hẹn đã đăng ký thì sẽ có nút hủy lịch hẹn, khi bấm vào nó sẻ lấy RecordID của cái lịch hẹn đó và gửi vào đây và chỉnh sửa trạng thái thành Canceled
+        /// FE thì khi cho xem các lịch hẹn đã đăng ký thì sẽ có nút hủy lịch hẹn, khi bấm vào nó sẻ lấy RecordID của cái lịch hẹn đó và gửi vào đây và chỉnh sửa trạng thái thành Hủy 
         /// </remarks>
         /// <param name="id"></param>
         /// <returns></returns>
-        [HttpPut("CancelAppointment/{id}")]
-        public async Task<IActionResult> CancelAppointment(int id)
+        [HttpPut("CancelAppointment/{ApointmentID}")]
+        public async Task<IActionResult> CancelAppointment(int ApointmentID)
         {
-            var result = await _appointmentService.CancelAppointmentAsync(id);
+            var result = await _appointmentService.CancelAppointmentAsync(ApointmentID);
 
             if (!result)
                 return NotFound(new { message = "Lịch hẹn không tồn tại hoặc đã bị hủy." });
