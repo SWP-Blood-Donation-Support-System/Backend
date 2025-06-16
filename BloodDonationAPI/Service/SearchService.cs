@@ -91,6 +91,33 @@ namespace BloodDonationAPI.Service
             
             return result;
         }
+
+        public async Task<IEnumerable<object>> FindAllEmergencies()
+        {
+            // Get all emergencies
+            var allEmergencies = await _context.Emergencies.ToListAsync();
+            
+            // Get hospital information for each emergency
+            var hospitals = await _context.Hospitals.ToListAsync();
+            
+            var result = allEmergencies.Select(e => {
+                var hospital = hospitals.FirstOrDefault(h => h.HospitalId == e.HospitalId);
+                return new {
+                    e.Username,
+                    EmergencyDate = e.EmergencyDate,
+                    BloodType = e.BloodType,
+                    EmergencyStatus = e.EmergencyStatus,
+                    EmergencyNote = e.EmergencyNote,
+                    RequiredUnits = e.RequiredUnits,
+                    e.HospitalId,
+                    HospitalName = hospital?.HospitalName,
+                    HospitalAddress = hospital?.HospitalAddress,
+                    HospitalPhone = hospital?.HospitalPhone
+                };
+            }).ToList<object>();
+            
+            return result;
+        }
           // Hospital search functionality removed as requested
 
         /// <summary>
