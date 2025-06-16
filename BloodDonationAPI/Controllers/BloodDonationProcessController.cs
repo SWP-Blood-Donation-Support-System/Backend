@@ -77,10 +77,9 @@ namespace BloodDonationAPI.Controllers
                     return Ok(new
                     {
                         message = "Blood added to bank successfully.",
-                        bloodBankId = result.BloodTypeId,
-                        bloodType = result.BloodTypeName,
-                        unit = result.Unit,
-                        expiryDate = result.ExpiryDate
+                        bloodType = result.BloodType,
+                        bloodVolumeTotal = result.BloodVolumeTotal,
+                        bloodBankStatus = result.BloodBankStatus,
                     });
                 }
             }
