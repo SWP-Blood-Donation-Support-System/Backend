@@ -45,44 +45,56 @@ namespace BloodDonationAPI.Service
                 Username = userName,
                 EventId = Dto.eventId,
                 RegistrationDate = DateTime.Now,
-                Status = "registered"
+                Status = "Đã đăng ký"
             };
 
                 _context.AppointmentRecords.Add(history);
                 await _context.SaveChangesAsync();
 
-                return "Success";
+                return "Bạn đã đăng ký thành công lịch hẹn";
         }
         public async Task<List<AppointmentHistoryDto>> GetByUsernameAsync(string username)
         {
-            return await _context.AppointmentRecords
+            var records = await _context.AppointmentRecords
                 .Where(h => h.Username == username)
                 .Include(h => h.Event)
+                .Include(h => h.BloodDetails)
+                    .ThenInclude(b => b.Hospital)
                 .OrderByDescending(h => h.RegistrationDate)
-                .Select(h => new AppointmentHistoryDto
-                {
-                    AppointmentHistoryId = h.AppointmentId,
-                    AppointmentId = h.EventId, 
-                    AppointmentDate = h.RegistrationDate,
-                    AppointmentStatus = h.Status,
-                    AppointmentDateOfAppointment = h.Event != null ? h.Event.EventDate : null,
-                    AppointmentTime = h.Event != null ? h.Event.EventTime : null,
-                    AppointmentTitle = h.Event != null ? h.Event.EventTitle : null,
-                    AppointmentContent = h.Event != null ? h.Event.EventContent : null,
-                })
                 .ToListAsync();
+
+            return records.Select(h => new AppointmentHistoryDto
+            {
+                AppointmentHistoryId = h.AppointmentId,
+                AppointmentId = h.EventId,
+                AppointmentDate = h.RegistrationDate,
+                AppointmentStatus = h.Status,
+
+                // Thông tin lịch hẹn
+                AppointmentDateOfAppointment = h.Event?.EventDate,
+                AppointmentTime = h.Event?.EventTime,
+                AppointmentTitle = h.Event?.EventTitle,
+                AppointmentContent = h.Event?.EventContent,
+
+                // Thông tin hiến máu (nếu có)
+                BloodType = h.BloodType,
+                DonationUnit = h.DonationUnit,
+                BloodStatus = h.BloodDetails.FirstOrDefault()?.BloodDetailStatus,
+                BloodLocation = h.BloodDetails.FirstOrDefault()?.Hospital?.HospitalName
+            }).ToList();
+
         }
 
         public async Task<bool> CancelAppointmentAsync(int appointmentId)
         {
             var appoinment = await _context.AppointmentRecords.FirstOrDefaultAsync(a => a.EventId == appointmentId);
 
-            if (appoinment == null || appoinment.Status=="Canceled")
+            if (appoinment == null || appoinment.Status=="Hủy")
             {
                 return false; // Lịch hẹn không tồn tại
             }
 
-            appoinment.Status = "Canceled"; // Cập nhật trạng thái lịch hẹn
+            appoinment.Status = "Hủy"; // Cập nhật trạng thái lịch hẹn
             await _context.SaveChangesAsync(); // Lưu thay đổi vào cơ sở dữ liệu
             return true; // Trả về true nếu cập nhật thành công
         }
