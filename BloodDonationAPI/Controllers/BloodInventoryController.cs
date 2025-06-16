@@ -4,6 +4,7 @@ using BloodDonationAPI.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System.ComponentModel.DataAnnotations;
+using BloodDonationAPI.DTO;
 using Microsoft.Extensions.Logging;
 
 namespace BloodDonationAPI.Controllers;
@@ -21,7 +22,7 @@ public class BloodInventoryController : ControllerBase
         _logger = logger;
     }
     /// <summary>
-    /// Lấy tổng lượng máu trong kho
+    /// Lấy chi tiết lượng máu trong kho
     /// </summary>
     [Authorize(Roles = "Staff,Admin")]
     [HttpGet]
@@ -32,7 +33,7 @@ public class BloodInventoryController : ControllerBase
         return Ok(result);
     }
     /// <summary>
-    /// Lấy chi tiết lượng máu trong kho
+    /// Lấy tổng lượng máu trong kho
     /// </summary>
     [Authorize(Roles = "Staff,Admin")]
     [HttpGet("blood-bank")]
@@ -40,7 +41,7 @@ public class BloodInventoryController : ControllerBase
     {
         try
         {
-            var result = await _bloodInventoryService.GetAllBloodBankAsync();
+            var result = await _bloodInventoryService.GetBloodBankAsync();
             return Ok(result);
         }
         catch (Exception ex)
@@ -49,17 +50,17 @@ public class BloodInventoryController : ControllerBase
         }
     }
     /// <summary>
-    /// Thêm lượng máu ngoài vào kho
+    /// Thêm lượng máu mới vào kho
     /// </summary>
     [Authorize(Roles = "Staff,Admin")]
-    [HttpPatch]
+    [HttpPost]
     [ProducesResponseType(typeof(BloodBankDTO), StatusCodes.Status200OK)]
     [ProducesResponseType(typeof(object), StatusCodes.Status400BadRequest)]
-    public async Task<ActionResult<BloodBankDTO>> UpdateInventory([FromBody] UpdateBloodInventoryRequestDTO request)
+    public async Task<ActionResult<BloodBankDTO>> AddBloodInventory([FromBody] AddBloodBankDto request)
     {
         try
         {
-            var result = await _bloodInventoryService.UpdateBloodInventoryAsync(request);
+            var result = await _bloodInventoryService.AddBloodInventoryAsync(request);
             return Ok(result);
         }
         catch (ArgumentException ex)
@@ -68,6 +69,7 @@ public class BloodInventoryController : ControllerBase
         }
         catch (Exception ex)
         {
+            _logger.LogError($"Error in AddBloodInventory: {ex.Message}");
             return StatusCode(500, new { message = "An error occurred while adding blood to inventory." });
         }
     }
