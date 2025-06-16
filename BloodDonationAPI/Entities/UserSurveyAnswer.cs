@@ -21,6 +21,9 @@ namespace BloodDonationAPI.Entities
         
         public DateTime AnswerDate { get; set; } = DateTime.Now;
         
+        [Required]
+        public int EventId { get; set; }
+        
         [ForeignKey("Username")]
         public virtual User User { get; set; }
         
@@ -29,5 +32,8 @@ namespace BloodDonationAPI.Entities
         
         [ForeignKey("OptionId")]
         public virtual SurveyOption Option { get; set; }
+
+        [ForeignKey("EventId")]
+        public virtual Event Event { get; set; }
     }
 } 

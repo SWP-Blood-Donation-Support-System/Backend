@@ -232,6 +232,7 @@ public partial class BloodDonationSystemContext : DbContext
             entity.Property(e => e.Username).HasMaxLength(50).IsRequired();
             entity.Property(e => e.AnswerText);
             entity.Property(e => e.AnswerDate).HasColumnType("datetime");
+            entity.Property(e => e.EventId).IsRequired();
 
             entity.HasOne(d => d.User)
                 .WithMany()
@@ -247,6 +248,11 @@ public partial class BloodDonationSystemContext : DbContext
                 .WithMany(p => p.UserAnswers)
                 .HasForeignKey(d => d.OptionId)
                 .HasConstraintName("FK_UserSurveyAnswer_SurveyOption");
+
+            entity.HasOne(d => d.Event)
+                .WithMany()
+                .HasForeignKey(d => d.EventId)
+                .HasConstraintName("FK_UserSurveyAnswer_Event");
         });
 
         modelBuilder.Entity<User>(entity =>

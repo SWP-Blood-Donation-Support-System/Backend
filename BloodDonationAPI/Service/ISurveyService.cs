@@ -7,6 +7,6 @@ namespace BloodDonationAPI.Service
     {
         Task<List<SurveyQuestionDto>> GetAllQuestions();
         Task<string> SubmitAnswer(string username, SubmitAnswerDto dto);
-        Task<List<UserAnswerDto>> GetUserAnswers(string username);
+        Task<List<UserAnswerDto>> GetUserAnswers(string username, int eventId);
     }
 } 

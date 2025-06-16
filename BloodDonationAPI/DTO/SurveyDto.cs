@@ -24,6 +24,8 @@ namespace BloodDonationAPI.DTO
         public int QuestionId { get; set; }
         public int? OptionId { get; set; }
         public string AnswerText { get; set; }
+        [Required]
+        public int EventId { get; set; }
     }
 
     public class UserAnswerDto
@@ -37,5 +39,6 @@ namespace BloodDonationAPI.DTO
         public string OptionText { get; set; }
         public string AnswerText { get; set; }
         public DateTime CreatedAt { get; set; }
+        public int EventId { get; set; }
     }
 } 

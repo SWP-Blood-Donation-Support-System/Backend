@@ -40,6 +40,10 @@ namespace BloodDonationAPI.Service
             if (question == null)
                 return "Question not found";
 
+            var eventExists = await _context.Events.AnyAsync(e => e.EventId == dto.EventId);
+            if (!eventExists)
+                return "Event not found";
+
             if (question.QuestionType == "SINGLE_CHOICE" && !dto.OptionId.HasValue)
                 return "OptionId is required for single choice questions";
 
@@ -52,7 +56,8 @@ namespace BloodDonationAPI.Service
                 QuestionId = dto.QuestionId,
                 OptionId = dto.OptionId,
                 AnswerText = dto.AnswerText,
-                AnswerDate = DateTime.Now
+                AnswerDate = DateTime.Now,
+                EventId = dto.EventId
             };
 
             _context.UserSurveyAnswers.Add(answer);
@@ -61,12 +66,13 @@ namespace BloodDonationAPI.Service
             return "Answer submitted successfully";
         }
 
-        public async Task<List<UserAnswerDto>> GetUserAnswers(string username)
+        public async Task<List<UserAnswerDto>> GetUserAnswers(string username, int eventId)
         {
             var answers = await _context.UserSurveyAnswers
-                .Where(a => a.Username == username)
+                .Where(a => a.Username == username && a.EventId == eventId)
                 .Include(a => a.Question)
                 .Include(a => a.Option)
+                .Include(a => a.Event)
                 .OrderBy(a => a.AnswerDate)
                 .ToListAsync();
 
@@ -80,7 +86,8 @@ namespace BloodDonationAPI.Service
                 OptionId = a.OptionId,
                 OptionText = a.Option?.OptionText,
                 AnswerText = a.AnswerText,
-                CreatedAt = a.AnswerDate
+                CreatedAt = a.AnswerDate,
+                EventId = a.EventId
             }).ToList();
         }
     }
