@@ -19,9 +19,11 @@ namespace BloodDonationAPI.Service
         {
             try
             {
-                return await _context.Notifications
+                var notifications = await _context.Notifications
                     .Include(n => n.Emergency)
                         .ThenInclude(e => e.Hospital)
+                    .Include(n => n.NotificationRecipients)
+                        .ThenInclude(nr => nr.UsernameNavigation)
                     .Select(n => new NotificationDto
                     {
                         NotificationId = n.NotificationId,
@@ -32,10 +34,19 @@ namespace BloodDonationAPI.Service
                         NotificationDate = n.NotificationDate.Value,
                         BloodType = n.Emergency.BloodType,
                         RequiredUnits = n.Emergency.RequiredUnits.Value,
-                        HospitalName = n.Emergency.Hospital.HospitalName
+                        HospitalName = n.Emergency.Hospital.HospitalName,
+                        Recipients = n.NotificationRecipients.Select(nr => new NotificationRecipientDto
+                        {
+                            Username = nr.Username,
+                            FullName = nr.UsernameNavigation.FullName,
+                            ResponseStatus = nr.ResponseStatus,
+                            ResponseDate = nr.ResponseDate
+                        }).ToList()
                     })
                     .OrderByDescending(n => n.NotificationDate)
                     .ToListAsync();
+
+                return notifications;
             }
             catch (Exception ex)
             {
@@ -79,7 +90,7 @@ namespace BloodDonationAPI.Service
 
                 // Create notification recipients for users with matching blood type
                 var matchingUsers = await _context.Users
-                    .Where(u => u.BloodType == emergency.BloodType && u.ProfileStatus == "Active")
+                    .Where(u => u.BloodType == emergency.BloodType)
                     .ToListAsync();
 
                 foreach (var user in matchingUsers)

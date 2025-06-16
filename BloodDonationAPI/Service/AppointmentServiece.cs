@@ -11,11 +11,11 @@ namespace BloodDonationAPI.Service
         {
             _context = context;
         }
-        public async Task<List<AppointmentList>> GetEventsLists()
+        public async Task<List<Event>> GetEventsLists()
         {
             var today = DateOnly.FromDateTime(DateTime.Now);
-            return await _context.AppointmentLists
-                .Where(a => a.AppointmentDate >= today)
+            return await _context.Events
+                .Where(a => a.EventDate >= today)
                 .ToListAsync();
 
         }
@@ -28,61 +28,61 @@ namespace BloodDonationAPI.Service
             if (user.ProfileStatus != "Active")
                 return "Bạn chưa đủ điều kiện để đăng ký.";
 
-            var appointment = await _context.AppointmentLists
-                .FirstOrDefaultAsync(a => a.AppointmentId == Dto.appointmentId);
+            var appointment = await _context.Events
+                .FirstOrDefaultAsync(a => a.EventId == Dto.eventId);
 
             if (appointment == null)
                 return "Lịch hẹn không tồn tại.";
 
-            bool alreadyRegistered = await _context.AppointmentHistories.AnyAsync(h =>
-                h.Username == userName && h.AppointmentId == Dto.appointmentId);
+            bool alreadyRegistered = await _context.AppointmentRecords.AnyAsync(h =>
+                h.Username == userName && h.EventId == Dto.eventId);
 
             if (alreadyRegistered)
                 return "Bạn đã đăng ký lịch hẹn này rồi.";
 
-            var history = new AppointmentHistory
+            var history = new AppointmentRecord
             {
                 Username = userName,
-                AppointmentId = Dto.appointmentId,
-                AppointmentDate = DateTime.Now,
-                AppointmentStatus = "registered"
+                EventId = Dto.eventId,
+                RegistrationDate = DateTime.Now,
+                Status = "registered"
             };
 
-                _context.AppointmentHistories.Add(history);
+                _context.AppointmentRecords.Add(history);
                 await _context.SaveChangesAsync();
 
                 return "Success";
         }
         public async Task<List<AppointmentHistoryDto>> GetByUsernameAsync(string username)
         {
-            return await _context.AppointmentHistories
+            return await _context.AppointmentRecords
                 .Where(h => h.Username == username)
-                .Include(h => h.Appointment)
-                .OrderByDescending(h => h.AppointmentDate)
+                .Include(h => h.Event)
+                .OrderByDescending(h => h.RegistrationDate)
                 .Select(h => new AppointmentHistoryDto
                 {
-                    AppointmentHistoryId = h.AppointmentHistoryId,
-                    AppointmentId = h.AppointmentId, 
-                    AppointmentDate = h.AppointmentDate,
-                    AppointmentStatus = h.AppointmentStatus,
-                    AppointmentDateOfAppointment = h.Appointment != null ? h.Appointment.AppointmentDate : null,
-                    AppointmentTime = h.Appointment != null ? h.Appointment.AppointmentTime : null,
-                    AppointmentTitle = h.Appointment != null ? h.Appointment.AppointmentTitle : null,
-                    AppointmentContent = h.Appointment != null ? h.Appointment.AppointmentContent : null,
+                    AppointmentHistoryId = h.AppointmentId,
+                    AppointmentId = h.EventId, 
+                    AppointmentDate = h.RegistrationDate,
+                    AppointmentStatus = h.Status,
+                    AppointmentDateOfAppointment = h.Event != null ? h.Event.EventDate : null,
+                    AppointmentTime = h.Event != null ? h.Event.EventTime : null,
+                    AppointmentTitle = h.Event != null ? h.Event.EventTitle : null,
+                    AppointmentContent = h.Event != null ? h.Event.EventContent : null,
                 })
                 .ToListAsync();
         }
 
         public async Task<bool> CancelAppointmentAsync(int appointmentId)
         {
-            var appoinment = await _context.AppointmentHistories.FirstOrDefaultAsync(a => a.AppointmentHistoryId == appointmentId);
+            var appoinment = await _context.AppointmentRecords.FirstOrDefaultAsync(a => a.EventId == appointmentId);
 
-            if (appoinment == null || appoinment.AppointmentStatus=="Canceled")
+            if (appoinment == null || appoinment.Status=="Canceled")
             {
                 return false; // Lịch hẹn không tồn tại
             }
 
-            appoinment.AppointmentStatus = "Canceled"; // Cập nhật trạng thái lịch hẹn
+            appoinment.Status = "Canceled"; // Cập nhật trạng thái lịch hẹn
             await _context.SaveChangesAsync(); // Lưu thay đổi vào cơ sở dữ liệu
             return true; // Trả về true nếu cập nhật thành công
         }

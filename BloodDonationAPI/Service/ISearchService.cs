@@ -7,5 +7,6 @@ namespace BloodDonationAPI.Service
     {
         Task<IEnumerable<object>> FindDonorsByBloodType(string bloodType);
         Task<IEnumerable<object>> FindEmergenciesByBloodType(string bloodType);
+        Task<IEnumerable<object>> FindAllEmergencies();
     }
 }

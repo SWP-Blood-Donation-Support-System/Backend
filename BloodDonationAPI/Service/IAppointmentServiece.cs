@@ -5,12 +5,12 @@ namespace BloodDonationAPI.Service
 {
     public interface IAppointmentServiece
     {
-        Task<List<AppointmentList>> GetEventsLists();
+        Task<List<Event>> GetEventsLists();
         Task<string> RegisterAppointment( string userName , RegisterAppointmentDto Dto);
 
         Task<List<AppointmentHistoryDto>> GetByUsernameAsync(string username);
 
-        Task<bool> CancelAppointmentAsync(int appointmentId);
+        Task<bool> CancelAppointmentAsync(int appointmentRecordId);
 
     }
 }

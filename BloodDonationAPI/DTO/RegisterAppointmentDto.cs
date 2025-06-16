@@ -2,6 +2,6 @@
 {
     public class RegisterAppointmentDto
     {
-        public int appointmentId { get; set; }
+        public int eventId { get; set; }
     }
 }

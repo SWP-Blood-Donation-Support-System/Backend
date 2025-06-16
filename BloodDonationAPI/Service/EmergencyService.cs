@@ -24,9 +24,6 @@ namespace BloodDonationAPI.Service
                 if (user == null)
                     return "User not found.";
 
-                if (user.ProfileStatus != "Active")
-                    return "User profile is not active.";
-
                 // Validate blood type
                 if (!IsValidBloodType(dto.BloodType))
                     return "Invalid blood type.";
