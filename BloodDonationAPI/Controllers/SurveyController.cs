@@ -53,9 +53,9 @@ namespace BloodDonationAPI.Controllers
         /// <returns></returns>
         [Authorize(Roles = "Admin,Staff")]
         [HttpGet("answers/{username}")]
-        public async Task<ActionResult<List<UserAnswerDto>>> GetUserAnswers(string username)
+        public async Task<ActionResult<List<UserAnswerDto>>> GetUserAnswers(string username, [FromQuery] int eventId)
         {
-            var answers = await _surveyService.GetUserAnswers(username);
+            var answers = await _surveyService.GetUserAnswers(username, eventId);
             return Ok(answers);
         }
     }
