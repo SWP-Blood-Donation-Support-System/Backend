@@ -81,6 +81,7 @@ namespace BloodDonationAPI
             builder.Services.AddScoped<ISearchService, SearchService>();
             builder.Services.AddScoped<IBlogService, BlogService>();
             builder.Services.AddScoped<IReportService, ReportService>();
+            builder.Services.AddScoped<ISurveyService, SurveyService>();
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {

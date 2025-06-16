@@ -343,3 +343,64 @@ INSERT INTO NotificationRecipient (NotificationID, Username, ResponseStatus, Res
 VALUES 
 (1, N'user1', N'Chấp nhận', '2025-10-01 10:30:00'),
 (1, N'user9', N'Chưa phản hồi', NULL);
+
+
+CREATE TABLE SurveyQuestion (
+    QuestionId INT PRIMARY KEY IDENTITY(1,1),
+    QuestionText NVARCHAR(MAX),
+    QuestionType NVARCHAR(20) -- 'single', 'multiple', 'text'
+);
+CREATE TABLE SurveyOption (
+    OptionId INT PRIMARY KEY IDENTITY(1,1),
+    QuestionId INT FOREIGN KEY REFERENCES SurveyQuestion(QuestionId),
+    OptionText NVARCHAR(MAX),
+    IsEligible BIT -- NULL nếu không áp dụng, 1 nếu đạt điều kiện hiến, 0 nếu không
+);
+CREATE TABLE UserSurveyAnswer (
+    AnswerId INT PRIMARY KEY IDENTITY(1,1),
+    Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
+    QuestionId INT FOREIGN KEY REFERENCES SurveyQuestion(QuestionId),
+    OptionId INT FOREIGN KEY REFERENCES SurveyOption(OptionId),
+    AnswerText NVARCHAR(MAX), -- Ghi câu trả lời (có thể là OptionText hoặc nhập tay)
+    AnswerDate DATETIME
+);
+
+-- Insert data for SurveyQuestion
+INSERT INTO SurveyQuestion (QuestionText, QuestionType) VALUES
+(N'Cân nặng hiện tại của bạn là bao nhiêu?', 'single'),
+(N'Trong 12 tháng qua, bạn có mắc các bệnh sau không?', 'single'),
+(N'Bạn có đang sử dụng loại thuốc điều trị nào không? Nếu có, vui lòng ghi rõ:', 'text'),
+(N'Bạn có đang mang thai hoặc cho con bú không? (áp dụng cho nữ)', 'single'),
+(N'Trong vòng 6 tháng qua, bạn có thực hiện các điều sau không?', 'single'),
+(N'Bạn đã tiêm vắc-xin trong 14 ngày qua không?', 'single'),
+(N'Bạn có từng bị phản ứng bất thường sau khi hiến máu không?', 'single'),
+(N'Trong 6 tháng qua, bạn có:', 'single'),
+(N'Khoảng thời gian từ lần hiến máu gần nhất đến nay là:', 'single');
+
+-- Insert data for SurveyOption
+INSERT INTO SurveyOption (QuestionId, OptionText, IsEligible) VALUES
+(1, N'Dưới 45kg', 0),
+(1, N'Từ 45kg trở lên', 1),
+(2, N'Viêm gan B hoặc C', 0),
+(2, N'HIV/AIDS', 0),
+(2, N'Lao phổi đang điều trị', 0),
+(2, N'Sốt rét', 0),
+(2, N'Ung thư', 0),
+(2, N'Không mắc bệnh nào', 1),
+(4, N'Có', 0),
+(4, N'Không', 1),
+(5, N'Xăm hình / xỏ khuyên', 0),
+(5, N'Phẫu thuật / nội soi', 0),
+(5, N'Truyền máu', 0),
+(5, N'Không có', 1),
+(6, N'Có', 0),
+(6, N'Không', 1),
+(7, N'Có', 0),
+(7, N'Không', 1),
+(8, N'Quan hệ tình dục không an toàn', 0),
+(8, N'Dùng chung kim tiêm', 0),
+(8, N'Dùng chất kích thích', 0),
+(8, N'Không có các hành vi trên', 1),
+(9, N'Dưới 3 tháng', 0),
+(9, N'Từ 3 tháng trở lên đối với nam', 1),
+(9, N'Từ 4 tháng trở lên đối với nữ', 1);
