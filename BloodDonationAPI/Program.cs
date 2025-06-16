@@ -1,6 +1,6 @@
 using BloodDonationAPI.Entities;
 using BloodDonationAPI.Service;
-using BloodDonationAPI.Service.Impl;
+//using BloodDonationAPI.Service.Impl;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
@@ -74,10 +74,10 @@ namespace BloodDonationAPI
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<IAppointmentServiece, AppointmentServiece>();
-            builder.Services.AddScoped<IBloodDonationProcessService, BloodDonationProcessService >();
+            //builder.Services.AddScoped<IBloodDonationProcessService, BloodDonationProcessService >();
             builder.Services.AddScoped<IEmergencyService, EmergencyService>();
             builder.Services.AddScoped<INotificationService, NotificationService>();
-            builder.Services.AddScoped<IBloodInventoryService, BloodInventoryService>();
+            //builder.Services.AddScoped<IBloodInventoryService, BloodInventoryService>();
             builder.Services.AddScoped<ISearchService, SearchService>();
             builder.Services.AddScoped<IBlogService, BlogService>();
             builder.Services.AddScoped<IReportService, ReportService>();
