@@ -361,7 +361,7 @@ CREATE TABLE UserSurveyAnswer (
     Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
     QuestionId INT FOREIGN KEY REFERENCES SurveyQuestion(QuestionId),
     OptionId INT FOREIGN KEY REFERENCES SurveyOption(OptionId),
-    EventId INT FOREIGN KEY REFERENCES Events(EventId),
+    AppointmentRecordId INT FOREIGN KEY REFERENCES AppointmentRecord(AppointmentId),
     AnswerText NVARCHAR(MAX), -- Ghi câu trả lời (có thể là OptionText hoặc nhập tay)
     AnswerDate DATETIME
 );

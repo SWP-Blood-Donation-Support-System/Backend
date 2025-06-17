@@ -1,452 +1,297 @@
-//using BloodDonationAPI.DTO.BloodInventory;
-//using BloodDonationAPI.DTOs.BloodInventory;
-//using BloodDonationAPI.Entities;
-//using Microsoft.EntityFrameworkCore;
-//using Microsoft.Extensions.Logging;
+using BloodDonationAPI.DTO;
+using BloodDonationAPI.DTO.BloodInventory;
+using BloodDonationAPI.DTOs.BloodInventory;
+using BloodDonationAPI.Entities;
+using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
-//namespace BloodDonationAPI.Service.Impl;
+namespace BloodDonationAPI.Service.Impl;
 
-//public class BloodInventoryService : IBloodInventoryService
-//{
-//    private readonly BloodDonationSystemContext _context;
-//    private readonly ILogger<BloodInventoryService> _logger;
+public class BloodInventoryService : IBloodInventoryService
+{
+    private readonly BloodDonationSystemContext _context;
+    private readonly ILogger<BloodInventoryService> _logger;
 
-//    public BloodInventoryService(BloodDonationSystemContext context, ILogger<BloodInventoryService> logger)
-//    {
-//        _context = context;
-//        _logger = logger;
-//    }
+    public BloodInventoryService(BloodDonationSystemContext context, ILogger<BloodInventoryService> logger)
+    {
+        _context = context;
+        _logger = logger;
+    }
 
-//    public async Task<BloodInventoryResponseDTO> GetBloodInventoryAsync()
-//    {
-//        var today = DateOnly.FromDateTime(DateTime.Today);
+    // Lấy tổng số lượng máu từ bảng BloodBank
+    public async Task<List<BloodBankDTO>> GetBloodBankAsync()
+    {
+        try
+        {
+            var bloodBanks = await _context.BloodBanks
+                .Select(b => new BloodBankDTO
+                {
+                    BloodType = b.BloodType,
+                    BloodVolumeTotal = b.BloodVolumeTotal,
+                    BloodBankStatus = b.BloodBankStatus
+                })
+                .OrderBy(b => b.BloodType)
+                .ToListAsync();
 
-//        var bloodInventory = await _context.BloodBanks
-//            .GroupBy(b => b.BloodTypeName)
-//            .Select(group => new BloodInventoryItemDTO
-//            {
-//                BloodTypeName = group.Key,
-//                TotalUnits = group.Sum(b => b.Unit ?? 0),
-//                AvailableUnits = group.Where(b =>
-//                        b.Status != "Expired" &&
-//                        (b.ExpiryDate == null || b.ExpiryDate > today))
-//                    .Sum(b => b.Unit ?? 0),
-//                ExpiredUnits = group.Where(b =>
-//                        b.Status == "Expired" ||
-//                        (b.ExpiryDate != null && b.ExpiryDate <= today))
-//                    .Sum(b => b.Unit ?? 0)
-//            })
-//            .ToListAsync();
+            return bloodBanks;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error in GetBloodBankAsync: {ex.Message}");
+            throw;
+        }
+    }
 
-//        return new BloodInventoryResponseDTO
-//        {
-//            Inventory = bloodInventory
-//        };
-//    }
+    // Lấy chi tiết từ bảng BloodDetail
+    public async Task<BloodInventoryResponseDTO> GetBloodInventoryAsync()
+    {
+        try
+        {
+            var bloodDetails = await _context.BloodDetails
+                .Select(b => new BloodInventoryItemDTO
+                {
+                    BloodDetailId = b.BloodDetailId,
+                    BloodType = b.BloodType,
+                    Volume = b.Volume ?? 0,
+                    BloodDetailDate = b.BloodDetailDate,
+                    BloodDetailStatus = b.BloodDetailStatus,
+                    Note = b.Note,
+                    HospitalId = b.HospitalId
+                })
+                .OrderBy(b => b.BloodType)
+                .ThenBy(b => b.BloodDetailDate)
+                .ToListAsync();
 
-//    public async Task<BloodBankDTO> UpdateBloodInventoryAsync(UpdateBloodInventoryRequestDTO request)
-//    {
-//        try 
-//        {
-//            // Validate request
-//            if (string.IsNullOrEmpty(request.BloodType))
-//                throw new ArgumentException("Blood type is required");
+            return new BloodInventoryResponseDTO
+            {
+                Inventory = bloodDetails
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error in GetBloodInventoryAsync: {ex.Message}");
+            throw;
+        }
+    }
 
-//            if (request.Unit <= 0)
-//                throw new ArgumentException("Unit amount must be positive");
+    // Thêm máu mới vào BloodDetail và cập nhật BloodBank
+    public async Task<BloodBankDTO> AddBloodInventoryAsync(AddBloodBankDto request)
+    {
+        try 
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
 
-//            var today = DateOnly.FromDateTime(DateTime.Today);
+            // Thêm bản ghi mới vào BloodDetail, luôn gán HospitalId = 1
+            var newBloodDetail = new BloodDetail
+            {
+                BloodType = request.BloodType,
+                Volume = request.Volume,
+                BloodDetailDate = request.BloodDetailDate,
+                BloodDetailStatus = "Còn hạn", // Mặc định là còn hạn
+                Note = request.Note,
+                HospitalId = 1 // Gán mặc định là 1
+            };
 
-//            // Tạo bản ghi máu mới
-//            var newBlood = new BloodBank
-//            {
-//                BloodTypeName = request.BloodType,
-//                Unit = request.Unit,
-//                ExpiryDate = today.AddDays(42), // Máu có hạn sử dụng 42 ngày
-//                Status = "Available"
-//            };
+            _context.BloodDetails.Add(newBloodDetail);
+            await _context.SaveChangesAsync();
 
-//            _context.BloodBanks.Add(newBlood);
-//            await _context.SaveChangesAsync();
+            // Tính tổng số lượng máu còn hạn từ BloodDetail cho nhóm máu này
+            var totalVolume = await _context.BloodDetails
+                .Where(b => b.BloodType == request.BloodType && 
+                           b.BloodDetailStatus == "Còn hạn")
+                .SumAsync(b => b.Volume ?? 0);
 
-//            // Return thông tin bản ghi vừa tạo
-//            return new BloodBankDTO
-//            {
-//                BloodTypeId = newBlood.BloodTypeId,
-//                BloodTypeName = newBlood.BloodTypeName,
-//                Unit = newBlood.Unit,
-//                ExpiryDate = newBlood.ExpiryDate,
-//                Status = newBlood.Status
-//            };
-//        }
-//        catch (Exception ex)
-//        {
-//            _logger.LogError($"Error in UpdateBloodInventoryAsync: {ex.Message}");
-//            throw;
-//        }
-//    }
+            // Tìm hoặc tạo mới BloodBank cho nhóm máu này
+            var bloodBank = await _context.BloodBanks
+                .FirstOrDefaultAsync(b => b.BloodType == request.BloodType);
 
-//    // Xử lý thêm máu mới
-//    private async Task<BloodInventoryItemDTO> HandleDonation(string bloodType, int amount, DateOnly today)
-//    {
-//        var bloodBank = new BloodBank
-//        {
-//            BloodTypeName = bloodType,
-//            Unit = amount,
-//            ExpiryDate = today.AddDays(42), // Máu có hạn sử dụng 42 ngày
-//            Status = "Available"
-//        };
-        
-//        _context.BloodBanks.Add(bloodBank);
-//        await _context.SaveChangesAsync();
-        
-//        return await GetInventoryStatus(bloodType, today);
-//    }
+            if (bloodBank != null)
+            {
+                bloodBank.BloodVolumeTotal = totalVolume;
+                bloodBank.BloodBankStatus = totalVolume > 0 ? "Còn" : "Hết";
+            }
+            else
+            {
+                bloodBank = new BloodBank
+                {
+                    BloodType = request.BloodType,
+                    BloodVolumeTotal = totalVolume,
+                    BloodBankStatus = totalVolume > 0 ? "Còn" : "Hết"
+                };
+                _context.BloodBanks.Add(bloodBank);
+            }
 
-//    // Xử lý sử dụng máu
-//    private async Task<BloodInventoryItemDTO> HandleUsage(string bloodType, int amount, DateOnly today)
-//    {
-//        // Lấy danh sách máu còn sử dụng được, sắp xếp theo ngày hết hạn (để dùng máu gần hết hạn trước)
-//        var availableBlood = await _context.BloodBanks
-//            .Where(b => b.BloodTypeName == bloodType &&
-//                       b.Status != "Expired" &&
-//                       (b.ExpiryDate == null || b.ExpiryDate > today))
-//            .OrderBy(b => b.ExpiryDate)
-//            .ToListAsync();
+            await _context.SaveChangesAsync();
 
-//        var totalAvailable = availableBlood.Sum(b => b.Unit ?? 0);
-//        if (amount > totalAvailable)
-//        {
-//            throw new InvalidOperationException($"Not enough available units. Requested: {amount}, Available: {totalAvailable}");
-//        }
+            return new BloodBankDTO
+            {
+                BloodType = bloodBank.BloodType,
+                BloodVolumeTotal = bloodBank.BloodVolumeTotal,
+                BloodBankStatus = bloodBank.BloodBankStatus
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error in AddBloodInventoryAsync: {ex.Message}");
+            throw;
+        }
+    }
 
-//        var remainingAmount = amount;
-//        foreach (var blood in availableBlood)
-//        {
-//            if (remainingAmount <= 0) break;
+    public async Task<BloodBankDTO> ExpireBloodAsync(ExpireBloodRequestDTO request)
+    {
+        try
+        {
+            // Tìm bản ghi máu theo ID trong BloodDetail
+            var bloodDetail = await _context.BloodDetails
+                .FirstOrDefaultAsync(b => b.BloodDetailId == request.BloodDetailId);
 
-//            var unitsToUse = Math.Min(blood.Unit ?? 0, remainingAmount);
-//            blood.Unit -= unitsToUse;
-//            remainingAmount -= unitsToUse;
+            if (bloodDetail == null)
+            {
+                throw new InvalidOperationException($"Blood detail record with ID {request.BloodDetailId} not found");
+            }
 
-//            // Nếu đã sử dụng hết đơn vị máu này
-//            if (blood.Unit <= 0)
-//            {
-//                _context.BloodBanks.Remove(blood);
-//            }
-//        }
+            if (bloodDetail.BloodDetailStatus == "Hết hạn")
+            {
+                throw new InvalidOperationException($"Blood detail record with ID {request.BloodDetailId} is already expired");
+            }
 
-//        await _context.SaveChangesAsync();
-//        return await GetInventoryStatus(bloodType, today);
-//    }
+            // Lưu lại volume trước khi đổi trạng thái
+            var expiredVolume = bloodDetail.Volume ?? 0;
+            var bloodType = bloodDetail.BloodType;
 
-//    // Xử lý máu hết hạn
-//    private async Task<BloodInventoryItemDTO> HandleExpired(string bloodType, int amount, DateOnly today)
-//    {
-//        // Lấy danh sách máu chưa hết hạn, sắp xếp theo ngày hết hạn (để đánh dấu máu gần hết hạn trước)
-//        var availableBlood = await _context.BloodBanks
-//            .Where(b => b.BloodTypeName == bloodType &&
-//                       b.Status != "Expired" &&
-//                       (b.ExpiryDate == null || b.ExpiryDate > today))
-//            .OrderBy(b => b.ExpiryDate)
-//            .ToListAsync();
+            // Cập nhật trạng thái
+            bloodDetail.BloodDetailStatus = "Hết hạn";
+            bloodDetail.BloodDetailDate = DateOnly.FromDateTime(DateTime.Today);
 
-//        var totalAvailable = availableBlood.Sum(b => b.Unit ?? 0);
-//        if (amount > totalAvailable)
-//        {
-//            throw new InvalidOperationException($"Not enough available units to mark as expired. Requested: {amount}, Available: {totalAvailable}");
-//        }
+            // Cập nhật tổng trong BloodBank
+            var bloodBank = await _context.BloodBanks
+                .FirstOrDefaultAsync(b => b.BloodType == bloodType);
 
-//        var remainingAmount = amount;
-//        foreach (var blood in availableBlood)
-//        {
-//            if (remainingAmount <= 0) break;
+            if (bloodBank != null)
+            {
+                bloodBank.BloodVolumeTotal = (bloodBank.BloodVolumeTotal ?? 0) - expiredVolume;
+                if (bloodBank.BloodVolumeTotal < 0) bloodBank.BloodVolumeTotal = 0;
+                bloodBank.BloodBankStatus = bloodBank.BloodVolumeTotal > 0 ? "Còn" : "Hết";
+            }
 
-//            var unitsToExpire = Math.Min(blood.Unit ?? 0, remainingAmount);
-            
-//            if (unitsToExpire == blood.Unit)
-//            {
-//                // Nếu đánh dấu hết hạn toàn bộ đơn vị máu này
-//                blood.Status = "Expired";
-//            }
-//            else
-//            {
-//                // Nếu chỉ đánh dấu hết hạn một phần
-//                // Tạo bản ghi mới cho phần máu hết hạn
-//                var expiredBlood = new BloodBank
-//                {
-//                    BloodTypeName = bloodType,
-//                    Unit = unitsToExpire,
-//                    ExpiryDate = today,
-//                    Status = "Expired"
-//                };
-//                _context.BloodBanks.Add(expiredBlood);
-                
-//                // Giảm số lượng máu còn lại
-//                blood.Unit -= unitsToExpire;
-//            }
-            
-//            remainingAmount -= unitsToExpire;
-//        }
+            await _context.SaveChangesAsync();
 
-//        await _context.SaveChangesAsync();
-//        return await GetInventoryStatus(bloodType, today);
-//    }
+            return new BloodBankDTO
+            {
+                BloodType = bloodBank?.BloodType ?? bloodType,
+                BloodVolumeTotal = bloodBank?.BloodVolumeTotal ?? 0,
+                BloodBankStatus = bloodBank?.BloodBankStatus ?? "Hết"
+            };
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error in ExpireBloodAsync: {ex.Message}");
+            throw;
+        }
+    }
 
-//    // Helper method để lấy trạng thái hiện tại của kho máu
-//    private async Task<BloodInventoryItemDTO> GetInventoryStatus(string bloodType, DateOnly today)
-//    {
-//        var inventory = await _context.BloodBanks
-//            .Where(b => b.BloodTypeName == bloodType)
-//            .GroupBy(b => b.BloodTypeName)
-//            .Select(group => new BloodInventoryItemDTO
-//            {
-//                BloodTypeName = group.Key,
-//                TotalUnits = group.Sum(b => b.Unit ?? 0),
-//                AvailableUnits = group.Where(b => 
-//                    b.Status != "Expired" && 
-//                    (b.ExpiryDate == null || b.ExpiryDate > today))
-//                    .Sum(b => b.Unit ?? 0),
-//                ExpiredUnits = group.Where(b => 
-//                    b.Status == "Expired" || 
-//                    (b.ExpiryDate != null && b.ExpiryDate <= today))
-//                    .Sum(b => b.Unit ?? 0)
-//            })
-//            .FirstOrDefaultAsync();
+    public async Task<UseBloodResponseDTO> UseBloodAsync(UseBloodRequestDTO request)
+    {
+        try
+        {
+            var today = DateOnly.FromDateTime(DateTime.Today);
 
-//        return inventory ?? new BloodInventoryItemDTO
-//        {
-//            BloodTypeName = bloodType,
-//            TotalUnits = 0,
-//            AvailableUnits = 0,
-//            ExpiredUnits = 0
-//        };
-//    }
+            // Lấy các dòng máu còn hạn, sắp xếp ngày cũ nhất trước
+            var availableBlood = await _context.BloodDetails
+                .Where(b => b.BloodType == request.BloodType
+                         && b.BloodDetailStatus == "Còn hạn"
+                         && b.Volume > 0)
+                .OrderBy(b => b.BloodDetailDate)
+                .ToListAsync();
 
-//    public async Task<List<BloodBankDTO>> GetAllBloodBankAsync()
-//    {
-//        try
-//        {
-//            var bloodBanks = await _context.BloodBanks
-//                .Select(b => new BloodBankDTO
-//                {
-//                    BloodTypeId = b.BloodTypeId,
-//                    BloodTypeName = b.BloodTypeName,
-//                    Unit = b.Unit,
-//                    DonationHistoryId = b.DonationHistoryId,
-//                    ExpiryDate = b.ExpiryDate,
-//                    Status = b.Status
-//                })
-//                .OrderBy(b => b.BloodTypeName)
-//                .ThenBy(b => b.ExpiryDate)
-//                .ToListAsync();
+            var totalAvailable = availableBlood.Sum(b => b.Volume ?? 0);
 
-//            return bloodBanks;
-//        }
-//        catch (Exception ex)
-//        {
-//            _logger.LogError($"Error in GetAllBloodBankAsync: {ex.Message}");
-//            throw;
-//        }
-//    }
+            if (totalAvailable < request.RequiredUnits)
+            {
+                throw new InvalidOperationException($"Không đủ số lượng máu. Yêu cầu: {request.RequiredUnits}, Hiện có: {totalAvailable}");
+            }
 
-//    public async Task<BloodBankDTO> ExpireBloodAsync(ExpireBloodRequestDTO request)
-//    {
-//        try
-//        {
-//            // Tìm bản ghi máu theo ID
-//            var blood = await _context.BloodBanks
-//                .FirstOrDefaultAsync(b => b.BloodTypeId == request.BloodTypeId);
+            var response = new UseBloodResponseDTO
+            {
+                BloodType = request.BloodType,
+                Note = request.Note
+            };
 
-//            if (blood == null)
-//            {
-//                throw new InvalidOperationException($"Blood record with ID {request.BloodTypeId} not found");
-//            }
+            var remainingUnits = request.RequiredUnits;
 
-//            // Kiểm tra nếu đã expired
-//            if (blood.Status == "Expired")
-//            {
-//                throw new InvalidOperationException($"Blood record with ID {request.BloodTypeId} is already expired");
-//            }
+            foreach (var blood in availableBlood)
+            {
+                if (remainingUnits <= 0) break;
 
-//            // Cập nhật trạng thái
-//            blood.Status = "Expired";
-//            blood.ExpiryDate = DateOnly.FromDateTime(DateTime.Today); // Cập nhật ngày hết hạn thành ngày hiện tại
+                int available = blood.Volume ?? 0;
+                if (available <= remainingUnits)
+                {
+                    // Đổi status thành "Đã sử dụng", cập nhật note, hospitalId, ngày sử dụng
+                    blood.BloodDetailStatus = "Đã sử dụng";
+                    blood.Note = request.Note;
+                    blood.HospitalId = request.HospitalId ?? 1;
+                    blood.BloodDetailDate = today;
 
-//            await _context.SaveChangesAsync();
+                    response.UsageDetails.Add(new BloodUsageDetailDTO
+                    {
+                        BloodDetailId = blood.BloodDetailId,
+                        UsedUnits = available,
+                        BloodDetailDate = today
+                    });
 
-//            // Trả về thông tin đã cập nhật
-//            return new BloodBankDTO
-//            {
-//                BloodTypeId = blood.BloodTypeId,
-//                BloodTypeName = blood.BloodTypeName,
-//                Unit = blood.Unit,
-//                ExpiryDate = blood.ExpiryDate,
-//                Status = blood.Status
-//            };
-//        }
-//        catch (Exception ex)
-//        {
-//            _logger.LogError($"Error in ExpireBloodAsync: {ex.Message}");
-//            throw;
-//        }
-//    }
+                    remainingUnits -= available;
+                }
+                else
+                {
+                    // Tách dòng: giữ lại dòng gốc với volume mới, tạo dòng mới đã sử dụng
+                    blood.Volume = available - remainingUnits;
 
-//    public async Task<UseBloodResponseDTO> UseBloodAsync(UseBloodRequestDTO request)
-//    {
-//        try
-//        {
-//            var today = DateOnly.FromDateTime(DateTime.Today);
-            
-//            // Lấy tất cả máu khả dụng của loại máu yêu cầu, sắp xếp theo ngày hết hạn
-//            var availableBlood = await _context.BloodBanks
-//                .Where(b => b.BloodTypeName == request.BloodTypeName &&
-//                           b.Status != "Expired" &&
-//                           b.Unit > 0 &&
-//                           (b.ExpiryDate == null || b.ExpiryDate > today))
-//                .OrderBy(b => b.ExpiryDate)
-//                .ToListAsync();
+                    var usedDetail = new BloodDetail
+                    {
+                        BloodType = blood.BloodType,
+                        Volume = remainingUnits,
+                        BloodDetailDate = today,
+                        BloodDetailStatus = "Đã sử dụng",
+                        Note = request.Note,
+                        AppointmentId = blood.AppointmentId,
+                        HospitalId = request.HospitalId ?? 1
+                    };
+                    _context.BloodDetails.Add(usedDetail);
+                    await _context.SaveChangesAsync(); // Để lấy BloodDetailId mới
 
-//            var totalAvailable = availableBlood.Sum(b => b.Unit ?? 0);
-//            var response = new UseBloodResponseDTO
-//            {
-//                BloodTypeName = request.BloodTypeName,
-//                Note = request.Note
-//            };
+                    response.UsageDetails.Add(new BloodUsageDetailDTO
+                    {
+                        BloodDetailId = usedDetail.BloodDetailId,
+                        UsedUnits = remainingUnits,
+                        BloodDetailDate = today
+                    });
 
-//            var remainingUnits = request.RequiredUnits;
-//            var usedBloodIds = new List<int>();
+                    remainingUnits = 0;
+                    break;
+                }
+            }
 
-//            // Sử dụng máu từ các bản ghi hiện có
-//            foreach (var blood in availableBlood)
-//            {
-//                if (remainingUnits <= 0) break;
+            response.TotalUsedUnits = request.RequiredUnits;
 
-//                var unitsToUse = Math.Min(blood.Unit ?? 0, remainingUnits);
-//                remainingUnits -= unitsToUse;
+            // Cập nhật lại BloodBank
+            var bloodBank = await _context.BloodBanks
+                .FirstOrDefaultAsync(b => b.BloodType == request.BloodType);
 
-//                // Tạo chi tiết sử dụng
-//                response.UsageDetails.Add(new BloodUsageDetailDTO
-//                {
-//                    BloodTypeId = blood.BloodTypeId,
-//                    UsedUnits = unitsToUse,
-//                    ExpiryDate = blood.ExpiryDate ?? today
-//                });
+            if (bloodBank != null)
+            {
+                bloodBank.BloodVolumeTotal = (bloodBank.BloodVolumeTotal ?? 0) - request.RequiredUnits;
+                if (bloodBank.BloodVolumeTotal < 0) bloodBank.BloodVolumeTotal = 0;
+                bloodBank.BloodBankStatus = bloodBank.BloodVolumeTotal > 0 ? "Còn" : "Hết";
+            }
 
-//                // Cập nhật số lượng trong BloodBank
-//                blood.Unit -= unitsToUse;
-//                if (blood.Unit <= 0)
-//                {
-//                    usedBloodIds.Add(blood.BloodTypeId);
-//                }
+            await _context.SaveChangesAsync();
 
-//                // Tạo bản ghi BloodMove
-//                var bloodMove = new BloodMove
-//                {
-//                    BloodTypeId = blood.BloodTypeId,
-//                    Unit = unitsToUse,
-//                    DateMove = today,
-//                    Note = request.Note
-//                };
-//                _context.BloodMoves.Add(bloodMove);
-//            }
-
-//            // Nếu vẫn chưa đủ số lượng, kiểm tra các loại máu tương thích
-//            if (remainingUnits > 0)
-//            {
-//                var compatibleBlood = await GetCompatibleBlood(request.BloodTypeName, remainingUnits, today);
-//                foreach (var blood in compatibleBlood)
-//                {
-//                    if (remainingUnits <= 0) break;
-
-//                    var unitsToUse = Math.Min(blood.Unit ?? 0, remainingUnits);
-//                    remainingUnits -= unitsToUse;
-
-//                    // Tạo chi tiết sử dụng
-//                    response.UsageDetails.Add(new BloodUsageDetailDTO
-//                    {
-//                        BloodTypeId = blood.BloodTypeId,
-//                        UsedUnits = unitsToUse,
-//                        ExpiryDate = blood.ExpiryDate ?? today
-//                    });
-
-//                    // Cập nhật số lượng trong BloodBank
-//                    blood.Unit -= unitsToUse;
-//                    if (blood.Unit <= 0)
-//                    {
-//                        usedBloodIds.Add(blood.BloodTypeId);
-//                    }
-
-//                    // Tạo bản ghi BloodMove
-//                    var bloodMove = new BloodMove
-//                    {
-//                        BloodTypeId = blood.BloodTypeId,
-//                        Unit = unitsToUse,
-//                        DateMove = today,
-//                        Note = $"{request.Note} (Compatible blood used for {request.BloodTypeName})"
-//                    };
-//                    _context.BloodMoves.Add(bloodMove);
-//                }
-//            }
-
-//            // Nếu vẫn không đủ số lượng
-//            if (remainingUnits > 0)
-//            {
-//                throw new InvalidOperationException($"Not enough blood units available. Required: {request.RequiredUnits}, Available: {request.RequiredUnits - remainingUnits}");
-//            }
-
-//            // Cập nhật tổng số đơn vị đã sử dụng
-//            response.TotalUsedUnits = request.RequiredUnits;
-
-//            await _context.SaveChangesAsync();
-
-//            return response;
-//        }
-//        catch (Exception ex)
-//        {
-//            _logger.LogError($"Error in UseBloodAsync: {ex.Message}");
-//            throw;
-//        }
-//    }
-
-//    // Helper method để lấy máu tương thích
-//    private async Task<List<BloodBank>> GetCompatibleBlood(string bloodType, int requiredUnits, DateOnly today)
-//    {
-//        // Định nghĩa các loại máu tương thích
-//        var compatibleTypes = GetCompatibleBloodTypes(bloodType);
-
-//        return await _context.BloodBanks
-//            .Where(b => compatibleTypes.Contains(b.BloodTypeName) &&
-//                       b.Status != "Expired" &&
-//                       b.Unit > 0 &&
-//                       (b.ExpiryDate == null || b.ExpiryDate > today))
-//            .OrderBy(b => b.ExpiryDate)
-//            .ToListAsync();
-//    }
-
-//    private List<string> GetCompatibleBloodTypes(string bloodType)
-//    {
-//        // Định nghĩa quy tắc tương thích máu
-//        switch (bloodType.ToUpper())
-//        {
-//            case "A+":
-//                return new List<string> { "A+", "A-", "O+", "O-" };
-//            case "A-":
-//                return new List<string> { "A-", "O-" };
-//            case "B+":
-//                return new List<string> { "B+", "B-", "O+", "O-" };
-//            case "B-":
-//                return new List<string> { "B-", "O-" };
-//            case "AB+":
-//                return new List<string> { "AB+", "AB-", "A+", "A-", "B+", "B-", "O+", "O-" };
-//            case "AB-":
-//                return new List<string> { "AB-", "A-", "B-", "O-" };
-//            case "O+":
-//                return new List<string> { "O+", "O-" };
-//            case "O-":
-//                return new List<string> { "O-" };
-//            default:
-//                return new List<string>();
-//        }
-//    }
-//}
+            return response;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError($"Error in UseBloodAsync: {ex.Message}");
+            throw;
+        }
+    }
+}
