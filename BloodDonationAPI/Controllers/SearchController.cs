@@ -1,14 +1,15 @@
+using BloodDonationAPI.Entities;
 using BloodDonationAPI.Service;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using System;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BloodDonationAPI.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    [Authorize]
     public class SearchController : ControllerBase
     {
         private readonly ISearchService _searchService;
@@ -26,11 +27,13 @@ namespace BloodDonationAPI.Controllers
         /// <param name="bloodType">Nhóm máu (A+, A-, B+, B-, AB+, AB-, O+, O-)</param>
         /// <returns>Danh sách người hiến máu có nhóm máu tương thích, sắp xếp theo địa chỉ</returns>
         [HttpGet("donors/byBloodType")]
-        [Authorize(Roles = "Staff,Admin")]
-        public async Task<IActionResult> GetDonorsByBloodType([FromQuery] string bloodType)
+        [Authorize(Roles = "Staff,Admin")]public async Task<IActionResult> GetDonorsByBloodType([FromQuery] string bloodType)
         {
             try
-            {
+            {                // Lấy thông tin người dùng hiện tại từ token
+                var currentUser = User.Identity?.Name ?? string.Empty;
+                var role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
                 // Validate input parameters
                 if (string.IsNullOrWhiteSpace(bloodType))
                 {
@@ -48,7 +51,12 @@ namespace BloodDonationAPI.Controllers
                 
                 var donors = await _searchService.FindDonorsByBloodType(bloodType);
                 
-                return Ok(new { donors });
+                return Ok(new { 
+                    donors,
+                    message = "Staff/Admin only API access successful",
+                    currentUser = currentUser,
+                    role = role
+                });
             }
             catch (Exception ex)
             {
@@ -60,26 +68,27 @@ namespace BloodDonationAPI.Controllers
         /// <remarks>
         /// API này cho phép tìm kiếm các yêu cầu cần máu theo nhóm máu cụ thể.
         /// - Staff và Admin: có thể tìm kiếm không giới hạn (bloodType có thể để trống)
-        /// - User: bắt buộc phải cung cấp bloodType
+        /// - User và khách: bắt buộc phải cung cấp bloodType
         /// </remarks>
         /// <param name="bloodType">Nhóm máu (A+, A-, B+, B-, AB+, AB-, O+, O-)</param>
         /// <returns>Danh sách người cần máu có nhóm máu đã chỉ định</returns>
         [HttpGet("requests/byBloodType")]
-        [Authorize]
+        [AllowAnonymous]
         public async Task<IActionResult> GetEmergenciesByBloodType([FromQuery] string bloodType)
         {
             try
-            {
-                // Lấy role của người dùng từ claims
-                var userRole = User.Claims.FirstOrDefault(c => c.Type == "http://schemas.microsoft.com/ws/2008/06/identity/claims/role")?.Value;
-                
-                // Nếu là User thì bắt buộc phải có bloodType
-                if ((userRole == "User" || string.IsNullOrEmpty(userRole)) && string.IsNullOrWhiteSpace(bloodType))
+            {                // Kiểm tra người dùng hiện tại (nếu đã đăng nhập)
+                bool isAuthenticated = User.Identity?.IsAuthenticated == true;
+                string currentUser = User.Identity?.Name ?? string.Empty;
+                string? role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
+                bool isStaffOrAdmin = isAuthenticated && (role == "Staff" || role == "Admin");
+                                     
+                if (!isStaffOrAdmin && string.IsNullOrWhiteSpace(bloodType))
                 {
-                    return BadRequest(new { message = "BloodType is required for regular users" });
+                    return BadRequest(new { message = "BloodType is required" });
                 }
 
-                // Staff/Admin không bắt buộc phải có bloodType
+                // Xử lý tìm kiếm theo bloodType hoặc tất cả
                 if (!string.IsNullOrWhiteSpace(bloodType))
                 {
                     // Chuẩn hóa bloodType
@@ -92,13 +101,29 @@ namespace BloodDonationAPI.Controllers
                     }
                     
                     var emergencies = await _searchService.FindEmergenciesByBloodType(bloodType);
-                    return Ok(new { emergencies });
+                    
+                    return Ok(new { 
+                        emergencies,
+                        isAuthenticated,
+                        currentUser = isAuthenticated ? currentUser : "Anonymous",
+                        accessType = isAuthenticated ? "Authenticated user" : "Public access",
+                        message = "Blood request search successful"
+                    });
+                }
+                else if (isStaffOrAdmin) // Chỉ Staff/Admin mới có thể tìm tất cả
+                {
+                    var allEmergencies = await _searchService.FindAllEmergencies();
+                      return Ok(new { 
+                        emergencies = allEmergencies,
+                        currentUser = currentUser ?? string.Empty,
+                        role = role ?? string.Empty,
+                        message = "Staff/Admin all emergencies access successful"
+                    });
                 }
                 else
                 {
-                    // Staff/Admin có thể tìm không giới hạn
-                    var allEmergencies = await _searchService.FindAllEmergencies();
-                    return Ok(new { emergencies = allEmergencies });
+                    // Đây là trường hợp không thể xảy ra do đã kiểm tra ở trên
+                    return BadRequest(new { message = "Invalid request" });
                 }
             }
             catch (Exception ex)
@@ -106,6 +131,5 @@ namespace BloodDonationAPI.Controllers
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
-          // Hospital search endpoint removed as requested
     }
 }

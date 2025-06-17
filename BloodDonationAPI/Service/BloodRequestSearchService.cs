@@ -1,3 +1,4 @@
+using BloodDonationAPI.DTO;
 using BloodDonationAPI.DTOs;
 using BloodDonationAPI.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -20,48 +21,62 @@ namespace BloodDonationAPI.Service
 
         public async Task<BloodRequestSearchResponse> FindNearbyBloodRequests(BloodRequestSearchRequest request)
         {
+            // Validate the request parameters
+            if (request == null)
+            {
+                throw new ArgumentNullException(nameof(request));
+            }
+
             var response = new BloodRequestSearchResponse();
             
             try
-            {
-                // If the database doesn't have BloodRequests yet, create temp data for testing
-                // In a real application, you'd remove this and use only the actual database data
+            {                // Lấy các yêu cầu máu từ bảng Emergency
+                var emergencies = await _context.Emergencies
+                    .Where(e => string.IsNullOrEmpty(request.BloodType) || 
+                               (e.BloodType != null && e.BloodType == request.BloodType))
+                    .ToListAsync();
+                
                 var mockRequests = new List<BloodRequestResult>();
                 
-                // Get users who are near the specified location
-                var users = await _context.Users.ToListAsync();
-                
-                // Use users as mock blood requesters for now
-                foreach (var user in users.Where(u => !string.IsNullOrEmpty(u.Address) && !string.IsNullOrEmpty(u.BloodType)))
-                {
-                    // Generate mock coordinates based on address (in real app, you'd use geocoding)
-                    var mockLat = request.Lat + (new Random().NextDouble() - 0.5) * 0.1;
-                    var mockLng = request.Lng + (new Random().NextDouble() - 0.5) * 0.1;
+                foreach (var emergency in emergencies)
+                {                    // Lấy thông tin người dùng
+                    var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == emergency.Username);
                     
-                    double distance = CalculateDistance(request.Lat, request.Lng, mockLat, mockLng);
+                    // Lấy thông tin bệnh viện
+                    var hospital = await _context.Hospitals.FirstOrDefaultAsync(h => h.HospitalId == emergency.HospitalId);
                     
-                    // Only include if within radius and matches blood type (if specified)
-                    if (distance <= request.Radius && 
-                        (string.IsNullOrEmpty(request.BloodType) || user.BloodType == request.BloodType))
-                    {                        mockRequests.Add(new BloodRequestResult
-                        {
-                            Id = user.Username,
-                            Distance = Math.Round(distance, 2),
-                            BloodType = user.BloodType ?? "Unknown",
-                            Status = "PENDING",
-                            Location = new Location
+                    // Kiểm tra null trước khi sử dụng
+                    if (emergency.Username == null || emergency.HospitalId == null)
+                    {
+                        continue; // Bỏ qua nếu thiếu thông tin cần thiết
+                    }
+                    
+                    if (user != null && hospital != null)
+                    {
+                        // Tính khoảng cách dựa trên địa chỉ bệnh viện
+                        double distance = CalculateDistance(request.Lat, request.Lng, 0, 0); // Không có tọa độ thực tế
+                        
+                        if (distance <= request.Radius)
+                        {                            mockRequests.Add(new BloodRequestResult
                             {
-                                Latitude = mockLat,
-                                Longitude = mockLng,
-                                Address = user.Address ?? "No address provided"
-                            },
-                            RequesterInfo = new RequesterInfo
-                            {
-                                Name = user.FullName ?? "Anonymous",
-                                Phone = user.Phone ?? "No phone provided",
-                                Email = user.Email ?? "No email provided"
-                            }
-                        });
+                                Id = emergency.EmergencyId.ToString(),
+                                Distance = Math.Round(distance, 2),
+                                BloodType = emergency.BloodType ?? "Unknown",
+                                Status = emergency.EmergencyStatus ?? "Unknown",
+                                Location = new Location
+                                {
+                                    Latitude = 0, // Không có tọa độ thực tế
+                                    Longitude = 0,
+                                    Address = hospital.HospitalAddress ?? "Unknown"
+                                },
+                                RequesterInfo = new RequesterInfo
+                                {
+                                    Name = user.FullName ?? "Anonymous",
+                                    Phone = user.Phone ?? "No phone provided",
+                                    Email = user.Email ?? "No email provided"
+                                }
+                            });
+                        }
                     }
                 }
                 

@@ -5,14 +5,14 @@ namespace BloodDonationAPI.Service
 {
     public interface IBloodDonationProcessService
     {
-      Task<List<AppointmentRegistrationDto>> GetRegistrationsByAppointmentID(int AppointmentID);
+      Task<List<AppointmentRegistrationDto>> GetRegistrationsByEventID(int EventID);
 
-        Task<bool> UpdateAppointmentStatusAsync(UpdateAppointmentStatusDto updateDto);
+        Task<bool> CheckInAsync(CheckInDto checkInDto);
 
-        Task<bool> AddDonationHistoryAsync(CreateDonationHistoryDto registrationDto);
+        Task<bool> RecordDonationAsync(DonateDto donateDto);
 
-        Task<BloodBank> AddBloodToBankAsync(AddBloodBankDto dto);
+        //Task<BloodBank> AddBloodToBankAsync(AddBloodBankDto dto);
 
-        Task<List<DonationHistoryDto>> GetDonationHistoryByUserNameAsync(string username);
+        //Task<List<DonationHistoryDto>> GetDonationHistoryByUserNameAsync(string username);
     }
 }

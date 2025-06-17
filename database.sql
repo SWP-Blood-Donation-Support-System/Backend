@@ -163,49 +163,49 @@ CREATE TABLE NotificationRecipient (
 --1
 INSERT INTO [User] (Username, Password, Email, Role, FullName,DateOfBirth, Gender, Phone, Address, ProfileStatus, BloodType) VALUES
 (N'admin1', N'admin1', N'admin@example.com', N'Admin', N'Quản trị viên',
- '1990-01-01', N'Nam', N'0909090909', N'Đà Nẵng', N'Active', NULL),
+ '1990-01-01', N'Nam', N'0909090909', N'Đà Nẵng', NULL, NULL),
  
 (N'staff1', N'staff1', N'user1@example.com', N'Staff', N'Nguyễn Văn A',
- '1995-05-10', N'Nam', N'0912345678', N'TP. Hồ Chí Minh', N'Active', NULL),
+ '1995-05-10', N'Nam', N'0912345678', N'TP. Hồ Chí Minh', NULL, NULL),
 
 (N'string', N'string', 'Nuser4@email.com', N'Staff', N'Phạm Thị D', 
-  N'1992-11-25', N'Nữ', '0978123456', N'321 Đường Lý Tự Trọng, Q1, TP.HCM', N'Active', NULL),
+  N'1992-11-25', N'Nữ', '0978123456', N'321 Đường Lý Tự Trọng, Q1, TP.HCM', NULL, NULL),
 
 (N'user1', N'pass1', N'user2@example.com', N'User', N'Trần Thị B',
- '1998-07-20', N'Nữ', N'0987654321', N'Hà Nội', N'Active', 'B-'),
+ '1998-07-20', N'Nữ', N'0987654321', N'Hà Nội', N'Sẵn sàng hiến máu', 'B-'),
 
 (N'user2', N'pass2', N'user1@email.com', N'User', N'Nguyễn Văn A', 
- N'1990-05-15', N'Nam', N'0912345678', N'123 Đường Lê Lợi, Q1, TP.HCM', N'Active', N'A+'),
+ N'1990-05-15', N'Nam', N'0912345678', N'123 Đường Lê Lợi, Q1, TP.HCM',N'Sẵn sàng hiến máu', N'A+'),
 
 (N'user3', N'pass3', N'user2@email.com', N'User', N'Trần Thị B', 
-  N'1995-08-20', N'Nữ', N'0987654321', N'456 Đường Nguyễn Huệ, Q1, TP.HCM', N'Active', N'B+'),
+  N'1995-08-20', N'Nữ', N'0987654321', N'456 Đường Nguyễn Huệ, Q1, TP.HCM', N'Sẵn sàng hiến máu', N'B+'),
 
 (N'user4', N'pass4', N'user3@email.com', N'User', N'Lê Văn C', 
-  N'1985-03-10', 'Nam', N'0909123456', N'789 Đường CMT8, Q3, TP.HCM', N'Active', N'O+'),
+  N'1985-03-10', 'Nam', N'0909123456', N'789 Đường CMT8, Q3, TP.HCM', N'Sẵn sàng hiến máu', N'O+'),
 
 (N'user5', N'pass5', N'user5@email.com', N'User', N'Hoàng Thị E', 
- '1993-04-12', N'Nữ', N'0911223344', N'101 Đường Hai Bà Trưng, Q1, TP.HCM', N'Active', N'AB+'),
+ '1993-04-12', N'Nữ', N'0911223344', N'101 Đường Hai Bà Trưng, Q1, TP.HCM', N'Sẵn sàng hiến máu', N'AB+'),
 
 (N'user6', N'pass6', N'user6@email.com', N'User', N'Vũ Văn F', 
- '1988-09-05', N'Nam', N'0988776655', N'202 Đường Lê Duẩn, Q1, TP.HCM', N'Active', N'AB-'),
+ '1988-09-05', N'Nam', N'0988776655', N'202 Đường Lê Duẩn, Q1, TP.HCM', N'Sẵn sàng hiến máu', N'AB-'),
 
 (N'user7', N'pass7', N'user7@email.com', N'User', N'Đặng Thị G', 
- '1997-12-30', N'Nữ', N'0901122334', N'303 Đường Pasteur, Q3, TP.HCM', N'Active', N'O-'),
+ '1997-12-30', N'Nữ', N'0901122334', N'303 Đường Pasteur, Q3, TP.HCM', N'Sẵn sàng hiến máu', N'O-'),
 
 (N'user8', N'pass8', N'user8@email.com', N'User', N'Bùi Văn H', 
- '1991-07-18', N'Nam', N'0912345000', N'404 Đường Nguyễn Đình Chiểu, Q1, TP.HCM', N'Active', N'A-'),
+ '1991-07-18', N'Nam', N'0912345000', N'404 Đường Nguyễn Đình Chiểu, Q1, TP.HCM', N'Sẵn sàng hiến máu', N'A-'),
 
 (N'user9', N'pass9', N'user9@email.com', N'User', N'Lý Thị I', 
- '1994-02-22', N'Nữ', N'0987650001', N'505 Đường Trần Hưng Đạo, Q5, TP.HCM', N'Active', N'B-'),
+ '1994-02-22', N'Nữ', N'0987650001', N'505 Đường Trần Hưng Đạo, Q5, TP.HCM', N'Sẵn sàng hiến máu', N'B-'),
 
 (N'user10', N'pass10', N'user10@email.com', N'User', N'Phan Văn K', 
- '1989-06-15', N'Nam', N'0909111222', N'606 Đường Cách Mạng Tháng 8, Q10, TP.HCM', N'Active', N'A+'),
+ '1989-06-15', N'Nam', N'0909111222', N'606 Đường Cách Mạng Tháng 8, Q10, TP.HCM', N'Sẵn sàng hiến máu', N'A+'),
 
 (N'user11', N'pass11', N'user11@email.com', N'User', N'Mai Thị L', 
- '1996-10-08', N'Nữ', N'0912121212', N'707 Đường 3 Tháng 2, Q10, TP.HCM', N'Active', N'B+'),
+ '1996-10-08', N'Nữ', N'0912121212', N'707 Đường 3 Tháng 2, Q10, TP.HCM', N'Sẵn sàng hiến máu', N'B+'),
 
 (N'user12', N'pass12', N'user12@email.com', N'User', N'Trịnh Văn M', 
- '1990-11-11', N'Nam', N'0988989898', N'808 Đường Lý Thường Kiệt, Q10, TP.HCM', N'Active', N'O+');
+ '1990-11-11', N'Nam', N'0988989898', N'808 Đường Lý Thường Kiệt, Q10, TP.HCM', N'Sẵn sàng hiến máu', N'O+');
 
 --2
 INSERT INTO Hospital (HospitalName, HospitalAddress, HospitalImage, HospitalPhone)
@@ -343,3 +343,65 @@ INSERT INTO NotificationRecipient (NotificationID, Username, ResponseStatus, Res
 VALUES 
 (1, N'user1', N'Chấp nhận', '2025-10-01 10:30:00'),
 (1, N'user9', N'Chưa phản hồi', NULL);
+
+
+CREATE TABLE SurveyQuestion (
+    QuestionId INT PRIMARY KEY IDENTITY(1,1),
+    QuestionText NVARCHAR(MAX),
+    QuestionType NVARCHAR(20) -- 'single', 'multiple', 'text'
+);
+CREATE TABLE SurveyOption (
+    OptionId INT PRIMARY KEY IDENTITY(1,1),
+    QuestionId INT FOREIGN KEY REFERENCES SurveyQuestion(QuestionId),
+    OptionText NVARCHAR(MAX),
+    IsEligible BIT -- NULL nếu không áp dụng, 1 nếu đạt điều kiện hiến, 0 nếu không
+);
+CREATE TABLE UserSurveyAnswer (
+    AnswerId INT PRIMARY KEY IDENTITY(1,1),
+    Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
+    QuestionId INT FOREIGN KEY REFERENCES SurveyQuestion(QuestionId),
+    OptionId INT FOREIGN KEY REFERENCES SurveyOption(OptionId),
+    AppointmentRecordId INT FOREIGN KEY REFERENCES AppointmentRecord(AppointmentId),
+    AnswerText NVARCHAR(MAX), -- Ghi câu trả lời (có thể là OptionText hoặc nhập tay)
+    AnswerDate DATETIME
+);
+
+-- Insert data for SurveyQuestion
+INSERT INTO SurveyQuestion (QuestionText, QuestionType) VALUES
+(N'Cân nặng hiện tại của bạn là bao nhiêu?', 'single'),
+(N'Trong 12 tháng qua, bạn có mắc các bệnh sau không?', 'single'),
+(N'Bạn có đang sử dụng loại thuốc điều trị nào không? Nếu có, vui lòng ghi rõ:', 'text'),
+(N'Bạn có đang mang thai hoặc cho con bú không? (áp dụng cho nữ)', 'single'),
+(N'Trong vòng 6 tháng qua, bạn có thực hiện các điều sau không?', 'single'),
+(N'Bạn đã tiêm vắc-xin trong 14 ngày qua không?', 'single'),
+(N'Bạn có từng bị phản ứng bất thường sau khi hiến máu không?', 'single'),
+(N'Trong 6 tháng qua, bạn có:', 'single'),
+(N'Khoảng thời gian từ lần hiến máu gần nhất đến nay là:', 'single');
+
+-- Insert data for SurveyOption
+INSERT INTO SurveyOption (QuestionId, OptionText, IsEligible) VALUES
+(1, N'Dưới 45kg', 0),
+(1, N'Từ 45kg trở lên', 1),
+(2, N'Viêm gan B hoặc C', 0),
+(2, N'HIV/AIDS', 0),
+(2, N'Lao phổi đang điều trị', 0),
+(2, N'Sốt rét', 0),
+(2, N'Ung thư', 0),
+(2, N'Không mắc bệnh nào', 1),
+(4, N'Có', 0),
+(4, N'Không', 1),
+(5, N'Xăm hình / xỏ khuyên', 0),
+(5, N'Phẫu thuật / nội soi', 0),
+(5, N'Truyền máu', 0),
+(5, N'Không có', 1),
+(6, N'Có', 0),
+(6, N'Không', 1),
+(7, N'Có', 0),
+(7, N'Không', 1),
+(8, N'Quan hệ tình dục không an toàn', 0),
+(8, N'Dùng chung kim tiêm', 0),
+(8, N'Dùng chất kích thích', 0),
+(8, N'Không có các hành vi trên', 1),
+(9, N'Dưới 3 tháng', 0),
+(9, N'Từ 3 tháng trở lên đối với nam', 1),
+(9, N'Từ 4 tháng trở lên đối với nữ', 1);

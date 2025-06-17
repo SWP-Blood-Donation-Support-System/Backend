@@ -40,7 +40,8 @@ public partial class BloodDonationSystemContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-
+    public virtual DbSet<SurveyQuestion> SurveyQuestions { get; set; }
+    public virtual DbSet<UserSurveyAnswer> UserSurveyAnswers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -198,16 +199,60 @@ public partial class BloodDonationSystemContext : DbContext
 
         modelBuilder.Entity<Report>(entity =>
         {
-            entity.HasKey(e => e.ReportId).HasName("PK__Report__D5BD4805239E4DCF");
+            entity.HasKey(e => e.ReportId).HasName("PK__Report__D5BD4805F0D0B0B5");
 
             entity.ToTable("Report");
 
+            entity.Property(e => e.ReportContent).HasMaxLength(500);
+            entity.Property(e => e.ReportDate).HasColumnType("date");
             entity.Property(e => e.ReportType).HasMaxLength(50);
             entity.Property(e => e.Username).HasMaxLength(50);
 
             entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.Reports)
                 .HasForeignKey(d => d.Username)
-                .HasConstraintName("FK__Report__Username__25869641");
+                .HasConstraintName("FK__Report__Username__3A81B327");
+        });
+
+        modelBuilder.Entity<SurveyQuestion>(entity =>
+        {
+            entity.HasKey(e => e.QuestionId);
+
+            entity.ToTable("SurveyQuestion");
+
+            entity.Property(e => e.QuestionText).IsRequired();
+            entity.Property(e => e.QuestionType).IsRequired().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<UserSurveyAnswer>(entity =>
+        {
+            entity.HasKey(e => e.AnswerId);
+
+            entity.ToTable("UserSurveyAnswer");
+
+            entity.Property(e => e.Username).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.AnswerText);
+            entity.Property(e => e.AnswerDate).HasColumnType("datetime");
+            entity.Property(e => e.EventId).IsRequired();
+
+            entity.HasOne(d => d.User)
+                .WithMany()
+                .HasForeignKey(d => d.Username)
+                .HasConstraintName("FK_UserSurveyAnswer_User");
+
+            entity.HasOne(d => d.Question)
+                .WithMany(p => p.UserAnswers)
+                .HasForeignKey(d => d.QuestionId)
+                .HasConstraintName("FK_UserSurveyAnswer_SurveyQuestion");
+
+            entity.HasOne(d => d.Option)
+                .WithMany(p => p.UserAnswers)
+                .HasForeignKey(d => d.OptionId)
+                .HasConstraintName("FK_UserSurveyAnswer_SurveyOption");
+
+            entity.HasOne(d => d.Event)
+                .WithMany()
+                .HasForeignKey(d => d.EventId)
+                .HasConstraintName("FK_UserSurveyAnswer_Event");
         });
 
         modelBuilder.Entity<User>(entity =>
