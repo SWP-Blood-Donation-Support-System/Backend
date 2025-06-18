@@ -50,7 +50,7 @@ namespace BloodDonationAPI.Controllers
             var userName = User.FindFirst(ClaimTypes.Name)?.Value;
             if(userName == null) return Unauthorized(new { message = "User not authenticated." });
             var result = await _appointmentService.RegisterAppointment(userName, dto);
-            if (result == "Success") return Ok(result);
+            if (result == "Bạn đã đăng ký thành công lịch hẹn") return Ok(new { message = result });
 
             else return BadRequest(new { message = result });
         }
@@ -65,6 +65,7 @@ namespace BloodDonationAPI.Controllers
         /// <param name="username"></param>
         /// <returns></returns>
         [HttpGet("AppointmentHistory/{username}")]
+        [Authorize(Roles ="User")]
         public async Task<IActionResult> GetAppointmentHistoryByUsername(string username)
         {
             var histories = await _appointmentService.GetByUsernameAsync(username);

@@ -27,6 +27,7 @@ namespace BloodDonationAPI.Service
                      FullName = h.UsernameNavigation.FullName,
                      Phone = h.UsernameNavigation.Phone,
                      AppointmentStatus = h.Status,
+                     BloodType = h.UsernameNavigation.BloodType,
                  })
                  .ToListAsync();
 
@@ -35,7 +36,7 @@ namespace BloodDonationAPI.Service
         public async Task<bool> CheckInAsync(CheckInDto checkInDto)
         {
             var check = await _context.AppointmentRecords.FindAsync(checkInDto.AppointmentId);
-            if (check == null || check.Status=="Donated")
+            if (check == null || check.Status== "Đã hiến")
                 return false;
 
             check.Status = "Đã đến";
@@ -58,7 +59,7 @@ namespace BloodDonationAPI.Service
             
             if (appointment.Status == "Đã hiến" )
             {
-                throw new Exception("Người dùng đã được ghi nhận hiến máu hoặc đã đến nhưng chưa hiến máu.");
+                throw new Exception("Người dùng đã được ghi nhận hiến máu ");
             }
 
             //ưu tiên lấy nhóm máu từ người dùng đã đăng ký, nếu không có thì sử dụng nhóm máu từ donateDto
@@ -79,6 +80,9 @@ namespace BloodDonationAPI.Service
             appointment.BloodType = bloodType;//lay nhom mau tu user đã đăng ký hoặc từ donateDto
             appointment.DonationUnit = donateDto.Volume;
 
+            // cap nhat trang thai cho user 
+
+            user.ProfileStatus = "Đang nghỉ ngơi";
             // Tạo bản ghi trong bảng BloodDetail
             var bloodDetail = new BloodDetail
             {
@@ -87,7 +91,7 @@ namespace BloodDonationAPI.Service
                 Volume = donateDto.Volume,
                 HospitalId = 1, // Giả sử HospitalId là 1, bạn có thể thay đổi theo logic của bạn
                 BloodDetailDate = DateOnly.FromDateTime(DateTime.Now),
-                BloodDetailStatus = "Đã hiến",
+                BloodDetailStatus = "Đã lưu trữ",
             };
             _context.BloodDetails.Add(bloodDetail);
             //cap nhat trong bang blood bank
