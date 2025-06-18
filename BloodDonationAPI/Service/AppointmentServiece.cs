@@ -11,11 +11,22 @@ namespace BloodDonationAPI.Service
         {
             _context = context;
         }
-        public async Task<List<Event>> GetEventsLists()
+        public async Task<List<EventDto>> GetEventsLists()
         {
             var today = DateOnly.FromDateTime(DateTime.Now);
+
             return await _context.Events
                 .Where(a => a.EventDate >= today)
+                .Select(a => new EventDto
+                {
+                    EventId = a.EventId,
+                    EventTitle = a.EventTitle,
+                    EventContent = a.EventContent,
+                    EventDate = a.EventDate,
+                    EventTime = a.EventTime,
+                    Location = a.Location,
+                    MaxParticipants = a.MaxParticipants
+                })
                 .ToListAsync();
 
         }
