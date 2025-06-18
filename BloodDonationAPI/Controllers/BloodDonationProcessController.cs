@@ -54,15 +54,15 @@ namespace BloodDonationAPI.Controllers
         {
             if (checkInDto == null || checkInDto.AppointmentId <= 0)
             {
-                return BadRequest("Invalid appointment history ID.");
+                return BadRequest(new { message = "Invalid appointment history ID." });
             }
 
             var result = await _service.CheckInAsync(checkInDto);
             if (!result)
             {
-                return NotFound("Appointment history not found or update failed.");
+                return NotFound(new { message = "Appointment history not found or update failed." });
             }
-            return Ok("Appointment status updated successfully.");
+            return Ok(new { message = "Appointment status updated successfully." });
         }
         /// <summary>
         /// API nay dùng để ghi nhận hiến máu của người đã đăng ký tham gia hiến máu 
@@ -89,9 +89,9 @@ namespace BloodDonationAPI.Controllers
             var result = await _service.RecordDonationAsync(donateDto);
             if (!result)
             {
-                return NotFound("Không tìm thấy lịch hẹn hoặc không thể ghi nhận hiến máu");
+                return NotFound(new { message = "Không tìm thấy lịch hẹn hoặc không thể ghi nhận hiến máu" });
             }
-            return Ok("Đã ghi nhận hiến máu thành công");
+            return Ok(new { message = "Đã ghi nhận hiến máu thành công" });
         }
 
         //[HttpPost("AddDonationHistory")]
