@@ -30,7 +30,8 @@ namespace BloodDonationAPI.Service
             var response = new BloodRequestSearchResponse();
             
             try
-            {                // Lấy các yêu cầu máu từ bảng Emergency
+            {
+                // Lấy các yêu cầu máu từ bảng Emergency
                 var emergencies = await _context.Emergencies
                     .Where(e => string.IsNullOrEmpty(request.BloodType) || 
                                (e.BloodType != null && e.BloodType == request.BloodType))
@@ -39,7 +40,8 @@ namespace BloodDonationAPI.Service
                 var mockRequests = new List<BloodRequestResult>();
                 
                 foreach (var emergency in emergencies)
-                {                    // Lấy thông tin người dùng
+                {
+                    // Lấy thông tin người dùng
                     var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == emergency.Username);
                     
                     // Lấy thông tin bệnh viện
@@ -57,10 +59,14 @@ namespace BloodDonationAPI.Service
                         double distance = CalculateDistance(request.Lat, request.Lng, 0, 0); // Không có tọa độ thực tế
                         
                         if (distance <= request.Radius)
-                        {                            mockRequests.Add(new BloodRequestResult
+                        {
+                            double distanceRaw = Math.Round(distance, 2);
+                            string formattedDistance = FormatDistance(distanceRaw);
+                            
+                            mockRequests.Add(new BloodRequestResult
                             {
                                 Id = emergency.EmergencyId.ToString(),
-                                Distance = Math.Round(distance, 2),
+                                Distance = formattedDistance, // Only use formatted distance
                                 BloodType = emergency.BloodType ?? "Unknown",
                                 Status = emergency.EmergencyStatus ?? "Unknown",
                                 Location = new Location
@@ -80,7 +86,8 @@ namespace BloodDonationAPI.Service
                     }
                 }
                 
-                response.Requests = mockRequests.OrderBy(r => r.Distance).ToList();
+                // Sắp xếp danh sách yêu cầu máu theo khoảng cách từ thấp đến cao
+                response.Requests = SortRequestsByDistance(mockRequests);
             }
             catch (Exception ex)
             {
@@ -112,6 +119,91 @@ namespace BloodDonationAPI.Service
         private double DegreesToRadians(double degrees)
         {
             return degrees * Math.PI / 180;
+        }
+        
+        /// <summary>
+        /// Format distance in appropriate units (m or km)
+        /// </summary>
+        /// <param name="distanceInKm">Distance in kilometers</param>
+        /// <returns>Formatted distance string with units</returns>
+        private string FormatDistance(double distanceInKm)
+        {
+            if (distanceInKm < 1)
+            {
+                // Convert to meters if less than 1 km
+                int meters = (int)(distanceInKm * 1000);
+                return $"{meters} m";
+            }
+            else if (distanceInKm < 10)
+            {
+                // For distances less than 10km, show one decimal place
+                return $"{distanceInKm:F1} km";
+            }
+            else
+            {
+                // For larger distances, round to integers
+                return $"{Math.Round(distanceInKm)} km";
+            }
+        }
+          /// <summary>
+        /// Sắp xếp danh sách yêu cầu máu theo khoảng cách từ thấp đến cao
+        /// </summary>
+        private List<BloodRequestResult> SortRequestsByDistance(List<BloodRequestResult> requests)
+        {
+            // Since Distance is now a string, we need to use a numeric value for sorting
+            var requestsWithNumericDistance = new List<(BloodRequestResult Request, double Distance)>();
+            
+            foreach (var bloodRequest in requests)
+            {
+                // Trích xuất giá trị khoảng cách số từ chuỗi định dạng (như "800 m" hoặc "5.2 km")
+                double numericDistance = ExtractNumericDistance(bloodRequest.Distance);
+                requestsWithNumericDistance.Add((bloodRequest, numericDistance));
+            }
+            
+            // Sắp xếp theo khoảng cách từ thấp đến cao (gần đến xa)
+            var sortedRequests = requestsWithNumericDistance
+                .OrderBy(r => r.Distance)
+                .Select(r => r.Request)
+                .ToList();
+                
+            Console.WriteLine($"Sorted {sortedRequests.Count} blood requests by distance (from lowest to highest)");
+            return sortedRequests;
+        }
+        
+        /// <summary>
+        /// Trích xuất giá trị số từ chuỗi khoảng cách được định dạng
+        /// </summary>
+        /// <param name="formattedDistance">Chuỗi khoảng cách định dạng (ví dụ: "800 m" hoặc "5.2 km")</param>
+        /// <returns>Giá trị khoảng cách tính bằng km</returns>
+        private double ExtractNumericDistance(string formattedDistance)
+        {
+            if (string.IsNullOrEmpty(formattedDistance))
+                return double.MaxValue; // Giá trị lớn nhất cho các trường hợp không có khoảng cách
+                
+            try
+            {
+                // Cắt chuỗi để lấy phần số và đơn vị
+                string[] parts = formattedDistance.Split(' ');
+                if (parts.Length != 2)
+                    return double.MaxValue;
+                
+                // Lấy giá trị số
+                if (!double.TryParse(parts[0], out double value))
+                    return double.MaxValue;
+                
+                // Kiểm tra đơn vị và chuyển đổi về km nếu cần
+                string unit = parts[1].ToLower();
+                if (unit == "m")
+                    return value / 1000.0; // Chuyển từ m sang km
+                else if (unit == "km")
+                    return value;
+                
+                return double.MaxValue;
+            }
+            catch
+            {
+                return double.MaxValue;
+            }
         }
     }
 }

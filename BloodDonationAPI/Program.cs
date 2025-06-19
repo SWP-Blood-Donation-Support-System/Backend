@@ -1,4 +1,4 @@
-using BloodDonationAPI.Entities;
+﻿using BloodDonationAPI.Entities;
 using BloodDonationAPI.Service;
 using BloodDonationAPI.Service.Impl;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -40,7 +40,7 @@ namespace BloodDonationAPI
             builder.Services.AddSwaggerGen(c =>
             {
                 c.SwaggerDoc("v1", new OpenApiInfo { Title = "Blood Donation API", Version = "v1" });
-                
+
                 // Thêm phần cấu hình JWT cho Swagger
                 c.AddSecurityDefinition("Bearer", new OpenApiSecurityScheme
                 {
@@ -70,7 +70,7 @@ namespace BloodDonationAPI
                 var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFile);
                 c.IncludeXmlComments(xmlPath);
 
-            });          
+            });
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<IAppointmentServiece, AppointmentServiece>();
@@ -96,7 +96,7 @@ namespace BloodDonationAPI
                 });
 
             var app = builder.Build();
-            
+
 
 
             // Configure the HTTP request pipeline.

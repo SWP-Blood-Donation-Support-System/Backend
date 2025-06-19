@@ -5,12 +5,10 @@ namespace BloodDonationAPI.DTO
     public class BloodRequestSearchResponse
     {
         public List<BloodRequestResult> Requests { get; set; } = new List<BloodRequestResult>();
-    }
-
-    public class BloodRequestResult
+    }    public class BloodRequestResult
     {
         public string Id { get; set; } = string.Empty;
-        public double Distance { get; set; } // Khoảng cách đến vị trí tìm kiếm (km)
+        public string Distance { get; set; } = string.Empty; // Khoảng cách đã định dạng (ví dụ: "5.2 km" hoặc "800 m")
         public string BloodType { get; set; } = string.Empty;
         public string Status { get; set; } = string.Empty; // PENDING, FULFILLED, CANCELLED
         public Location Location { get; set; } = new Location();

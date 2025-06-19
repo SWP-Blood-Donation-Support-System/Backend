@@ -6,12 +6,10 @@ namespace BloodDonationAPI.DTO
     public class DonorSearchResponse
     {
         public List<NearbyDonor> Donors { get; set; } = new List<NearbyDonor>();
-    }
-
-    public class NearbyDonor
+    }    public class NearbyDonor
     {
         public string Id { get; set; }
-        public double Distance { get; set; } // Khoảng cách đến vị trí tìm kiếm (km)
+        public string Distance { get; set; } // Khoảng cách đến vị trí tìm kiếm (đã định dạng, ví dụ: "5.2 km" hoặc "800 m")
         public string BloodType { get; set; }
         public string Status { get; set; } // AVAILABLE, UNAVAILABLE
         public DateTime? LastDonationDate { get; set; }
