@@ -95,28 +95,22 @@ public class BloodInventoryService : IBloodInventoryService
             _context.BloodDetails.Add(newBloodDetail);
             await _context.SaveChangesAsync();
 
-            // Tính tổng số lượng máu còn hạn từ BloodDetail cho nhóm máu này
-            var totalVolume = await _context.BloodDetails
-                .Where(b => b.BloodType == request.BloodType && 
-                           b.BloodDetailStatus == "Còn hạn")
-                .SumAsync(b => b.Volume ?? 0);
-
             // Tìm hoặc tạo mới BloodBank cho nhóm máu này
             var bloodBank = await _context.BloodBanks
                 .FirstOrDefaultAsync(b => b.BloodType == request.BloodType);
 
             if (bloodBank != null)
             {
-                bloodBank.BloodVolumeTotal = totalVolume;
-                bloodBank.BloodBankStatus = totalVolume > 0 ? "Còn" : "Hết";
+                bloodBank.BloodVolumeTotal = (bloodBank.BloodVolumeTotal ?? 0) + request.Volume;
+                bloodBank.BloodBankStatus = (bloodBank.BloodVolumeTotal ?? 0) > 0 ? "Còn" : "Hết";
             }
             else
             {
                 bloodBank = new BloodBank
                 {
                     BloodType = request.BloodType,
-                    BloodVolumeTotal = totalVolume,
-                    BloodBankStatus = totalVolume > 0 ? "Còn" : "Hết"
+                    BloodVolumeTotal = request.Volume,
+                    BloodBankStatus = request.Volume > 0 ? "Còn" : "Hết"
                 };
                 _context.BloodBanks.Add(bloodBank);
             }
@@ -169,7 +163,7 @@ public class BloodInventoryService : IBloodInventoryService
 
             if (bloodBank != null)
             {
-                bloodBank.BloodVolumeTotal = (bloodBank.BloodVolumeTotal ?? 0) - expiredVolume;
+                bloodBank.BloodVolumeTotal = bloodBank.BloodVolumeTotal - expiredVolume;
                 if (bloodBank.BloodVolumeTotal < 0) bloodBank.BloodVolumeTotal = 0;
                 bloodBank.BloodBankStatus = bloodBank.BloodVolumeTotal > 0 ? "Còn" : "Hết";
             }
@@ -279,7 +273,7 @@ public class BloodInventoryService : IBloodInventoryService
 
             if (bloodBank != null)
             {
-                bloodBank.BloodVolumeTotal = (bloodBank.BloodVolumeTotal ?? 0) - request.RequiredUnits;
+                bloodBank.BloodVolumeTotal = bloodBank.BloodVolumeTotal - request.RequiredUnits;
                 if (bloodBank.BloodVolumeTotal < 0) bloodBank.BloodVolumeTotal = 0;
                 bloodBank.BloodBankStatus = bloodBank.BloodVolumeTotal > 0 ? "Còn" : "Hết";
             }
