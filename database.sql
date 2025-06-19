@@ -1,93 +1,128 @@
-﻿Create Database Blood_Donation_System;
+﻿-- Lưu ý: Trước khi chạy đoạn code này hãy xóa tất bảng database Blood_Donation_System nếu đã tồn tại nếu ko Id sẽ tăng sai
+-- Lưu ý: ko chạy 1 mạch
+-- Chạy theo thứ tự tạo database -> tạo bảng -> add dữ liệu theo thứ tự 1 -> 2 -> 3 -> 4 -> 5
+-- Tạo CSDL
+
+
+CREATE DATABASE Blood_Donation_System;
+GO
+
 USE Blood_Donation_System;
+GO
 
--- 1. BloodBank trước khi chạy nhớ tạo database Blood_Donation_System
-CREATE TABLE BloodBank (
-  BloodTypeId INT PRIMARY KEY,
-  BloodTypeName NVARCHAR(50),
-  Unit INT
-);
-
--- 2. Hospital
+----------------------------------------------------------
+-- 1. Bảng Hospital: Thông tin cơ sở y tế tổ chức hiến máu
+----------------------------------------------------------
 CREATE TABLE Hospital (
-  HospitalId INT PRIMARY KEY,
-  Name NVARCHAR(100),
-  Address NVARCHAR(200),
-  HospitalImage NVARCHAR(MAX)
+  HospitalId INT IDENTITY(1,1) PRIMARY KEY,
+  HospitalName NVARCHAR(100),
+  HospitalAddress NVARCHAR(200),
+  HospitalImage NVARCHAR(MAX),
+  HospitalPhone NVARCHAR(20)
 );
 
--- 3. User
+----------------------------------------------------------
+-- 2. Bảng User: Quản lý người dùng hệ thống (người hiến máu, admin)
+----------------------------------------------------------
 CREATE TABLE [User] (
   Username NVARCHAR(50) PRIMARY KEY,
   Password NVARCHAR(100),
   Email NVARCHAR(100),
-  Role NVARCHAR(50),
+  [Role] NVARCHAR(50), -- Ví dụ: Donor, Admin
   FullName NVARCHAR(100),
   DateOfBirth DATE,
   Gender NVARCHAR(10),
   Phone NVARCHAR(20),
-  Address NVARCHAR(200),
-  ProfileStatus NVARCHAR(50),
-  BloodTypeId INT FOREIGN KEY REFERENCES BloodBank(BloodTypeId)
+  [Address] NVARCHAR(200),
+  ProfileStatus NVARCHAR(50), -- Trạng thái hồ sơ
+  BloodType NVARCHAR(5)
 );
 
--- 4. Emergency
+----------------------------------------------------------
+-- 3. Bảng Emergency: Ghi lại các yêu cầu cần máu khẩn cấp
+----------------------------------------------------------
 CREATE TABLE Emergency (
   EmergencyId INT IDENTITY(1,1) PRIMARY KEY,
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
-  BloodTypeId INT FOREIGN KEY REFERENCES BloodBank(BloodTypeId),
   EmergencyDate DATE,
+  BloodType NVARCHAR(5),
   EmergencyStatus NVARCHAR(50),
   EmergencyNote NVARCHAR(MAX),
   RequiredUnits INT,
   HospitalId INT FOREIGN KEY REFERENCES Hospital(HospitalId)
 );
 
--- 5. Notification
+----------------------------------------------------------
+-- 4. Bảng Notification: Thông báo liên quan đến các ca khẩn cấp
+----------------------------------------------------------
 CREATE TABLE Notification (
-  EmergencyId INT PRIMARY KEY FOREIGN KEY REFERENCES Emergency(EmergencyId),
+  NotificationId INT IDENTITY(1,1) PRIMARY KEY,
+  EmergencyId INT FOREIGN KEY REFERENCES Emergency(EmergencyId),
   NotificationStatus NVARCHAR(50),
   NotificationTitle NVARCHAR(100),
   NotificationContent NVARCHAR(MAX),
-  BloodTypeId INT FOREIGN KEY REFERENCES BloodBank(BloodTypeId)
+  NotificationDate DATE
 );
 
--- 6. AppointmentList
-CREATE TABLE AppointmentList (
+----------------------------------------------------------
+-- 5. Bảng Events: Quản lý các đợt tổ chức hiến máu
+----------------------------------------------------------
+CREATE TABLE Events (
+  EventId INT IDENTITY(1,1) PRIMARY KEY,
+  EventDate DATE,
+  EventTime TIME,
+  EventTitle NVARCHAR(100),
+  EventContent NVARCHAR(MAX),
+  Location NVARCHAR(255),
+  MaxParticipants INT -- Số người đăng ký tối đa
+);
+
+----------------------------------------------------------
+-- 6. Bảng AppointmentRecord: 
+-- Ghi nhận các đăng ký lịch hẹn và kết quả hiến máu của người dùng
+----------------------------------------------------------
+CREATE TABLE AppointmentRecord (
   AppointmentId INT IDENTITY(1,1) PRIMARY KEY,
-  AppointmentDate DATE,
-  AppointmentTime TIME,
-  AppointmentTitle NVARCHAR(100),
-  AppointmentContent NVARCHAR(MAX)
-);
-
--- 7. DonationHistory
-CREATE TABLE DonationHistory (
-  DonationHistoryId INT IDENTITY(1,1) PRIMARY KEY,
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
-  BloodTypeId INT FOREIGN KEY REFERENCES BloodBank(BloodTypeId),
-  DonationDate DATE,
-  DonationStatus NVARCHAR(50),
-  DonationUnit INT
+  EventId INT FOREIGN KEY REFERENCES Events(EventId),
+  RegistrationDate DATETIME,
+  Status NVARCHAR(50), -- VD: Đã hiến, Chờ xác nhận, Huỷ
+  BloodType NVARCHAR(5),
+  DonationUnit INT -- Số đơn vị máu đã hiến (nếu có)
 );
 
--- 8. Certificate
+----------------------------------------------------------
+-- 7. Bảng Certificate: Giấy chứng nhận cho người đã hiến máu
+----------------------------------------------------------
 CREATE TABLE Certificate (
-  DonationHistoryId INT PRIMARY KEY FOREIGN KEY REFERENCES DonationHistory(DonationHistoryId),
+  AppointmentId INT PRIMARY KEY FOREIGN KEY REFERENCES AppointmentRecord(AppointmentId),
   CertificateCode NVARCHAR(50),
   IssueDate DATE
 );
 
--- 9. Report
+----------------------------------------------------------
+-- 8. Bảng BloodBank: Tổng kho máu hiện có, theo nhóm máu
+----------------------------------------------------------
+CREATE TABLE BloodBank (
+  BloodType NVARCHAR(5) PRIMARY KEY,
+  BloodVolumeTotal INT,
+  BloodBankStatus NVARCHAR(100)
+);
+
+----------------------------------------------------------
+-- 9. Bảng Report: Người dùng gửi phản ánh, báo cáo
+----------------------------------------------------------
 CREATE TABLE Report (
   ReportId INT IDENTITY(1,1) PRIMARY KEY,
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
   ReportDate DATE,
-  ReportType NVARCHAR(50),
+  ReportType NVARCHAR(50), -- VD: Vấn đề lịch hẹn, sự kiện, tài khoản
   ReportContent NVARCHAR(MAX)
 );
 
--- 10. Blog
+----------------------------------------------------------
+-- 10. Bảng Blog: Bài viết chia sẻ về hiến máu
+----------------------------------------------------------
 CREATE TABLE Blog (
   BlogId INT IDENTITY(1,1) PRIMARY KEY,
   BlogTitle NVARCHAR(100),
@@ -96,66 +131,277 @@ CREATE TABLE Blog (
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username)
 );
 
--- 11. BloodMove
-CREATE TABLE BloodMove (
-  BloodMoveId INT IDENTITY(1,1) PRIMARY KEY,
-  Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
-  BloodTypeId INT FOREIGN KEY REFERENCES BloodBank(BloodTypeId),
-  Unit INT,
+----------------------------------------------------------
+-- 11. Bảng BloodDetail: 
+-- Ghi lại đơn vị máu hiến cụ thể, gắn với sự kiện và bệnh viện
+----------------------------------------------------------
+CREATE TABLE BloodDetail (
+  BloodDetailId INT IDENTITY(1,1) PRIMARY KEY,
+  BloodType NVARCHAR(5) FOREIGN KEY REFERENCES BloodBank(BloodType),
+  Volume INT,
+  AppointmentId INT FOREIGN KEY REFERENCES AppointmentRecord(AppointmentId),
   HospitalId INT FOREIGN KEY REFERENCES Hospital(HospitalId),
-  DateMove DATE
+  BloodDetailDate DATE,
+  BloodDetailStatus NVARCHAR(100), -- VD: Còn hạn, Hết hạn
+  Note NVARCHAR(MAX)
 );
 
--- 12. AppointmentHistory
-CREATE TABLE AppointmentHistory (
-  AppointmentHistoryId INT IDENTITY(1,1) PRIMARY KEY,
-  Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
-  AppointmentId INT FOREIGN KEY REFERENCES AppointmentList(AppointmentId),
-  AppointmentDate DATETIME,
-  Status NVARCHAR(50)
-);
-
--- 13. NotificationRecipient
+----------------------------------------------------------
+-- 12. Bảng NotificationRecipient: 
+-- Ghi nhận người nhận thông báo và trạng thái phản hồi
+----------------------------------------------------------
 CREATE TABLE NotificationRecipient (
   NotificationRecipientId INT IDENTITY(1,1) PRIMARY KEY,
-  EmergencyId INT FOREIGN KEY REFERENCES Emergency(EmergencyId),
-  NotificationEmergencyId INT FOREIGN KEY REFERENCES Notification(EmergencyId),
+  NotificationId INT FOREIGN KEY REFERENCES Notification(NotificationId),
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
-  ResponseStatus NVARCHAR(50), -- 'Chưa phản hồi', 'Chấp nhận', 'Từ chối'
+  ResponseStatus NVARCHAR(50), -- VD: Chưa phản hồi, Chấp nhận, Từ chối
   ResponseDate DATETIME
 );
-INSERT INTO BloodBank (BloodTypeId, BloodTypeName, Unit) VALUES
-(1, 'A+', 10),
-(2, 'A-', 5),
-(3, 'B+', 8),
-(4, 'B-', 4),
-(5, 'AB+', 6),
-(6, 'AB-', 2),
-(7, 'O+', 12),
-(8, 'O-', 3);
-
-INSERT INTO Hospital (HospitalId, Name, Address) VALUES
-(1, N'Bệnh viện Chợ Rẫy', N'201B Nguyễn Chí Thanh, Phường 12, Quận 5, TP. Hồ Chí Minh'),
-(2, N'Bệnh viện Bạch Mai', N'78 Giải Phóng, Phường Phương Mai, Quận Đống Đa, Hà Nội'),
-(3, N'Bệnh viện Trung ương Huế', N'16 Lê Lợi, Phường Vĩnh Ninh, TP. Huế, Thừa Thiên Huế'),
-(4, N'Bệnh viện 108', N'1 Trần Hưng Đạo, Phường Bạch Đằng, Quận Hai Bà Trưng, Hà Nội'),
-(5, N'Bệnh viện Đại học Y Dược TP.HCM', N'215 Hồng Bàng, Phường 11, Quận 5, TP. Hồ Chí Minh'),
-(6, N'Bệnh viện Nhi Trung ương', N'18/879 La Thành, Phường Láng Thượng, Quận Đống Đa, Hà Nội'),
-(7, N'Bệnh viện Hữu nghị Việt Đức', N'40 Tràng Thi, Phường Hàng Bông, Quận Hoàn Kiếm, Hà Nội'),
-(8, N'Bệnh viện K - Cơ sở Tân Triều', N'30 Cầu Bươu, Tân Triều, Thanh Trì, Hà Nội');
 
 
-INSERT INTO [User] (
-  Username, Password, Email, Role, FullName,
-  DateOfBirth, Gender, Phone, Address, ProfileStatus, BloodTypeId
-) VALUES
-(N'user1', N'pass123', N'user1@example.com', N'donor', N'Nguyễn Văn A',
- '1995-05-10', N'Nam', N'0912345678', N'TP. Hồ Chí Minh', N'Đang hoạt động', 1),
 
-(N'user2', N'pass456', N'user2@example.com', N'donor', N'Trần Thị B',
- '1998-07-20', N'Nữ', N'0987654321', N'Hà Nội', N'Đang hoạt động', 4),
+--1
+INSERT INTO [User] (Username, Password, Email, Role, FullName,DateOfBirth, Gender, Phone, Address, ProfileStatus, BloodType) VALUES
+(N'admin1', N'admin1', N'admin@example.com', N'Admin', N'Quản trị viên',
+ '1990-01-01', N'Nam', N'0909090909', N'Đà Nẵng', NULL, NULL),
+ 
+(N'staff1', N'staff1', N'user1@example.com', N'Staff', N'Nguyễn Văn A',
+ '1995-05-10', N'Nam', N'0912345678', N'TP. Hồ Chí Minh', NULL, NULL),
 
-(N'admin1', N'admin123', N'admin@example.com', N'admin', N'Quản trị viên',
- '1990-01-01', N'Nam', N'0909090909', N'Đà Nẵng', N'Đang hoạt động', 7);
+(N'string', N'string', 'Nuser4@email.com', N'Staff', N'Phạm Thị D', 
+  N'1992-11-25', N'Nữ', '0978123456', N'321 Đường Lý Tự Trọng, Q1, TP.HCM', NULL, NULL),
+
+(N'user1', N'pass1', N'user2@example.com', N'User', N'Trần Thị B',
+ '1998-07-20', N'Nữ', N'0987654321', N'Hà Nội', N'Sẵn sàng hiến máu', 'B-'),
+
+(N'user2', N'pass2', N'user1@email.com', N'User', N'Nguyễn Văn A', 
+ N'1990-05-15', N'Nam', N'0912345678', N'123 Đường Lê Lợi, Q1, TP.HCM',N'Sẵn sàng hiến máu', N'A+'),
+
+(N'user3', N'pass3', N'user2@email.com', N'User', N'Trần Thị B', 
+  N'1995-08-20', N'Nữ', N'0987654321', N'456 Đường Nguyễn Huệ, Q1, TP.HCM', N'Sẵn sàng hiến máu', N'B+'),
+
+(N'user4', N'pass4', N'user3@email.com', N'User', N'Lê Văn C', 
+  N'1985-03-10', 'Nam', N'0909123456', N'789 Đường CMT8, Q3, TP.HCM', N'Sẵn sàng hiến máu', N'O+'),
+
+(N'user5', N'pass5', N'user5@email.com', N'User', N'Hoàng Thị E', 
+ '1993-04-12', N'Nữ', N'0911223344', N'101 Đường Hai Bà Trưng, Q1, TP.HCM', N'Sẵn sàng hiến máu', N'AB+'),
+
+(N'user6', N'pass6', N'user6@email.com', N'User', N'Vũ Văn F', 
+ '1988-09-05', N'Nam', N'0988776655', N'202 Đường Lê Duẩn, Q1, TP.HCM', N'Sẵn sàng hiến máu', N'AB-'),
+
+(N'user7', N'pass7', N'user7@email.com', N'User', N'Đặng Thị G', 
+ '1997-12-30', N'Nữ', N'0901122334', N'303 Đường Pasteur, Q3, TP.HCM', N'Sẵn sàng hiến máu', N'O-'),
+
+(N'user8', N'pass8', N'user8@email.com', N'User', N'Bùi Văn H', 
+ '1991-07-18', N'Nam', N'0912345000', N'404 Đường Nguyễn Đình Chiểu, Q1, TP.HCM', N'Sẵn sàng hiến máu', N'A-'),
+
+(N'user9', N'pass9', N'user9@email.com', N'User', N'Lý Thị I', 
+ '1994-02-22', N'Nữ', N'0987650001', N'505 Đường Trần Hưng Đạo, Q5, TP.HCM', N'Sẵn sàng hiến máu', N'B-'),
+
+(N'user10', N'pass10', N'user10@email.com', N'User', N'Phan Văn K', 
+ '1989-06-15', N'Nam', N'0909111222', N'606 Đường Cách Mạng Tháng 8, Q10, TP.HCM', N'Sẵn sàng hiến máu', N'A+'),
+
+(N'user11', N'pass11', N'user11@email.com', N'User', N'Mai Thị L', 
+ '1996-10-08', N'Nữ', N'0912121212', N'707 Đường 3 Tháng 2, Q10, TP.HCM', N'Sẵn sàng hiến máu', N'B+'),
+
+(N'user12', N'pass12', N'user12@email.com', N'User', N'Trịnh Văn M', 
+ '1990-11-11', N'Nam', N'0988989898', N'808 Đường Lý Thường Kiệt, Q10, TP.HCM', N'Sẵn sàng hiến máu', N'O+');
+
+--2
+INSERT INTO Hospital (HospitalName, HospitalAddress, HospitalImage, HospitalPhone)
+VALUES
+(N'Bệnh viện Chợ Rẫy', N'201B Nguyễn Chí Thanh, Quận 5, TP.HCM', N'https://example.com/images/choray.jpg', '02838554137'),
+(N'Bệnh viện Bạch Mai', N'78 Giải Phóng, Đống Đa, Hà Nội', N'https://example.com/images/bachmai.jpg', '02438693731'),
+(N'Bệnh viện Trung ương Huế', N'16 Lê Lợi, TP. Huế', N'https://example.com/images/hue.jpg', '02343822231'),
+(N'Bệnh viện Đại học Y Dược', N'215 Hồng Bàng, Quận 5, TP.HCM', N'https://example.com/images/ydhcm.jpg', '02839525353'),
+(N'Bệnh viện 108', N'1 Trần Hưng Đạo, Hai Bà Trưng, Hà Nội', N'https://example.com/images/108.jpg', '02462784108'),
+(N'Bệnh viện FV', N'6 Nguyễn Lương Bằng, Phú Mỹ Hưng, Quận 7, TP.HCM', N'https://example.com/images/fv.jpg', '02854113333'),
+(N'Bệnh viện Hữu nghị Việt Đức', N'40 Tràng Thi, Hoàn Kiếm, Hà Nội', N'https://example.com/images/vietduc.jpg', '02438253531'),
+(N'Bệnh viện Nhi đồng 1', N'341 Sư Vạn Hạnh, Quận 10, TP.HCM', N'https://example.com/images/nhidong1.jpg', '02839271119'),
+(N'Bệnh viện Từ Dũ', N'284 Cống Quỳnh, Quận 1, TP.HCM', N'https://example.com/images/tudu.jpg', '02854042525'),
+(N'Bệnh viện Phụ sản Hà Nội', N'929 La Thành, Ba Đình, Hà Nội', N'https://example.com/images/phusanhanoi.jpg', '02438343223'),
+(N'Bệnh viện Nhi đồng 2', N'14 Lý Tự Trọng, Quận 1, TP.HCM', N'https://example.com/images/nhidong2.jpg', '02838295725'),
+(N'Bệnh viện Ung bướu TP.HCM', N'3 Nơ Trang Long, Bình Thạnh, TP.HCM', N'https://example.com/images/ungbuouhcm.jpg', '02838412939'),
+(N'Bệnh viện Tai Mũi Họng TW', N'78 Giải Phóng, Đống Đa, Hà Nội', N'https://example.com/images/taimuihong.jpg', '02438691337'),
+(N'Bệnh viện Mắt TP.HCM', N'280 Điện Biên Phủ, Quận 3, TP.HCM', N'https://example.com/images/mathcm.jpg', '02839327546'),
+(N'Bệnh viện Việt Pháp', N'1 Phương Mai, Đống Đa, Hà Nội', N'https://example.com/images/vietphap.jpg', '02435771111'),
+(N'Bệnh viện Đa khoa Quốc tế Vinmec', N'458 Minh Khai, Hai Bà Trưng, Hà Nội', N'https://example.com/images/vinmec.jpg', '02439743456'),
+(N'Bệnh viện Đại học Y Hà Nội', N'1 Tôn Thất Tùng, Đống Đa, Hà Nội', N'https://example.com/images/ydhn.jpg', '02435743291'),
+(N'Bệnh viện Thống Nhất', N'1 Lý Thường Kiệt, Quận Tân Bình, TP.HCM', N'https://example.com/images/thongnhat.jpg', '02838695735'),
+(N'Bệnh viện Nhân dân 115', N'527 Sư Vạn Hạnh, Quận 10, TP.HCM', N'https://example.com/images/115.jpg', '02838654127'),
+(N'Bệnh viện Phổi Trung ương', N'463 Hoàng Hoa Thám, Ba Đình, Hà Nội', N'https://example.com/images/phoitw.jpg', '02438233044');
+
+--2
+INSERT INTO Events(EventDate, EventTime, EventTitle, EventContent, Location, MaxParticipants)
+VALUES
+('2024-03-15', '09:00', N'Ngày hội hiến máu mùa xuân', N'Sự kiện hiến máu đầu năm tại Bệnh viện B', N'456 Nguyễn Trãi, Q5', 60),
+('2024-07-10', '13:30', N'Hiến máu nhân đạo', N'Chương trình hiến máu do Đoàn trường tổ chức', N'Đại học Y Dược TP.HCM', 80),
+('2023-11-25', '08:15', N'Giọt máu yêu thương', N'Hiến máu cứu người tại Bệnh viện C', N'789 Trần Hưng Đạo, Q3', 45),
+('2024-01-20', '10:00', N'Tình nguyện vì sự sống', N'Chương trình hiến máu cho bệnh nhi ung thư', N'Viện Huyết học TP.HCM', 70),
+('2025-06-20', '08:00', N'Ngày hội hiến máu', N'Hiến máu cứu người tại Bệnh viện A', N'123 Lê Lợi, Q1', 50),
+('2025-07-05', '07:30', N'Mỗi giọt máu – Một tấm lòng', N'Ngày hội hiến máu toàn thành phố', N'Công viên 23/9, Q1', 100),
+('2025-08-12', '09:00', N'Hiến máu cứu người', N'Sự kiện phối hợp giữa Hội chữ thập đỏ và Bệnh viện D', N'12 Nguyễn Văn Cừ, Q5', 55),
+('2025-09-01', '08:30', N'Trái tim nhân ái', N'Hiến máu vào dịp Quốc khánh', N'Nhà văn hóa Thanh Niên', 65),
+('2025-10-15', '10:15', N'Ngày hội đỏ', N'Trao giọt máu – Trao hy vọng', N'Đại học Quốc Gia TP.HCM', 120),
+('2025-11-30', '13:00', N'Chung tay vì cộng đồng', N'Sự kiện lớn do Thành đoàn tổ chức', N'Nhà thi đấu Phú Thọ, Q11', 150);
+
+--2
+INSERT INTO Report (Username, ReportDate, ReportType, ReportContent)
+VALUES
+(N'user5', '2024-01-10', N'Góp ý', N'Đề nghị tăng số lượng điểm hiến máu di động trong thành phố'),
+(N'user6', '2024-02-15', N'Khiếu nại', N'Thủ tục đăng ký hiến máu trực tuyến bị lỗi không hoàn thành'),
+(N'staff1', '2024-03-20', N'Báo cáo', N'Tổng kết chương trình hiến máu Xuân hồng 2024'),
+(N'user8', '2024-04-25', N'Góp ý', N'Cần bổ sung đồ ăn nhẹ sau khi hiến máu'),
+(N'user1', '2025-01-05', N'Khiếu nại', N'Nhân viên lấy máu thao tác không đúng quy trình'),
+(N'string', '2025-01-15', N'Báo cáo', N'Báo cáo sự cố thiết bị y tế tại điểm hiến máu'),
+(N'user4', '2025-02-02', N'Góp ý', N'Đề nghị cung cấp giấy chứng nhận hiến máu điện tử'),
+(N'user2', '2025-02-18', N'Khiếu nại', N'Chờ đợi quá lâu trước khi được hiến máu'),
+(N'staff1', '2025-03-10', N'Báo cáo', N'Báo cáo kết quả chiến dịch hiến máu 8/3'),
+(N'user4', '2025-03-28', N'Góp ý', N'Cần có thêm nhân viên hướng dẫn tại các điểm hiến máu'),
+(N'user5', '2025-04-05', N'Khiếu nại', N'Thông tin cá nhân bị sai trên giấy chứng nhận'),
+(N'string', '2025-04-15', N'Báo cáo', N'Báo cáo lượng máu tiếp nhận quý I/2025'),
+(N'user7', '2025-06-01', N'Góp ý', N'Đề nghị cải thiện chất lượng áo phông tặng cho người hiến máu'),
+(N'user8', '2025-06-05', N'Khiếu nại', N'Điểm hiến máu không đủ chỗ ngồi chờ'),
+(N'staff1', '2025-06-10', N'Báo cáo', N'Báo cáo sơ bộ về ngày hội hiến máu 1/6'),
+(N'user2', '2025-06-20', N'Góp ý', N'Đề xuất tổ chức hiến máu tại các trường đại học thường xuyên hơn'),
+(N'user1', '2025-06-25', N'Khiếu nại', N'Không nhận được thông báo kết quả xét nghiệm sau hiến máu'),
+(N'string', '2025-06-30', N'Báo cáo', N'Báo cáo tổng kết hoạt động hiến máu 6 tháng đầu năm'),
+(N'user2', '2025-03-15', N'Khiếu nại', N'Thái độ nhân viên chưa tốt khi đi hiến máu'),
+(N'user3', '2025-04-20', N'Góp ý', N'Đề nghị cải thiện cơ sở vật chất tại điểm hiến máu'),
+(N'staff1', '2025-07-05', N'Báo cáo', N'Báo cáo hoạt động hiến máu quý 2 năm 2023');
+
+--2
+INSERT INTO Blog (BlogTitle, BlogContent, BlogImage, Username)
+VALUES 
+(N'Lợi ích của việc hiến máu', N'Hiến máu không chỉ cứu người mà còn có lợi cho sức khỏe của bạn...', N'https://example.com/hienmau1.jpg', N'staff1'),
+(N'Chuẩn bị gì trước khi hiến máu?', N'Để có một lần hiến máu thành công, bạn cần chuẩn bị...', N'https://example.com/hienmau2.jpg', N'string'),
+(N'Những điều cần biết sau khi hiến máu', N'Sau khi hiến máu, bạn cần lưu ý những điều sau để đảm bảo sức khỏe...', N'https://example.com/hienmau3.jpg', N'staff1');
+
+--3
+INSERT INTO AppointmentRecord (Username, EventId, RegistrationDate, Status, BloodType, DonationUnit)
+VALUES 
+('user1', 1, '2025-06-15', N'Đã hiến', 'B-', 1),
+('user2', 2, '2025-06-14', N'Đã hiến', 'A+', 1),
+('user3', 3, '2025-06-13', N'Chưa hiến', 'B+', 1),
+('user4', 4, '2025-06-10', N'Hủy', 'O+', 0),
+('user5', 5, '2025-06-11', N'Đã hiến', 'AB+', 1),
+('user6', 1, '2025-06-12', N'Chưa hiến', 'AB-', 1),
+('user7', 2, '2025-06-10', N'Đã hiến', 'O-', 1),
+('user8', 3, '2025-06-08', N'Đã hiến', 'A-', 1),
+('user9', 4, '2025-06-09', N'Hủy', 'B-', 0),
+('user10', 5, '2025-06-07', N'Chưa hiến', 'A+', 1),
+('user11', 1, '2025-06-06', N'Đã hiến', 'B+', 1),
+('user12', 2, '2025-06-05', N'Đã hiến', 'O+', 1);
+
+--3
+INSERT INTO Emergency (Username, EmergencyDate, bloodType, EmergencyStatus, EmergencyNote, RequiredUnits, HospitalId)
+VALUES 
+(N'user5', '2025-06-11', N'B-', N'Đã xét duyệt', N'Cần 5 đơn vị nhóm máu B- tại Bệnh viện 108', 5, 5);
+
+--4
+INSERT INTO Notification (EmergencyId, NotificationStatus, NotificationTitle, NotificationContent, NotificationDate)
+VALUES 
+(1, N'Đã gửi', N'Yêu cầu hiến máu khẩn cấp - Bệnh viện 108', N'Cần 5 đơn vị nhóm máu B- tại Bệnh viện 108', '2025-06-11');
+
+--4
+INSERT INTO BloodBank (BloodType, BloodVolumeTotal, BloodBankStatus)
+VALUES 
+('O+', 5, N'Còn'),
+('A+', 8, N'Còn'),
+('B+', 3, N'Còn'),
+('AB+', 0, N'Hết'),
+('O-', 2, N'Còn'),
+('A-', 1, N'Còn'),
+('B-', 0, N'Hết'),
+('AB-', 4, N'Còn');
+
+--4
+INSERT INTO Certificate (AppointmentId, CertificateCode, IssueDate)
+VALUES 
+(1, N'CERT-2023-0001', '2025-01-15'),
+(2, N'CERT-2023-0002', '2025-02-20'),
+(3, N'CERT-2023-0003', '2025-05-10'),
+(4, N'CERT-2023-0004', '2025-06-25'),
+(5, N'CERT-2023-0005', '2025-08-12');
+
+--5
+INSERT INTO BloodDetail (BloodType, Volume, AppointmentId, HospitalId, BloodDetailDate, BloodDetailStatus, Note)
+VALUES 
+('O+', 1, 1, 1, '2025-06-21', N'Còn hạn', NULL),
+('A+', 1, 2, 1, '2025-06-20', N'Còn hạn', NULL),
+('B+', 1, 3, 2, '2025-06-19', N'Còn hạn', NULL),
+('AB+', 1, 4, 3, '2025-06-18', N'Hết hạn', N'Sử dụng trước 2025-06-25'),
+('O-', 1, 5, 2, '2025-06-17', N'Còn hạn', NULL),
+('A-', 1, 6, 1, '2025-06-16', N'Hết hạn', N'Không sử dụng được'),
+('B-', 1, 7, 3, '2025-06-15', N'Còn hạn', NULL),
+('AB-', 1, 8, 2, '2025-06-14', N'Còn hạn', NULL),
+('O+', 1, 9, 1, '2025-06-13', N'Hết hạn', N'Đã lưu trữ quá thời hạn cho phép'),
+('A+', 1, 10, 3, '2025-06-12', N'Còn hạn', NULL);
+
+--5
+INSERT INTO NotificationRecipient (NotificationID, Username, ResponseStatus, ResponseDate)
+VALUES 
+(1, N'user1', N'Chấp nhận', '2025-10-01 10:30:00'),
+(1, N'user9', N'Chưa phản hồi', NULL);
 
 
+CREATE TABLE SurveyQuestion (
+    QuestionId INT PRIMARY KEY IDENTITY(1,1),
+    QuestionText NVARCHAR(MAX),
+    QuestionType NVARCHAR(20) -- 'single', 'multiple', 'text'
+);
+CREATE TABLE SurveyOption (
+    OptionId INT PRIMARY KEY IDENTITY(1,1),
+    QuestionId INT FOREIGN KEY REFERENCES SurveyQuestion(QuestionId),
+    OptionText NVARCHAR(MAX),
+    IsEligible BIT -- NULL nếu không áp dụng, 1 nếu đạt điều kiện hiến, 0 nếu không
+);
+CREATE TABLE UserSurveyAnswer (
+    AnswerId INT PRIMARY KEY IDENTITY(1,1),
+    Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
+    QuestionId INT FOREIGN KEY REFERENCES SurveyQuestion(QuestionId),
+    OptionId INT FOREIGN KEY REFERENCES SurveyOption(OptionId),
+    AppointmentRecordId INT FOREIGN KEY REFERENCES AppointmentRecord(AppointmentId),
+    AnswerText NVARCHAR(MAX), -- Ghi câu trả lời (có thể là OptionText hoặc nhập tay)
+    AnswerDate DATETIME
+);
+
+-- Insert data for SurveyQuestion
+INSERT INTO SurveyQuestion (QuestionText, QuestionType) VALUES
+(N'Cân nặng hiện tại của bạn là bao nhiêu?', 'single'),
+(N'Trong 12 tháng qua, bạn có mắc các bệnh sau không?', 'single'),
+(N'Bạn có đang sử dụng loại thuốc điều trị nào không? Nếu có, vui lòng ghi rõ:', 'text'),
+(N'Bạn có đang mang thai hoặc cho con bú không? (áp dụng cho nữ)', 'single'),
+(N'Trong vòng 6 tháng qua, bạn có thực hiện các điều sau không?', 'single'),
+(N'Bạn đã tiêm vắc-xin trong 14 ngày qua không?', 'single'),
+(N'Bạn có từng bị phản ứng bất thường sau khi hiến máu không?', 'single'),
+(N'Trong 6 tháng qua, bạn có:', 'single'),
+(N'Khoảng thời gian từ lần hiến máu gần nhất đến nay là:', 'single');
+
+-- Insert data for SurveyOption
+INSERT INTO SurveyOption (QuestionId, OptionText, IsEligible) VALUES
+(1, N'Dưới 45kg', 0),
+(1, N'Từ 45kg trở lên', 1),
+(2, N'Viêm gan B hoặc C', 0),
+(2, N'HIV/AIDS', 0),
+(2, N'Lao phổi đang điều trị', 0),
+(2, N'Sốt rét', 0),
+(2, N'Ung thư', 0),
+(2, N'Không mắc bệnh nào', 1),
+(4, N'Có', 0),
+(4, N'Không', 1),
+(5, N'Xăm hình / xỏ khuyên', 0),
+(5, N'Phẫu thuật / nội soi', 0),
+(5, N'Truyền máu', 0),
+(5, N'Không có', 1),
+(6, N'Có', 0),
+(6, N'Không', 1),
+(7, N'Có', 0),
+(7, N'Không', 1),
+(8, N'Quan hệ tình dục không an toàn', 0),
+(8, N'Dùng chung kim tiêm', 0),
+(8, N'Dùng chất kích thích', 0),
+(8, N'Không có các hành vi trên', 1),
+(9, N'Dưới 3 tháng', 0),
+(9, N'Từ 3 tháng trở lên đối với nam', 1),
+(9, N'Từ 4 tháng trở lên đối với nữ', 1);

@@ -5,7 +5,9 @@ namespace BloodDonationAPI.Entities;
 
 public partial class Notification
 {
-    public int EmergencyId { get; set; }
+    public int NotificationId { get; set; }
+
+    public int? EmergencyId { get; set; }
 
     public string? NotificationStatus { get; set; }
 
@@ -13,11 +15,9 @@ public partial class Notification
 
     public string? NotificationContent { get; set; }
 
-    public int? BloodTypeId { get; set; }
+    public DateOnly? NotificationDate { get; set; }
 
-    public virtual BloodBank? BloodType { get; set; }
-
-    public virtual Emergency Emergency { get; set; } = null!;
+    public virtual Emergency? Emergency { get; set; }
 
     public virtual ICollection<NotificationRecipient> NotificationRecipients { get; set; } = new List<NotificationRecipient>();
 }

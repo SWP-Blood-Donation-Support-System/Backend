@@ -1,0 +1,27 @@
+﻿namespace BloodDonationAPI.DTO
+{
+    public class AppointmentHistoryDto
+    {
+        public int AppointmentId { get; set; }
+        public int? EventId { get; set; }
+        public DateTime? AppointmentDate { get; set; }
+        public string? AppointmentStatus { get; set; }
+        
+
+        // Thông tin lịch hẹn
+        public DateOnly? AppointmentDateOfAppointment { get; set; }
+        public TimeOnly? AppointmentTime { get; set; }
+        public string? AppointmentTitle { get; set; }
+        public string? AppointmentContent { get; set; }
+
+        //thông tin hiến máu 
+        public string? BloodStatus { get; set; }
+        public string? BloodType { get; set; }
+        public int? DonationUnit { get; set; }
+        
+        public string? BloodLocation { get; set; }
+
+    }
+
+
+}

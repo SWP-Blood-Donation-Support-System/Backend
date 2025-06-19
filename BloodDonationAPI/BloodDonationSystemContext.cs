@@ -16,21 +16,19 @@ public partial class BloodDonationSystemContext : DbContext
     {
     }
 
-    public virtual DbSet<AppointmentHistory> AppointmentHistories { get; set; }
-
-    public virtual DbSet<AppointmentList> AppointmentLists { get; set; }
+    public virtual DbSet<AppointmentRecord> AppointmentRecords { get; set; }
 
     public virtual DbSet<Blog> Blogs { get; set; }
 
     public virtual DbSet<BloodBank> BloodBanks { get; set; }
 
-    public virtual DbSet<BloodMove> BloodMoves { get; set; }
+    public virtual DbSet<BloodDetail> BloodDetails { get; set; }
 
     public virtual DbSet<Certificate> Certificates { get; set; }
 
-    public virtual DbSet<DonationHistory> DonationHistories { get; set; }
-
     public virtual DbSet<Emergency> Emergencies { get; set; }
+
+    public virtual DbSet<Event> Events { get; set; }
 
     public virtual DbSet<Hospital> Hospitals { get; set; }
 
@@ -42,55 +40,34 @@ public partial class BloodDonationSystemContext : DbContext
 
     public virtual DbSet<User> Users { get; set; }
 
-    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-    {
-        optionsBuilder.UseSqlServer(GetConnectionString());
-
-    }
-
-    private string GetConnectionString()
-    {
-        IConfiguration configuration = new ConfigurationBuilder()
-            .SetBasePath(Directory.GetCurrentDirectory()).AddJsonFile("appsettings.json",true ,true).Build();
-        var strConn = configuration["ConnectionStrings:DefaultConnection"];
-
-        return strConn;
-    }   
-
+    public virtual DbSet<SurveyQuestion> SurveyQuestions { get; set; }
+    public virtual DbSet<UserSurveyAnswer> UserSurveyAnswers { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.Entity<AppointmentHistory>(entity =>
+        modelBuilder.Entity<AppointmentRecord>(entity =>
         {
-            entity.HasKey(e => e.AppointmentHistoryId).HasName("PK__Appointm__6795700E36B12243");
+            entity.HasKey(e => e.AppointmentId).HasName("PK__Appointm__8ECDFCC215502E78");
 
-            entity.ToTable("AppointmentHistory");
+            entity.ToTable("AppointmentRecord");
 
-            entity.Property(e => e.AppointmentDate).HasColumnType("datetime");
+            entity.Property(e => e.BloodType).HasMaxLength(5);
+            entity.Property(e => e.RegistrationDate).HasColumnType("datetime");
             entity.Property(e => e.Status).HasMaxLength(50);
             entity.Property(e => e.Username).HasMaxLength(50);
 
-            entity.HasOne(d => d.Appointment).WithMany(p => p.AppointmentHistories)
-                .HasForeignKey(d => d.AppointmentId)
-                .HasConstraintName("FK__Appointme__Appoi__398D8EEE");
+            entity.HasOne(d => d.Event).WithMany(p => p.AppointmentRecords)
+                .HasForeignKey(d => d.EventId)
+                .HasConstraintName("FK__Appointme__Event__182C9B23");
 
-            entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.AppointmentHistories)
+            entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.AppointmentRecords)
                 .HasForeignKey(d => d.Username)
-                .HasConstraintName("FK__Appointme__Usern__38996AB5");
-        });
-
-        modelBuilder.Entity<AppointmentList>(entity =>
-        {
-            entity.HasKey(e => e.AppointmentId).HasName("PK__Appointm__8ECDFCC2182C9B23");
-
-            entity.ToTable("AppointmentList");
-
-            entity.Property(e => e.AppointmentTitle).HasMaxLength(100);
+                .HasConstraintName("FK__Appointme__Usern__173876EA");
         });
 
         modelBuilder.Entity<Blog>(entity =>
         {
-            entity.HasKey(e => e.BlogId).HasName("PK__Blog__54379E302B3F6F97");
+            entity.HasKey(e => e.BlogId).HasName("PK__Blog__54379E30286302EC");
 
             entity.ToTable("Blog");
 
@@ -99,129 +76,111 @@ public partial class BloodDonationSystemContext : DbContext
 
             entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.Blogs)
                 .HasForeignKey(d => d.Username)
-                .HasConstraintName("FK__Blog__Username__2D27B809");
+                .HasConstraintName("FK__Blog__Username__2A4B4B5E");
         });
 
         modelBuilder.Entity<BloodBank>(entity =>
         {
-            entity.HasKey(e => e.BloodTypeId).HasName("PK__BloodBan__B489BA637F60ED59");
+            entity.HasKey(e => e.BloodType).HasName("PK__BloodBan__33141D171FCDBCEB");
 
             entity.ToTable("BloodBank");
 
-            entity.Property(e => e.BloodTypeId).ValueGeneratedNever();
-            entity.Property(e => e.BloodTypeName).HasMaxLength(50);
+            entity.Property(e => e.BloodType).HasMaxLength(5);
+            entity.Property(e => e.BloodBankStatus).HasMaxLength(100);
         });
 
-        modelBuilder.Entity<BloodMove>(entity =>
+        modelBuilder.Entity<BloodDetail>(entity =>
         {
-            entity.HasKey(e => e.BloodMoveId).HasName("PK__BloodMov__3A1A9F67300424B4");
+            entity.HasKey(e => e.BloodDetailId).HasName("PK__BloodDet__BC368EB12D27B809");
 
-            entity.ToTable("BloodMove");
+            entity.ToTable("BloodDetail");
 
-            entity.Property(e => e.Username).HasMaxLength(50);
+            entity.Property(e => e.BloodDetailStatus).HasMaxLength(100);
+            entity.Property(e => e.BloodType).HasMaxLength(5);
 
-            entity.HasOne(d => d.BloodType).WithMany(p => p.BloodMoves)
-                .HasForeignKey(d => d.BloodTypeId)
-                .HasConstraintName("FK__BloodMove__Blood__32E0915F");
+            entity.HasOne(d => d.Appointment).WithMany(p => p.BloodDetails)
+                .HasForeignKey(d => d.AppointmentId)
+                .HasConstraintName("FK__BloodDeta__Appoi__300424B4");
 
-            entity.HasOne(d => d.Hospital).WithMany(p => p.BloodMoves)
+            entity.HasOne(d => d.BloodTypeNavigation).WithMany(p => p.BloodDetails)
+                .HasForeignKey(d => d.BloodType)
+                .HasConstraintName("FK__BloodDeta__Blood__2F10007B");
+
+            entity.HasOne(d => d.Hospital).WithMany(p => p.BloodDetails)
                 .HasForeignKey(d => d.HospitalId)
-                .HasConstraintName("FK__BloodMove__Hospi__33D4B598");
-
-            entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.BloodMoves)
-                .HasForeignKey(d => d.Username)
-                .HasConstraintName("FK__BloodMove__Usern__31EC6D26");
+                .HasConstraintName("FK__BloodDeta__Hospi__30F848ED");
         });
 
         modelBuilder.Entity<Certificate>(entity =>
         {
-            entity.HasKey(e => e.DonationHistoryId).HasName("PK__Certific__A1E5FD5321B6055D");
+            entity.HasKey(e => e.AppointmentId).HasName("PK__Certific__8ECDFCC21B0907CE");
 
             entity.ToTable("Certificate");
 
-            entity.Property(e => e.DonationHistoryId).ValueGeneratedNever();
+            entity.Property(e => e.AppointmentId).ValueGeneratedNever();
             entity.Property(e => e.CertificateCode).HasMaxLength(50);
 
-            entity.HasOne(d => d.DonationHistory).WithOne(p => p.Certificate)
-                .HasForeignKey<Certificate>(d => d.DonationHistoryId)
+            entity.HasOne(d => d.Appointment).WithOne(p => p.Certificate)
+                .HasForeignKey<Certificate>(d => d.AppointmentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Certifica__Donat__239E4DCF");
-        });
-
-        modelBuilder.Entity<DonationHistory>(entity =>
-        {
-            entity.HasKey(e => e.DonationHistoryId).HasName("PK__Donation__A1E5FD531BFD2C07");
-
-            entity.ToTable("DonationHistory");
-
-            entity.Property(e => e.DonationStatus).HasMaxLength(50);
-            entity.Property(e => e.Username).HasMaxLength(50);
-
-            entity.HasOne(d => d.BloodType).WithMany(p => p.DonationHistories)
-                .HasForeignKey(d => d.BloodTypeId)
-                .HasConstraintName("FK__DonationH__Blood__1ED998B2");
-
-            entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.DonationHistories)
-                .HasForeignKey(d => d.Username)
-                .HasConstraintName("FK__DonationH__Usern__1DE57479");
+                .HasConstraintName("FK__Certifica__Appoi__1CF15040");
         });
 
         modelBuilder.Entity<Emergency>(entity =>
         {
-            entity.HasKey(e => e.EmergencyId).HasName("PK__Emergenc__7B5544D30BC6C43E");
+            entity.HasKey(e => e.EmergencyId).HasName("PK__Emergenc__7B5544D307020F21");
 
             entity.ToTable("Emergency");
 
+            entity.Property(e => e.BloodType).HasMaxLength(5);
             entity.Property(e => e.EmergencyStatus).HasMaxLength(50);
             entity.Property(e => e.Username).HasMaxLength(50);
 
-            entity.HasOne(d => d.BloodType).WithMany(p => p.Emergencies)
-                .HasForeignKey(d => d.BloodTypeId)
-                .HasConstraintName("FK__Emergency__Blood__0EA330E9");
-
             entity.HasOne(d => d.Hospital).WithMany(p => p.Emergencies)
                 .HasForeignKey(d => d.HospitalId)
-                .HasConstraintName("FK__Emergency__Hospi__0F975522");
+                .HasConstraintName("FK__Emergency__Hospi__09DE7BCC");
 
             entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.Emergencies)
                 .HasForeignKey(d => d.Username)
-                .HasConstraintName("FK__Emergency__Usern__0DAF0CB0");
+                .HasConstraintName("FK__Emergency__Usern__08EA5793");
+        });
+
+        modelBuilder.Entity<Event>(entity =>
+        {
+            entity.HasKey(e => e.EventId).HasName("PK__Events__7944C810117F9D94");
+
+            entity.Property(e => e.EventTitle).HasMaxLength(100);
+            entity.Property(e => e.Location).HasMaxLength(255);
         });
 
         modelBuilder.Entity<Hospital>(entity =>
         {
-            entity.HasKey(e => e.HospitalId).HasName("PK__Hospital__38C2E5AF03317E3D");
+            entity.HasKey(e => e.HospitalId).HasName("PK__Hospital__38C2E5AF7F60ED59");
 
             entity.ToTable("Hospital");
 
-            entity.Property(e => e.HospitalId).ValueGeneratedNever();
-            entity.Property(e => e.Address).HasMaxLength(200);
-            entity.Property(e => e.Name).HasMaxLength(100);
+            entity.Property(e => e.HospitalAddress).HasMaxLength(200);
+            entity.Property(e => e.HospitalName).HasMaxLength(100);
+            entity.Property(e => e.HospitalPhone).HasMaxLength(20);
         });
 
         modelBuilder.Entity<Notification>(entity =>
         {
-            entity.HasKey(e => e.EmergencyId).HasName("PK__Notifica__7B5544D31273C1CD");
+            entity.HasKey(e => e.NotificationId).HasName("PK__Notifica__20CF2E120CBAE877");
 
             entity.ToTable("Notification");
 
-            entity.Property(e => e.EmergencyId).ValueGeneratedNever();
             entity.Property(e => e.NotificationStatus).HasMaxLength(50);
             entity.Property(e => e.NotificationTitle).HasMaxLength(100);
 
-            entity.HasOne(d => d.BloodType).WithMany(p => p.Notifications)
-                .HasForeignKey(d => d.BloodTypeId)
-                .HasConstraintName("FK__Notificat__Blood__15502E78");
-
-            entity.HasOne(d => d.Emergency).WithOne(p => p.Notification)
-                .HasForeignKey<Notification>(d => d.EmergencyId)
-                .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Notificat__Emerg__145C0A3F");
+            entity.HasOne(d => d.Emergency).WithMany(p => p.Notifications)
+                .HasForeignKey(d => d.EmergencyId)
+                .HasConstraintName("FK__Notificat__Emerg__0EA330E9");
         });
 
         modelBuilder.Entity<NotificationRecipient>(entity =>
         {
-            entity.HasKey(e => e.NotificationRecipientId).HasName("PK__Notifica__F6659EE43C69FB99");
+            entity.HasKey(e => e.NotificationRecipientId).HasName("PK__Notifica__F6659EE433D4B598");
 
             entity.ToTable("NotificationRecipient");
 
@@ -229,41 +188,82 @@ public partial class BloodDonationSystemContext : DbContext
             entity.Property(e => e.ResponseStatus).HasMaxLength(50);
             entity.Property(e => e.Username).HasMaxLength(50);
 
-            entity.HasOne(d => d.Emergency).WithMany(p => p.NotificationRecipients)
-                .HasForeignKey(d => d.EmergencyId)
-                .HasConstraintName("FK__Notificat__Emerg__3E52440B");
-
-            entity.HasOne(d => d.NotificationEmergency).WithMany(p => p.NotificationRecipients)
-                .HasForeignKey(d => d.NotificationEmergencyId)
-                .HasConstraintName("FK__Notificat__Notif__3F466844");
+            entity.HasOne(d => d.Notification).WithMany(p => p.NotificationRecipients)
+                .HasForeignKey(d => d.NotificationId)
+                .HasConstraintName("FK__Notificat__Notif__35BCFE0A");
 
             entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.NotificationRecipients)
                 .HasForeignKey(d => d.Username)
-                .HasConstraintName("FK__Notificat__Usern__403A8C7D");
+                .HasConstraintName("FK__Notificat__Usern__36B12243");
         });
 
         modelBuilder.Entity<Report>(entity =>
         {
-            entity.HasKey(e => e.ReportId).HasName("PK__Report__D5BD4805267ABA7A");
+            entity.HasKey(e => e.ReportId).HasName("PK__Report__D5BD4805F0D0B0B5");
 
             entity.ToTable("Report");
 
+            entity.Property(e => e.ReportContent).HasMaxLength(500);
+            entity.Property(e => e.ReportDate).HasColumnType("date");
             entity.Property(e => e.ReportType).HasMaxLength(50);
             entity.Property(e => e.Username).HasMaxLength(50);
 
             entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.Reports)
                 .HasForeignKey(d => d.Username)
-                .HasConstraintName("FK__Report__Username__286302EC");
+                .HasConstraintName("FK__Report__Username__3A81B327");
+        });
+
+        modelBuilder.Entity<SurveyQuestion>(entity =>
+        {
+            entity.HasKey(e => e.QuestionId);
+
+            entity.ToTable("SurveyQuestion");
+
+            entity.Property(e => e.QuestionText).IsRequired();
+            entity.Property(e => e.QuestionType).IsRequired().HasMaxLength(20);
+        });
+
+        modelBuilder.Entity<UserSurveyAnswer>(entity =>
+        {
+            entity.HasKey(e => e.AnswerId);
+
+            entity.ToTable("UserSurveyAnswer");
+
+            entity.Property(e => e.Username).HasMaxLength(50).IsRequired();
+            entity.Property(e => e.AnswerText);
+            entity.Property(e => e.AnswerDate).HasColumnType("datetime");
+            entity.Property(e => e.EventId).IsRequired();
+
+            entity.HasOne(d => d.User)
+                .WithMany()
+                .HasForeignKey(d => d.Username)
+                .HasConstraintName("FK_UserSurveyAnswer_User");
+
+            entity.HasOne(d => d.Question)
+                .WithMany(p => p.UserAnswers)
+                .HasForeignKey(d => d.QuestionId)
+                .HasConstraintName("FK_UserSurveyAnswer_SurveyQuestion");
+
+            entity.HasOne(d => d.Option)
+                .WithMany(p => p.UserAnswers)
+                .HasForeignKey(d => d.OptionId)
+                .HasConstraintName("FK_UserSurveyAnswer_SurveyOption");
+
+            entity.HasOne(d => d.Event)
+                .WithMany()
+                .HasForeignKey(d => d.EventId)
+                .HasConstraintName("FK_UserSurveyAnswer_Event");
         });
 
         modelBuilder.Entity<User>(entity =>
         {
-            entity.HasKey(e => e.Username).HasName("PK__User__536C85E507020F21");
+            entity.HasKey(e => e.Username).HasName("PK__User__536C85E503317E3D");
 
             entity.ToTable("User");
 
             entity.Property(e => e.Username).HasMaxLength(50);
             entity.Property(e => e.Address).HasMaxLength(200);
+            entity.Property(e => e.BloodType).HasMaxLength(5);
             entity.Property(e => e.Email).HasMaxLength(100);
             entity.Property(e => e.FullName).HasMaxLength(100);
             entity.Property(e => e.Gender).HasMaxLength(10);
@@ -271,10 +271,6 @@ public partial class BloodDonationSystemContext : DbContext
             entity.Property(e => e.Phone).HasMaxLength(20);
             entity.Property(e => e.ProfileStatus).HasMaxLength(50);
             entity.Property(e => e.Role).HasMaxLength(50);
-
-            entity.HasOne(d => d.BloodType).WithMany(p => p.Users)
-                .HasForeignKey(d => d.BloodTypeId)
-                .HasConstraintName("FK__User__BloodTypeI__08EA5793");
         });
 
         OnModelCreatingPartial(modelBuilder);
