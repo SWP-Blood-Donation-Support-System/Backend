@@ -62,15 +62,19 @@ namespace BloodDonationAPI.DTO
 
     public class SurveyAnsweredDto 
     { 
-        public int appointmentId { get; set; }
+        public int? appointmentId { get; set; }
+       public List<SurveyAnsweredItemsDto> AnsweredItems { get; set; } = new List<SurveyAnsweredItemsDto>();
+
+    }
+    public class SurveyAnsweredItemsDto
+    {
         public int? QuestionId { get; set; }
-        public string QuestionText{ get; set; }
+        public string QuestionText { get; set; }
         public int? OptionId { get; set; }
         public string OptionText { get; set; }
         public string? AdditionalText { get; set; }
 
         public DateTime? AnswerDate { get; set; }
-
     }
 
 

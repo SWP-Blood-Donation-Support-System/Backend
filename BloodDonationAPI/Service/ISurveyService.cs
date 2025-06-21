@@ -8,9 +8,9 @@ namespace BloodDonationAPI.Service
         Task<List<SurveyQuestionDto>> GetAllQuestions();
         //Task<string> SubmitAnswer(string username, SubmitAnswerDto dto);
         //Task<List<UserAnswerDto>> GetUserAnswers(string username, int eventId);
-        Task SubmitSurveyAnswersAsync(SurveyAnswerDto dto);
+        Task<string> SubmitSurveyAnswersAsync(SurveyAnswerDto dto);
 
-        Task<List<SurveyAnsweredDto>> GetAnsweredByAppointmentIdAsync(int appointmentId);
-
+        Task<SurveyAnsweredDto> GetAnsweredByAppointmentIdAsync(int appointmentId);
+        Task<List<SurveyAnsweredDto>> GetAllAnsweredOfAppointmentHavePendinStatusAsync();
     }
 } 

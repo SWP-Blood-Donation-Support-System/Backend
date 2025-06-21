@@ -28,30 +28,57 @@ namespace BloodDonationAPI.Controllers
             return Ok(questions);
         }
 
-
+        /// <summary>
+        /// Api này dùng để submit câu trả lời khảo sát của người dùng
+        /// </summary>
+        /// <remarks>
+        /// FE khi bấm nút dăng kí thì sẻ tạo 1 appointmentId và chuyển trang cho người dùng trả lời khảo sát. 
+        /// 
+        /// đầu tiên là khi bấm nút sẻ gọi api lấy các câu hỏi khảo sát, sau đó người dùng trả lời xong thì sẽ submit câu trả lời khảo sát này bằng cách gọi api này.
+        /// 
+        /// Lấy appoimentID từ cái đăng kí mới tạo ra, và gửi kèm theo các câu trả lời của người dùng.khi trả lời xong và bấm nút submit thì sẽ gọi api này để lưu câu trả lời khảo sát vào database.
+        /// </remarks>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPost("submit-survey-answers")]
         public async Task<IActionResult> SubmitSurveyAnswersAsync([FromBody] SurveyAnswerDto dto)
         {
-            try
-            {
-                await _surveyService.SubmitSurveyAnswersAsync(dto);
-                return Ok(new { message = "Câu trả lời đã được lưu thành công." });
-            }
-            catch (ArgumentException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
-            catch (Exception ex)
-            {
-                return StatusCode(500, new { message = "Đã xảy ra lỗi khi lưu câu trả lời: " + ex.Message });
-            }
+          var result = await _surveyService.SubmitSurveyAnswersAsync(dto);
+           return Ok(new { message = result });
         }
 
-
+        /// <summary>
+        /// Dùng để lấy tất cả các câu trả lời đã được trả lời theo appointmentId
+        /// </summary>
+        /// <remarks>
+        /// FE sẻ gửi appointmentId của cuộc hẹn để lấy các câu trả lời đã được trả lời cho cuộc hẹn đó.
+        /// 
+        /// </remarks>
+        /// <param name="appointmentId"></param>
+        /// <returns></returns>
         [HttpGet("answered/{appointmentId}")]
         public async Task<IActionResult> GetAnsweredByAppointmentIdAsync(int appointmentId)
         {
             var answered = await _surveyService.GetAnsweredByAppointmentIdAsync(appointmentId);
+            if (answered == null )
+            {
+                return NotFound(new { message = "Không tìm thấy câu trả lời cho cuộc hẹn này." });
+            }
+            return Ok(answered);
+        }
+
+        /// <summary>
+        /// Api này dùng để lấy tất cả các câu trả lời đã được trả lời và có trạng thái đang chờ duyệt (pending) của cuộc hẹn.
+        /// </summary>
+        /// <remarks>
+        /// cái này dùng để staff xem tất cả các câu trả lời đã được trả lời và có trạng thái đang chờ duyệt (pending) của cuộc hẹn. để làm them chức năng kế là duyệt trạng thái cho lịch hẹn này.
+        /// </remarks>
+        /// <returns></returns>
+
+        [HttpGet("pending")]
+        public async Task<IActionResult> GetAllAnsweredHaveAppointmentStatusAsync()
+        {
+            var answered = await _surveyService.GetAllAnsweredOfAppointmentHavePendinStatusAsync();
             if (answered == null || !answered.Any())
             {
                 return NotFound(new { message = "Không tìm thấy câu trả lời cho cuộc hẹn này." });

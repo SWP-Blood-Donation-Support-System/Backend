@@ -1,6 +1,7 @@
 ﻿using BloodDonationAPI.DTO;
 using BloodDonationAPI.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Threading.Tasks;
 
 namespace BloodDonationAPI.Service
 {
@@ -32,38 +33,83 @@ namespace BloodDonationAPI.Service
         }
         public async Task<string> RegisterAppointment(string userName , RegisterAppointmentDto Dto)
         {
+            //kiểm tra người dùng có tồn tại và đủ điều kiện đăng ký không
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userName);
             if (user == null)
                 return "User not found.";
 
             if (user.ProfileStatus != "Active")
                 return "Bạn chưa đủ điều kiện để đăng ký.";
-
+            //kiểm tra lịch hẹn có tồn tại không
             var appointment = await _context.Events
                 .FirstOrDefaultAsync(a => a.EventId == Dto.eventId);
 
             if (appointment == null)
                 return "Lịch hẹn không tồn tại.";
-
+            //kiểm tra xem đã đăng ký lịch hẹn này chưa
             bool alreadyRegistered = await _context.AppointmentRecords.AnyAsync(h =>
                 h.Username == userName && h.EventId == Dto.eventId);
 
             if (alreadyRegistered)
                 return "Bạn đã đăng ký lịch hẹn này rồi.";
-
+            // nếu chưa có lịch hẹn thì thêm mới vào bảng AppointmentRecords
             var history = new AppointmentRecord
             {
                 Username = userName,
                 EventId = Dto.eventId,
                 RegistrationDate = DateTime.Now,
-                Status = "Đã đăng ký"
+                Status = "Đang xét duyệt"
             };
 
                 _context.AppointmentRecords.Add(history);
                 await _context.SaveChangesAsync();
+            return "Bạn đã đăng ký thành công lịch hẹn";
 
-                return "Bạn đã đăng ký thành công lịch hẹn";
+            //var appointmentId = history.AppointmentId;
+
+            //// Kiểm tra xem người dùng đã trả lời khảo sát chưa
+            //bool hasAnswers = await _context.UserSurveyAnswers
+            //    .AnyAsync(a => a.AppointmentId == appointmentId);
+
+            //if (!hasAnswers)
+            //{
+            //    return "Bạn đã đăng ký thành công lịch hẹn. Vui lòng trả lời khảo sát để xác định đủ điều kiện hiến máu.";
+            //}
+            ////kiêm tra xem người dùng có đủ điều kiện hiến máu chưa
+
+            //var status = "Đang xét duyệt";//satus mặc định là đang xét duyệt neu can xem xet them 
+
+            //bool? isEligible = await CheckUserAnsweredSurvey(appointmentId);
+            //if (isEligible == true)
+            //{
+            //    // Cập nhật thông tin hiến máu nếu đủ điều kiện
+            //    status = "Đã Đăng ký";
+
+            //}
+            //else if (isEligible == false)
+            //{
+            //    // Cập nhật thông tin hiến máu nếu không đủ điều kiện
+            //    status = "Không đủ điều kiện";
+            //}
+            //// Cập nhật trạng thái lịch hẹn
+            //history.Status = status;
+            //_context.AppointmentRecords.Update(history);
+            //await _context.SaveChangesAsync();
+
+            //// Trả về thông báo dựa trên trạng thái
+            //return status switch
+            //{
+            //    "Đã Đăng ký" => "Bạn đã đăng ký thành công lịch hẹn và đủ điều kiện hiến máu.",
+            //    "Không đủ điều kiện" => "Bạn đã đăng ký thành công lịch hẹn nhưng không đủ điều kiện hiến máu.",
+            //    "Đang xét duyệt" => "Bạn đã đăng ký thành công lịch hẹn và đang chờ xét duyệt.",
+            //    _ => "Bạn đã đăng ký thành công lịch hẹn."
+            //};
+
         }
+       
+       
+
+
         public async Task<List<AppointmentHistoryDto>> GetByUsernameAsync(string username)
         {
             var records = await _context.AppointmentRecords

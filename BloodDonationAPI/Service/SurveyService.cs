@@ -32,14 +32,15 @@ namespace BloodDonationAPI.Service
             }).ToList();
         }
 
-        public  async  Task<List<SurveyAnsweredDto>> GetAnsweredByAppointmentIdAsync(int appointmentId)
+        public  async  Task<SurveyAnsweredDto?> GetAnsweredByAppointmentIdAsync(int appointmentId)
         {
            var answered =  await _context.UserSurveyAnswers
                 .Where(a => a.AppointmentId == appointmentId)
                 .Include(a => a.Question)
                 .Include(a => a.Option)
-                .Select(a => new SurveyAnsweredDto
+                .Select(a => new SurveyAnsweredItemsDto
                 {
+                    
                     QuestionId = a.QuestionId,
                     QuestionText = a.Question.QuestionText,
                     OptionId = a.OptionId,
@@ -47,10 +48,21 @@ namespace BloodDonationAPI.Service
                     AdditionalText = a.AdditionalText,
                     AnswerDate = a.AnswerDate
                 }).ToListAsync();
-            return answered;
+
+            if (answered == null || !answered.Any())
+            {
+                return null; // Không tìm thấy câu trả lời cho cuộc hẹn này
+            }
+                var result = new SurveyAnsweredDto
+                {
+                    appointmentId = appointmentId,
+                    AnsweredItems = answered
+                };
+            return result;
+
         }
 
-        public async Task SubmitSurveyAnswersAsync(SurveyAnswerDto dto)
+        public async Task<string> SubmitSurveyAnswersAsync(SurveyAnswerDto dto)
         {
            if(dto.appointmentId <= 0 || dto.Answers == null || !dto.Answers.Any())
            {
@@ -68,13 +80,87 @@ namespace BloodDonationAPI.Service
                 OptionId = a.OptionId,
                 AdditionalText = a.AdditionalText,
                 AnswerDate = DateTime.Now
-            });
+            }).ToList();
             await _context.UserSurveyAnswers.AddRangeAsync(answers);
             await _context.SaveChangesAsync();
+
+            //kiem tra ket qua tra loi
+            var checkResult = await CheckUserAnsweredSurvey(dto.appointmentId);
+
+            // kiem tra xem lịch hẹn có tồn tại không
+            var appointment = await _context.AppointmentRecords
+                .FirstOrDefaultAsync(a => a.AppointmentId == dto.appointmentId);
+            if (appointment == null)
+            {
+                throw new ArgumentException("Lịch hẹn không tồn tại.");
+            }
+
+            // kiem tra va gan cac status tuy theo ket qua tra loi
+            var status = checkResult switch
+            {
+                true => "Đã đủ điều kiện",
+                false => "Không đủ điều kiện",
+                null => "Đang xét duyệt"
+            };
+
+            //luu status vao appointmentRecord
+            appointment.Status = status;
+            _context.AppointmentRecords.Update(appointment);
+            await _context.SaveChangesAsync();
+
+            var message = checkResult switch
+            {
+                true => "Câu trả lời đã được lưu thành công. Bạn đủ điều kiện hiến máu.",
+                false => "Câu trả lời đã được lưu thành công. Bạn không đủ điều kiện hiến máu.",
+                null => "Câu trả lời đã được lưu thành công. Đang chờ xét duyệt."
+            };
+
+            return message;
         }
 
+        public async Task<bool?> CheckUserAnsweredSurvey(int appointmentID)
+        {
+            var answers = await _context.UserSurveyAnswers
+                .Where(a => a.AppointmentId == appointmentID)
+                .Select(a => a.Option.IsEligible).ToListAsync();
 
-        
+            if (answers.Any(a => a == false))
+            {
+                return false; // Nếu có bất kỳ câu trả lời nào không đủ điều kiện, trả về false
+            }
+            if (answers.All(a => a == true))
+            {
+                return true; // Nếu không có câu trả lời nào, coi như không đủ điều kiện
+            }
+
+            return null;
+        }
+
+        public async Task<List<SurveyAnsweredDto>> GetAllAnsweredOfAppointmentHavePendinStatusAsync()
+        {
+            var answers =  await _context.UserSurveyAnswers
+                .Include(a => a.Question)
+                .Include(a => a.Option)
+                .Where(a => a.Appointment.Status == "Đang xét duyệt") // Chỉ lấy những câu trả lời có lịch hẹn đã có trạng thái ddang xet duyệt de xem xét
+                .GroupBy(a => a.AppointmentId) // Nhóm theo AppointmentId để gom các câu trả lời của cùng một cuộc hẹn
+                .Select(g => new SurveyAnsweredDto
+                {
+                    appointmentId = g.Key,
+                    AnsweredItems = g.Select(a => new SurveyAnsweredItemsDto
+                    {
+                        QuestionId = a.QuestionId,
+                        QuestionText = a.Question.QuestionText,
+                        OptionId = a.OptionId,
+                        OptionText = a.Option.OptionText,
+                        AdditionalText = a.AdditionalText,
+                        AnswerDate = a.AnswerDate
+                    }).ToList()
+                }).ToListAsync();
+
+
+            return answers;
+        }
+
 
         //public async Task<string> SubmitAnswer(string username, SubmitAnswerDto dto)
         //{
