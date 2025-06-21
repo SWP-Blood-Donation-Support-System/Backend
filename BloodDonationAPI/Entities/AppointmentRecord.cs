@@ -25,5 +25,7 @@ public partial class AppointmentRecord
 
     public virtual Event? Event { get; set; }
 
+    public virtual ICollection<UserSurveyAnswer> UserSurveyAnswers { get; set; } = new List<UserSurveyAnswer>();
+
     public virtual User? UsernameNavigation { get; set; }
 }
