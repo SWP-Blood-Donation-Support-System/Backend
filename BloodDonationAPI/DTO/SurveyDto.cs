@@ -18,6 +18,10 @@ namespace BloodDonationAPI.DTO
         public string OptionText { get; set; }
     }
 
+
+
+
+
     public class SubmitAnswerDto
     {
         [Required]
@@ -41,4 +45,33 @@ namespace BloodDonationAPI.DTO
         public DateTime CreatedAt { get; set; }
         public int EventId { get; set; }
     }
+
+
+    public class SurveyAnswerDto
+    {
+      public int appointmentId { get; set; }
+      public List<AnswerItemDto> Answers { get; set; } = new List<AnswerItemDto>();
+    }
+
+    public class AnswerItemDto
+    {
+        public int QuestionId { get; set; }
+        public int OptionId { get; set; }
+        public string? AdditionalText { get; set; }
+    }
+
+    public class SurveyAnsweredDto 
+    { 
+        public int appointmentId { get; set; }
+        public int? QuestionId { get; set; }
+        public string QuestionText{ get; set; }
+        public int? OptionId { get; set; }
+        public string OptionText { get; set; }
+        public string? AdditionalText { get; set; }
+
+        public DateTime? AnswerDate { get; set; }
+
+    }
+
+
 } 
