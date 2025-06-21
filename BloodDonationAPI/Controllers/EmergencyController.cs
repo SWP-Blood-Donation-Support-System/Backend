@@ -105,5 +105,24 @@ namespace BloodDonationAPI.Controllers
                 return StatusCode(500, new { message = "An error occurred while processing your request.", error = ex.Message });
             }
         }
+
+        /// <summary>
+        /// So sánh lượng máu trong kho với đơn khẩn cấp, trả về trạng thái đủ/không đủ và chi tiết nếu đủ
+        /// </summary>
+        [HttpGet("CompareBlood/{emergencyId}")]
+        [Authorize(Roles = "Staff,Admin")]
+        public async Task<IActionResult> CompareBlood(int emergencyId)
+        {
+            try
+            {
+                var result = await _emergencyService.CompareBloodForEmergency(emergencyId);
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error comparing blood for emergency");
+                return StatusCode(500, new { message = ex.Message });
+            }
+        }
     }
 } 
