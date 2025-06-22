@@ -62,7 +62,7 @@ namespace BloodDonationAPI.Controllers
         /// Tạo blog mới
         /// </summary>
         [HttpPost("CreateBlog")]
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Staff, Admin")]
         public async Task<IActionResult> CreateBlog([FromBody] CreateBlogDto dto)
         {
             try
@@ -88,7 +88,7 @@ namespace BloodDonationAPI.Controllers
         /// Cập nhật blog theo ID
         /// </summary>
         [HttpPut("UpdateBlog/{id}")]
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Staff, Admin")]
         public async Task<IActionResult> UpdateBlog(int id, [FromBody] UpdateBlogDto dto)
         {
             try
@@ -114,7 +114,7 @@ namespace BloodDonationAPI.Controllers
         /// Xóa blog theo ID
         /// </summary>
         [HttpDelete("DeleteBlog/{id}")]
-        [Authorize(Roles = "Staff,Admin")]
+        [Authorize(Roles = "Staff, Admin")]
         public async Task<IActionResult> DeleteBlog(int id)
         {
             try

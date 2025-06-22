@@ -128,6 +128,8 @@ CREATE TABLE Blog (
   BlogTitle NVARCHAR(100),
   BlogContent NVARCHAR(MAX),
   BlogImage NVARCHAR(MAX),
+  BlogStatus NVARCHAR(MAX),
+  BlogDetail NVARCHAR(MAX),
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username)
 );
 
@@ -271,11 +273,11 @@ VALUES
 (N'staff1', '2025-07-05', N'Báo cáo', N'Báo cáo hoạt động hiến máu quý 2 năm 2023');
 
 --2
-INSERT INTO Blog (BlogTitle, BlogContent, BlogImage, Username)
+INSERT INTO Blog  (BlogTitle, BlogContent, BlogImage, BlogStatus, BlogDetail, Username)
 VALUES 
-(N'Lợi ích của việc hiến máu', N'Hiến máu không chỉ cứu người mà còn có lợi cho sức khỏe của bạn...', N'https://example.com/hienmau1.jpg', N'staff1'),
-(N'Chuẩn bị gì trước khi hiến máu?', N'Để có một lần hiến máu thành công, bạn cần chuẩn bị...', N'https://example.com/hienmau2.jpg', N'string'),
-(N'Những điều cần biết sau khi hiến máu', N'Sau khi hiến máu, bạn cần lưu ý những điều sau để đảm bảo sức khỏe...', N'https://example.com/hienmau3.jpg', N'staff1');
+(N'Lợi ích của việc hiến máu', N'Hiến máu không chỉ cứu người mà còn có lợi cho sức khỏe của bạn...', N'https://example.com/hienmau1.jpg',N'available', NULL, N'staff1'),
+(N'Chuẩn bị gì trước khi hiến máu?', N'Để có một lần hiến máu thành công, bạn cần chuẩn bị...', N'https://example.com/hienmau2.jpg', N'available', NULL, N'string'),
+(N'Những điều cần biết sau khi hiến máu', N'Sau khi hiến máu, bạn cần lưu ý những điều sau để đảm bảo sức khỏe...', N'https://example.com/hienmau3.jpg', N'unavailable', NULL, N'staff1');
 
 --3
 INSERT INTO AppointmentRecord (Username, EventId, RegistrationDate, Status, BloodType, DonationUnit)
