@@ -172,6 +172,44 @@ namespace BloodDonationAPI.Service
             return result;
         }
 
+        public async Task<string> UpdateEmergency(int emergencyId, string username, string role, RegisterEmergencyDto dto)
+        {
+            var emergency = await _context.Emergencies.FindAsync(emergencyId);
+            if (emergency == null)
+                return "Emergency not found.";
+
+            // Chỉ cho phép user tạo hoặc Admin/Staff sửa
+            if (emergency.Username != username && role != "Admin" && role != "Staff")
+                return "You are not authorized to update this emergency.";
+
+            // Cập nhật thông tin
+            if (!string.IsNullOrEmpty(dto.BloodType))
+                emergency.BloodType = dto.BloodType;
+            if (dto.RequiredUnits.HasValue)
+                emergency.RequiredUnits = dto.RequiredUnits;
+            if (dto.HospitalId.HasValue)
+                emergency.HospitalId = dto.HospitalId;
+            // Có thể cập nhật thêm các trường khác nếu cần
+
+            await _context.SaveChangesAsync();
+            return "Emergency updated successfully.";
+        }
+
+        public async Task<string> DeleteEmergency(int emergencyId, string username, string role)
+        {
+            var emergency = await _context.Emergencies.FindAsync(emergencyId);
+            if (emergency == null)
+                return "Emergency not found.";
+
+            // Chỉ cho phép user tạo hoặc Admin/Staff xóa
+            if (emergency.Username != username && role != "Admin" && role != "Staff")
+                return "You are not authorized to delete this emergency.";
+
+            _context.Emergencies.Remove(emergency);
+            await _context.SaveChangesAsync();
+            return "Emergency deleted successfully.";
+        }
+
         private bool IsValidBloodType(string bloodType)
         {
             var validTypes = new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" };

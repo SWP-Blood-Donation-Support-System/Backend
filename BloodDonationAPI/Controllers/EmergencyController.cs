@@ -124,5 +124,57 @@ namespace BloodDonationAPI.Controllers
                 return StatusCode(500, new { message = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Sửa thông tin đơn khẩn cấp (chỉ người tạo hoặc Admin/Staff)
+        /// </summary>
+        [HttpPut("UpdateEmergency/{emergencyId}")]
+        [Authorize(Roles = "User,Staff,Admin")]
+        public async Task<IActionResult> UpdateEmergency(int emergencyId, [FromBody] RegisterEmergencyDto dto)
+        {
+            try
+            {
+                var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+                if (username == null || role == null)
+                    return Unauthorized(new { message = "User not authenticated." });
+
+                var result = await _emergencyService.UpdateEmergency(emergencyId, username, role, dto);
+                if (result == "Emergency updated successfully.")
+                    return Ok(new { message = result });
+                return BadRequest(new { message = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error updating emergency");
+                return StatusCode(500, new { message = "An error occurred while processing your request.", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Xóa đơn khẩn cấp (chỉ người tạo hoặc Admin/Staff)
+        /// </summary>
+        [HttpDelete("DeleteEmergency/{emergencyId}")]
+        [Authorize(Roles = "User,Staff,Admin")]
+        public async Task<IActionResult> DeleteEmergency(int emergencyId)
+        {
+            try
+            {
+                var username = User.FindFirst(System.Security.Claims.ClaimTypes.Name)?.Value;
+                var role = User.FindFirst(System.Security.Claims.ClaimTypes.Role)?.Value;
+                if (username == null || role == null)
+                    return Unauthorized(new { message = "User not authenticated." });
+
+                var result = await _emergencyService.DeleteEmergency(emergencyId, username, role);
+                if (result == "Emergency deleted successfully.")
+                    return Ok(new { message = result });
+                return BadRequest(new { message = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error deleting emergency");
+                return StatusCode(500, new { message = "An error occurred while processing your request.", error = ex.Message });
+            }
+        }
     }
 } 

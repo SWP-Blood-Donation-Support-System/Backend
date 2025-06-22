@@ -9,5 +9,7 @@ namespace BloodDonationAPI.Service
         Task<List<Emergency>> GetEmergencies();
         Task<string> UpdateEmergencyStatus(int emergencyId, string status);
         Task<BloodCompareResultDto> CompareBloodForEmergency(int emergencyId);
+        Task<string> UpdateEmergency(int emergencyId, string username, string role, RegisterEmergencyDto dto);
+        Task<string> DeleteEmergency(int emergencyId, string username, string role);
     }
 } 
