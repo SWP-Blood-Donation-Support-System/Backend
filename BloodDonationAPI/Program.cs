@@ -82,7 +82,12 @@ namespace BloodDonationAPI
             builder.Services.AddScoped<IBlogService, BlogService>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<ISurveyService, SurveyService>();
+
+            // them cai service nay de no tu dong chay va cap nhat stus cho user sau khi hiến máu
+            builder.Services.AddHostedService<DonationReminderService>();
+
             builder.Services.AddScoped<IAdminUserService, AdminUserService>();
+
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {
