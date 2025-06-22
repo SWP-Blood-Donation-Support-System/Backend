@@ -31,27 +31,55 @@ namespace BloodDonationAPI.Service
                 .ToListAsync();
 
         }
-        public async Task<string> RegisterAppointment(string userName , RegisterAppointmentDto Dto)
+        public async Task<RegisterAppointmentResultDto> RegisterAppointment(string userName , RegisterAppointmentDto Dto)
         {
             //kiểm tra người dùng có tồn tại và đủ điều kiện đăng ký không
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userName);
             if (user == null)
-                return "User not found.";
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Người dùng không tồn tại.",
+                    AppointmentId = null
+                };
 
             if (user.ProfileStatus != "Active")
-                return "Bạn chưa đủ điều kiện để đăng ký.";
+            {
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Tài khoản của bạn không đủ điều kiện đăng ký lịch hẹn.",
+                    AppointmentId = null
+                };
+            }
+                
             //kiểm tra lịch hẹn có tồn tại không
             var appointment = await _context.Events
                 .FirstOrDefaultAsync(a => a.EventId == Dto.eventId);
 
             if (appointment == null)
-                return "Lịch hẹn không tồn tại.";
+            {
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Lịch hẹn không tồn tại.",
+                    AppointmentId = null
+                };
+            }
+               
             //kiểm tra xem đã đăng ký lịch hẹn này chưa
             bool alreadyRegistered = await _context.AppointmentRecords.AnyAsync(h =>
                 h.Username == userName && h.EventId == Dto.eventId && h.Status != "Hủy");
 
             if (alreadyRegistered)
-                return "Bạn đã đăng ký lịch hẹn này rồi.";
+            {
+                 return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Bạn đã đăng ký lịch hẹn này rồi.",
+                    AppointmentId = null
+                };
+            }
             // nếu chưa có lịch hẹn thì thêm mới vào bảng AppointmentRecords
             var history = new AppointmentRecord
             {
@@ -63,7 +91,12 @@ namespace BloodDonationAPI.Service
 
                 _context.AppointmentRecords.Add(history);
                 await _context.SaveChangesAsync();
-            return "Bạn đã đăng ký thành công lịch hẹn";
+            return new RegisterAppointmentResultDto
+            {
+                IsSuccess = true,
+                Message = "Bạn đã đăng ký thành công lịch hẹn.",
+                AppointmentId = history.AppointmentId
+            };
 
             //var appointmentId = history.AppointmentId;
 

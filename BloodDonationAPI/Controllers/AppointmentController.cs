@@ -45,14 +45,19 @@ namespace BloodDonationAPI.Controllers
         /// <returns></returns>
         [HttpPost("RegisterAppointment")]
         [Authorize(Roles = "User")]
-        public async Task<IActionResult> RegisterAppointment([FromBody] RegisterAppointmentDto dto)
-        {
-            var userName = User.FindFirst(ClaimTypes.Name)?.Value;
-            if(userName == null) return Unauthorized(new { message = "User not authenticated." });
-            var result = await _appointmentService.RegisterAppointment(userName, dto);
-            if (result == "Bạn đã đăng ký thành công lịch hẹn") return Ok(new { message = result });
-
-            else return BadRequest(new { message = result });
+            public async Task<IActionResult> RegisterAppointment([FromBody] RegisterAppointmentDto dto)
+            {
+                var userName = User.FindFirst(ClaimTypes.Name)?.Value;
+                if(userName == null) return Unauthorized(new { message = "User not authenticated." });
+                var result = await _appointmentService.RegisterAppointment(userName, dto);
+                if (result.IsSuccess)
+                {
+                    return Ok(new { message = "Đăng ký lịch hẹn thành công.", appointmentId = result.AppointmentId });
+                }
+                else
+                {
+                    return BadRequest(new { message = result.Message });
+            }
         }
         /// <summary>
         /// dùng để xem xem user nào đã dăng ký những lịch hẹn nào 

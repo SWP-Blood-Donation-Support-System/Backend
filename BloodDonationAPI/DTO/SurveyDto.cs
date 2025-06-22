@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -16,6 +16,8 @@ namespace BloodDonationAPI.DTO
     {
         public int OptionId { get; set; }
         public string OptionText { get; set; }
+        public  int? displayOrder { get; set; }  // Thêm thuộc tính displayOrder
+        public bool? requireText { get; set; } // Thêm thuộc tính requiredText
     }
 
 

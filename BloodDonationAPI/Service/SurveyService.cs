@@ -27,7 +27,9 @@ namespace BloodDonationAPI.Service
                 Options = q.SurveyOptions.Select(o => new SurveyOptionDto
                 {
                     OptionId = o.OptionId,
-                    OptionText = o.OptionText
+                    OptionText = o.OptionText,
+                    displayOrder = o.DisplayOrder, // Thêm thuộc tính displayOrder
+                    requireText = o.RequireText // Thêm thuộc tính requireText
                 }).ToList()
             }).ToList();
         }
