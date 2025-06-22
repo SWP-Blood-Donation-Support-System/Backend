@@ -60,6 +60,13 @@ namespace BloodDonationAPI.DTO
         public string? AdditionalText { get; set; }
     }
 
+    public class  SurveyAnsweredByAppointmentIdDto
+    {
+        public int AppointmentId { get; set; }
+        public string? Status { get; set; }
+        public List<SurveyAnsweredItemsDto> AnsweredItems { get; set; } = new List<SurveyAnsweredItemsDto>();
+
+    }
     public class SurveyAnsweredDto 
     { 
         public int? appointmentId { get; set; }
@@ -77,5 +84,9 @@ namespace BloodDonationAPI.DTO
         public DateTime? AnswerDate { get; set; }
     }
 
-
+    public class UpdataAppointmentStatusDto
+    {
+        public int AppointmentId { get; set; }
+        public string Status { get; set; }
+    }
 } 

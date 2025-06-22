@@ -53,6 +53,10 @@ namespace BloodDonationAPI.Controllers
         /// <remarks>
         /// FE sẻ gửi appointmentId của cuộc hẹn để lấy các câu trả lời đã được trả lời cho cuộc hẹn đó.
         /// 
+        /// dung de cho user xem lai cac cau tra loi da tra loi cua minh cho cuoc hen do. 
+        /// 
+        /// hoac staff xem lai cac cau tra loi da tra loi cua user cho cuoc hen do.
+        /// 
         /// </remarks>
         /// <param name="appointmentId"></param>
         /// <returns></returns>
@@ -84,6 +88,31 @@ namespace BloodDonationAPI.Controllers
                 return NotFound(new { message = "Không tìm thấy câu trả lời cho cuộc hẹn này." });
             }
             return Ok(answered);
+        }
+
+        /// <summary>
+        /// Api này dùng để cập nhật trạng thái của cuộc hẹn sau khi đã duyệt câu trả lời khảo sát.
+        /// </summary>
+        /// <remarks>
+        /// Sau khi staff duyệt câu trả lời khảo sát thì sẽ gọi api này để cập nhật trạng thái của cuộc hẹn.
+        /// 
+        /// Trạng thái sẻ là "Đã đủ điều kiện", "Không đủ điều kiện" hoặc đang xét duyệt.
+        /// </remarks>
+        /// <param name="dto"></param>
+        /// <returns></returns>
+        [HttpPut("update-appointment-status")]
+        public async Task<IActionResult> UpdateAppointmentStatus([FromBody] UpdataAppointmentStatusDto dto)
+        {
+            if (dto == null || dto.AppointmentId <= 0 || string.IsNullOrEmpty(dto.Status))
+            {
+                return BadRequest(new { message = "Thông tin cập nhật không hợp lệ." });
+            }
+            var result = await _surveyService.UpdateAppointmentStatus(dto);
+            if (result)
+            {
+                return Ok(new { message = "Cập nhật trạng thái lịch hẹn thành công." });
+            }
+            return NotFound(new { message = "Lịch hẹn không tồn tại hoặc cập nhật thất bại." });
         }
 
         ///// <summary>

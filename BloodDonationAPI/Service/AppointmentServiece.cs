@@ -48,7 +48,7 @@ namespace BloodDonationAPI.Service
                 return "Lịch hẹn không tồn tại.";
             //kiểm tra xem đã đăng ký lịch hẹn này chưa
             bool alreadyRegistered = await _context.AppointmentRecords.AnyAsync(h =>
-                h.Username == userName && h.EventId == Dto.eventId);
+                h.Username == userName && h.EventId == Dto.eventId && h.Status != "Hủy");
 
             if (alreadyRegistered)
                 return "Bạn đã đăng ký lịch hẹn này rồi.";

@@ -32,7 +32,7 @@ namespace BloodDonationAPI.Service
             }).ToList();
         }
 
-        public  async  Task<SurveyAnsweredDto?> GetAnsweredByAppointmentIdAsync(int appointmentId)
+        public  async  Task<SurveyAnsweredByAppointmentIdDto?> GetAnsweredByAppointmentIdAsync(int appointmentId)
         {
            var answered =  await _context.UserSurveyAnswers
                 .Where(a => a.AppointmentId == appointmentId)
@@ -53,9 +53,13 @@ namespace BloodDonationAPI.Service
             {
                 return null; // Không tìm thấy câu trả lời cho cuộc hẹn này
             }
-                var result = new SurveyAnsweredDto
+                var result = new SurveyAnsweredByAppointmentIdDto
                 {
-                    appointmentId = appointmentId,
+                    AppointmentId = appointmentId,
+                    Status = _context.AppointmentRecords
+                        .Where(a => a.AppointmentId == appointmentId)
+                        .Select(a => a.Status)
+                        .FirstOrDefault(), // Lấy trạng thái của cuộc hẹn
                     AnsweredItems = answered
                 };
             return result;
@@ -159,6 +163,21 @@ namespace BloodDonationAPI.Service
 
 
             return answers;
+        }
+
+        public async Task<bool> UpdateAppointmentStatus(UpdataAppointmentStatusDto dto)
+        {
+            var appointment = await _context.AppointmentRecords
+                .FirstOrDefaultAsync(a => a.AppointmentId == dto.AppointmentId);
+
+            if (appointment == null)
+            {
+                return false; // Lịch hẹn không tồn tại
+            }
+            appointment.Status = dto.Status;
+            _context.AppointmentRecords.Update(appointment);
+            await _context.SaveChangesAsync();
+            return true; // Cập nhật thành công
         }
 
 
