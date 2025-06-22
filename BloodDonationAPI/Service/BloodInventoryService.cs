@@ -87,7 +87,7 @@ public class BloodInventoryService : IBloodInventoryService
                 BloodType = request.BloodType,
                 Volume = request.Volume,
                 BloodDetailDate = request.BloodDetailDate,
-                BloodDetailStatus = "Còn hạn", // Mặc định là còn hạn
+                BloodDetailStatus = "Đã lưu trữ", // Thay đổi từ "Còn hạn" thành "Đã lưu trữ"
                 Note = request.Note,
                 HospitalId = 1 // Gán mặc định là 1
             };
@@ -190,10 +190,10 @@ public class BloodInventoryService : IBloodInventoryService
         {
             var today = DateOnly.FromDateTime(DateTime.Today);
 
-            // Lấy các dòng máu còn hạn, sắp xếp ngày cũ nhất trước
+            // Lấy các dòng máu đã lưu trữ, sắp xếp ngày cũ nhất trước
             var availableBlood = await _context.BloodDetails
                 .Where(b => b.BloodType == request.BloodType
-                         && b.BloodDetailStatus == "Còn hạn"
+                         && b.BloodDetailStatus == "Đã lưu trữ" // Thay đổi từ "Còn hạn" thành "Đã lưu trữ"
                          && b.Volume > 0)
                 .OrderBy(b => b.BloodDetailDate)
                 .ToListAsync();
@@ -237,8 +237,10 @@ public class BloodInventoryService : IBloodInventoryService
                 }
                 else
                 {
-                    // Tách dòng: giữ lại dòng gốc với volume mới, tạo dòng mới đã sử dụng
+                    // Tách dòng: giữ lại dòng gốc với volume mới và status "Đã lưu trữ", tạo dòng mới đã sử dụng
                     blood.Volume = available - remainingUnits;
+                    blood.BloodDetailStatus = "Đã lưu trữ"; // Giữ nguyên status "Đã lưu trữ"
+                    blood.BloodDetailDate = today; // Cập nhật ngày
 
                     var usedDetail = new BloodDetail
                     {
