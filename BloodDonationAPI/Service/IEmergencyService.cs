@@ -8,5 +8,8 @@ namespace BloodDonationAPI.Service
         Task<string> RegisterEmergency(string username, string role, RegisterEmergencyDto dto);
         Task<List<Emergency>> GetEmergencies();
         Task<string> UpdateEmergencyStatus(int emergencyId, string status);
+        Task<BloodCompareResultDto> CompareBloodForEmergency(int emergencyId);
+        Task<string> UpdateEmergency(int emergencyId, string username, string role, RegisterEmergencyDto dto);
+        Task<string> DeleteEmergency(int emergencyId, string username, string role);
     }
 } 

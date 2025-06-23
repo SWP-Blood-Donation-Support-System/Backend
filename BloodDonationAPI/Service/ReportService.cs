@@ -94,9 +94,6 @@ namespace BloodDonationAPI.Service
                 if (user == null)
                     return "User not found.";
 
-                if (user.ProfileStatus != "Active")
-                    return "User profile is not active.";
-
                 var report = new Report
                 {
                     Username = username,

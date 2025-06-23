@@ -30,7 +30,7 @@ namespace BloodDonationAPI.Service
             var potentialDonors = await _context.Users
                 .Where(u => u.Role == "User" &&
                            u.BloodType == request.BloodType &&
-                           u.ProfileStatus == "Active")
+                           u.ProfileStatus == "Sẵn sàng hiến máu")
                 .ToListAsync();
 
             var nearbyDonors = new List<NearbyDonor>();
@@ -93,7 +93,7 @@ namespace BloodDonationAPI.Service
             var potentialDonors = await _context.Users
                 .Where(u => u.Role == "User" &&
                            u.BloodType == request.BloodType &&
-                           u.ProfileStatus == "Active" &&
+                           u.ProfileStatus == "Sẵn sàng hiến máu" &&
                            (u.Address != null && (
                                u.Address.Contains("TP.HCM") ||
                                u.Address.Contains("TP. HCM") ||
@@ -164,7 +164,7 @@ namespace BloodDonationAPI.Service
             var potentialDonors = await _context.Users
                 .Where(u => u.Role == "User" &&
                            u.BloodType == request.BloodType &&
-                           u.ProfileStatus == "Active")
+                           u.ProfileStatus == "Sẵn sàng hiến máu")
                 .ToListAsync();
 
             var donors = new List<NearbyDonor>();
