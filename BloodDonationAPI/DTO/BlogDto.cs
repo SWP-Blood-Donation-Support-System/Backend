@@ -6,6 +6,8 @@ namespace BloodDonationAPI.DTO
         public string BlogTitle { get; set; } = null!;
         public string BlogContent { get; set; } = null!;
         public string? BlogImage { get; set; }
+        public string? BlogStatus { get; set; }
+        public string? BlogDetail { get; set; }
         public string Username { get; set; } = null!;
         public string? AuthorName { get; set; }
     }
@@ -15,6 +17,8 @@ namespace BloodDonationAPI.DTO
         public string BlogTitle { get; set; } = null!;
         public string BlogContent { get; set; } = null!;
         public string? BlogImage { get; set; }
+        public string? BlogStatus { get; set; }
+        public string? BlogDetail { get; set; }
     }
 
     public class UpdateBlogDto
@@ -22,5 +26,7 @@ namespace BloodDonationAPI.DTO
         public string BlogTitle { get; set; } = null!;
         public string BlogContent { get; set; } = null!;
         public string? BlogImage { get; set; }
+        public string? BlogStatus { get; set; }
+        public string? BlogDetail { get; set; }
     }
 } 

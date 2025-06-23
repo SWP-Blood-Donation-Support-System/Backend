@@ -20,6 +20,7 @@ namespace BloodDonationAPI.Service
             try
             {
                 return await _context.Blogs
+                    .Where(b => b.BlogStatus == "available")
                     .Include(b => b.UsernameNavigation)
                     .Select(b => new BlogDto
                     {
@@ -27,6 +28,8 @@ namespace BloodDonationAPI.Service
                         BlogTitle = b.BlogTitle,
                         BlogContent = b.BlogContent,
                         BlogImage = b.BlogImage,
+                        BlogStatus = b.BlogStatus,
+                        BlogDetail = b.BlogDetail,
                         Username = b.Username,
                         AuthorName = b.UsernameNavigation.FullName
                     })
@@ -57,6 +60,8 @@ namespace BloodDonationAPI.Service
                     BlogTitle = blog.BlogTitle,
                     BlogContent = blog.BlogContent,
                     BlogImage = blog.BlogImage,
+                    BlogStatus = blog.BlogStatus,
+                    BlogDetail = blog.BlogDetail,
                     Username = blog.Username,
                     AuthorName = blog.UsernameNavigation.FullName
                 };
@@ -76,14 +81,13 @@ namespace BloodDonationAPI.Service
                 if (user == null)
                     return "User not found.";
 
-                if (user.ProfileStatus != "Active")
-                    return "User profile is not active.";
-
                 var blog = new Blog
                 {
                     BlogTitle = dto.BlogTitle,
                     BlogContent = dto.BlogContent,
                     BlogImage = dto.BlogImage,
+                    BlogStatus = dto.BlogStatus,
+                    BlogDetail = dto.BlogDetail,
                     Username = username
                 };
 
@@ -113,6 +117,8 @@ namespace BloodDonationAPI.Service
                 blog.BlogTitle = dto.BlogTitle;
                 blog.BlogContent = dto.BlogContent;
                 blog.BlogImage = dto.BlogImage;
+                blog.BlogStatus = dto.BlogStatus;
+                blog.BlogDetail = dto.BlogDetail;
 
                 await _context.SaveChangesAsync();
                 return "Blog updated successfully.";

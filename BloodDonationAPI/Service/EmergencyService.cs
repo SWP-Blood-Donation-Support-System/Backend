@@ -132,6 +132,84 @@ namespace BloodDonationAPI.Service
             }
         }
 
+        public async Task<BloodCompareResultDto> CompareBloodForEmergency(int emergencyId)
+        {
+            var emergency = await _context.Emergencies.FirstOrDefaultAsync(e => e.EmergencyId == emergencyId);
+            if (emergency == null)
+                throw new Exception("Emergency not found");
+            if (string.IsNullOrEmpty(emergency.BloodType) || !emergency.RequiredUnits.HasValue)
+                throw new Exception("Emergency missing blood type or required units");
+            // Lấy các dòng máu còn hạn đúng nhóm máu
+            var availableBlood = await _context.BloodDetails
+                .Where(b => b.BloodType == emergency.BloodType && b.BloodDetailStatus == "Còn hạn" && b.Volume > 0)
+                .OrderBy(b => b.BloodDetailDate)
+                .ToListAsync();
+            var totalAvailable = availableBlood.Sum(b => b.Volume ?? 0);
+            var result = new BloodCompareResultDto
+            {
+                IsEnough = totalAvailable >= emergency.RequiredUnits,
+                RequiredUnits = emergency.RequiredUnits,
+                AvailableUnits = totalAvailable
+            };
+            if (result.IsEnough)
+            {
+                int remaining = emergency.RequiredUnits.Value;
+                result.Details = new List<BloodCompareResultDto.BloodDetailInfo>();
+                foreach (var blood in availableBlood)
+                {
+                    if (remaining <= 0) break;
+                    int use = Math.Min(blood.Volume ?? 0, remaining);
+                    result.Details.Add(new BloodCompareResultDto.BloodDetailInfo
+                    {
+                        BloodDetailId = blood.BloodDetailId,
+                        BloodType = blood.BloodType,
+                        Volume = use,
+                        BloodDetailDate = blood.BloodDetailDate
+                    });
+                    remaining -= use;
+                }
+            }
+            return result;
+        }
+
+        public async Task<string> UpdateEmergency(int emergencyId, string username, string role, RegisterEmergencyDto dto)
+        {
+            var emergency = await _context.Emergencies.FindAsync(emergencyId);
+            if (emergency == null)
+                return "Emergency not found.";
+
+            // Chỉ cho phép user tạo hoặc Admin/Staff sửa
+            if (emergency.Username != username && role != "Admin" && role != "Staff")
+                return "You are not authorized to update this emergency.";
+
+            // Cập nhật thông tin
+            if (!string.IsNullOrEmpty(dto.BloodType))
+                emergency.BloodType = dto.BloodType;
+            if (dto.RequiredUnits.HasValue)
+                emergency.RequiredUnits = dto.RequiredUnits;
+            if (dto.HospitalId.HasValue)
+                emergency.HospitalId = dto.HospitalId;
+            // Có thể cập nhật thêm các trường khác nếu cần
+
+            await _context.SaveChangesAsync();
+            return "Emergency updated successfully.";
+        }
+
+        public async Task<string> DeleteEmergency(int emergencyId, string username, string role)
+        {
+            var emergency = await _context.Emergencies.FindAsync(emergencyId);
+            if (emergency == null)
+                return "Emergency not found.";
+
+            // Chỉ cho phép user tạo hoặc Admin/Staff xóa
+            if (emergency.Username != username && role != "Admin" && role != "Staff")
+                return "You are not authorized to delete this emergency.";
+
+            _context.Emergencies.Remove(emergency);
+            await _context.SaveChangesAsync();
+            return "Emergency deleted successfully.";
+        }
+
         private bool IsValidBloodType(string bloodType)
         {
             var validTypes = new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" };
