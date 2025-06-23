@@ -28,7 +28,7 @@ namespace BloodDonationAPI.Controllers
         /// <param name="AppointmentID"></param>
         /// <returns></returns>
         [HttpGet("GetRegisterListByEventID/{EventID}")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> GetRegistrationsByEventID(int EventID)
         {
             var result = await _service.GetRegistrationsByEventID(EventID);
@@ -49,7 +49,7 @@ namespace BloodDonationAPI.Controllers
         /// <param name="checkInDto"></param>
         /// <returns></returns>
         [HttpPut("Checkin")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> CheckIn([FromBody] CheckInDto checkInDto)
         {
             if (checkInDto == null || checkInDto.AppointmentId <= 0)
@@ -79,7 +79,7 @@ namespace BloodDonationAPI.Controllers
         /// <param name="donateDto"></param>
         /// <returns></returns>
         [HttpPost("RecordDonation")]
-        [Authorize(Roles = "Staff")]
+        [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> RecordDonation([FromBody] DonateDto donateDto)
         {
             if (donateDto == null || donateDto.AppointmentId <= 0 || string.IsNullOrEmpty(donateDto.BloodType) || donateDto.Volume <= 0)

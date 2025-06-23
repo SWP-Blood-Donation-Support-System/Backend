@@ -119,6 +119,41 @@ namespace BloodDonationAPI.Service
             return true;
         }
 
+        public async Task UpdateEligibleUsersAsync()
+        {
+            var today = DateTime.Today;
+
+            var users = await _context.Users
+                .Include(u => u.AppointmentRecords)
+                .Where(u => u.ProfileStatus == "Đang nghỉ ngơi")
+                .Select(u => new
+                {
+                    User = u,
+                    LastDonationDate = u.AppointmentRecords
+                        .Where(a => a.Status == "Đã hiến")
+                        .OrderByDescending(a => a.RegistrationDate)
+                        .Select(a => a.RegistrationDate)
+                        .FirstOrDefault()
+                }).ToListAsync();
+
+            foreach (var item in users)
+            {
+                if (item.LastDonationDate == null) continue;
+
+                int waitDate = item.User.Gender == "Nữ" ? 112 : 84; // Ngày chờ tùy theo giới tính
+                DateTime nextEligibleDate = item.LastDonationDate.Value.AddDays(waitDate);
+
+                if (today >= nextEligibleDate)
+                {
+                    item.User.ProfileStatus = "Active"; // Cập nhật trạng thái người dùng thành "Active"
+                    Console.WriteLine($"✅ {item.User.Username} đã nghỉ đủ {waitDate} ngày.");
+                }
+
+                await _context.SaveChangesAsync();
+
+            }
+        }
+
 
 
         //public async Task<bool> AddDonationHistoryAsync(CreateDonationHistoryDto registrationDto)

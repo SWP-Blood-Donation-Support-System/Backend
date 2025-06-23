@@ -347,63 +347,103 @@ VALUES
 (1, N'user9', N'Chưa phản hồi', NULL);
 
 
+-- Bảng câu hỏi
 CREATE TABLE SurveyQuestion (
     QuestionId INT PRIMARY KEY IDENTITY(1,1),
     QuestionText NVARCHAR(MAX),
     QuestionType NVARCHAR(20) -- 'single', 'multiple', 'text'
 );
+
+-- Bảng lựa chọn câu trả lời
 CREATE TABLE SurveyOption (
     OptionId INT PRIMARY KEY IDENTITY(1,1),
     QuestionId INT FOREIGN KEY REFERENCES SurveyQuestion(QuestionId),
     OptionText NVARCHAR(MAX),
-    IsEligible BIT -- NULL nếu không áp dụng, 1 nếu đạt điều kiện hiến, 0 nếu không
+    IsEligible BIT,           -- 1 = Đạt, 0 = Không đạt, NULL = Không xác định
+    DisplayOrder INT,
+    RequireText BIT DEFAULT 0
 );
+
+
+-- Bảng câu trả lời của người dùng
 CREATE TABLE UserSurveyAnswer (
     AnswerId INT PRIMARY KEY IDENTITY(1,1),
-    Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
+    AppointmentId INT FOREIGN KEY REFERENCES AppointmentRecord(AppointmentId),
     QuestionId INT FOREIGN KEY REFERENCES SurveyQuestion(QuestionId),
     OptionId INT FOREIGN KEY REFERENCES SurveyOption(OptionId),
-    AppointmentRecordId INT FOREIGN KEY REFERENCES AppointmentRecord(AppointmentId),
-    AnswerText NVARCHAR(MAX), -- Ghi câu trả lời (có thể là OptionText hoặc nhập tay)
-    AnswerDate DATETIME
+    AdditionalText NVARCHAR(MAX),
+    AnswerDate DATETIME DEFAULT GETDATE()
 );
 
--- Insert data for SurveyQuestion
-INSERT INTO SurveyQuestion (QuestionText, QuestionType) VALUES
-(N'Cân nặng hiện tại của bạn là bao nhiêu?', 'single'),
-(N'Trong 12 tháng qua, bạn có mắc các bệnh sau không?', 'single'),
-(N'Bạn có đang sử dụng loại thuốc điều trị nào không? Nếu có, vui lòng ghi rõ:', 'text'),
-(N'Bạn có đang mang thai hoặc cho con bú không? (áp dụng cho nữ)', 'single'),
-(N'Trong vòng 6 tháng qua, bạn có thực hiện các điều sau không?', 'single'),
-(N'Bạn đã tiêm vắc-xin trong 14 ngày qua không?', 'single'),
-(N'Bạn có từng bị phản ứng bất thường sau khi hiến máu không?', 'single'),
-(N'Trong 6 tháng qua, bạn có:', 'single'),
-(N'Khoảng thời gian từ lần hiến máu gần nhất đến nay là:', 'single');
 
--- Insert data for SurveyOption
-INSERT INTO SurveyOption (QuestionId, OptionText, IsEligible) VALUES
-(1, N'Dưới 45kg', 0),
-(1, N'Từ 45kg trở lên', 1),
-(2, N'Viêm gan B hoặc C', 0),
-(2, N'HIV/AIDS', 0),
-(2, N'Lao phổi đang điều trị', 0),
-(2, N'Sốt rét', 0),
-(2, N'Ung thư', 0),
-(2, N'Không mắc bệnh nào', 1),
-(4, N'Có', 0),
-(4, N'Không', 1),
-(5, N'Xăm hình / xỏ khuyên', 0),
-(5, N'Phẫu thuật / nội soi', 0),
-(5, N'Truyền máu', 0),
-(5, N'Không có', 1),
-(6, N'Có', 0),
-(6, N'Không', 1),
-(7, N'Có', 0),
-(7, N'Không', 1),
-(8, N'Quan hệ tình dục không an toàn', 0),
-(8, N'Dùng chung kim tiêm', 0),
-(8, N'Dùng chất kích thích', 0),
-(8, N'Không có các hành vi trên', 1),
-(9, N'Dưới 3 tháng', 0),
-(9, N'Từ 3 tháng trở lên đối với nam', 1),
-(9, N'Từ 4 tháng trở lên đối với nữ', 1);
+INSERT INTO SurveyQuestion (QuestionText, QuestionType) VALUES
+(N'1. Anh/chị từng hiến máu chưa?', 'single'),
+(N'2. Hiện tại, anh/chị có mắc bệnh lý nào không?', 'single'),
+(N'3. Trước đây, anh/chị có từng mắc một trong các bệnh: viêm gan siêu vi B, C, HIV...?', 'single'),
+(N'4. Trong 12 tháng gần đây, anh/chị có?', 'multiple'),
+(N'5. Trong 06 tháng gần đây, anh/chị có?', 'multiple'),
+(N'6. Trong 01 tháng gần đây, anh/chị có?', 'multiple'),
+(N'7. Trong 14 ngày gần đây, anh/chị có?', 'single'),
+(N'8. Trong 07 ngày gần đây, anh/chị có?', 'single'),
+(N'9. Câu hỏi dành cho phụ nữ:', 'multiple');
+
+
+-- Q1
+INSERT INTO SurveyOption VALUES (1, N'Có', 1, 1, 0), (1, N'Không', 1, 2, 0);
+-- Q2
+INSERT INTO SurveyOption VALUES (2, N'Có', NULL, 1, 1), (2, N'Không', 1, 2, 0);
+-- Q3
+INSERT INTO SurveyOption VALUES (3, N'Có', 0, 1, 0), (3, N'Không', 1, 2, 0), (3, N'Bệnh khác', NULL, 3, 1);
+-- Q4
+INSERT INTO SurveyOption VALUES
+(4, N'Khởi bệnh sau khi mắc bệnh truyền nhiễm nặng', 0, 1, 0),
+(4, N'Được truyền máu hoặc chế phẩm máu', 0, 2, 0),
+(4, N'Tiêm vaccin?', NULL, 3, 1),
+(4, N'Không', 1, 4, 0);
+-- Q5
+INSERT INTO SurveyOption VALUES
+(5, N'Khởi bệnh nghiêm trọng', 0, 1, 0),
+(5, N'Sút cân nhanh không rõ nguyên nhân', 0, 2, 0),
+(5, N'Nổi hạch kéo dài', 0, 3, 0),
+(5, N'Thủ thuật y tế xâm lấn', 0, 4, 0),
+(5, N'Xăm, xỏ cơ thể', 0, 5, 0),
+(5, N'Sử dụng ma túy', 0, 6, 0),
+(5, N'Tiếp xúc máu hoặc dịch tiết người khác', 0, 7, 0),
+(5, N'Sống chung với người bị viêm gan B', 0, 8, 0),
+(5, N'Quan hệ tình dục có nguy cơ', 0, 9, 0),
+(5, N'Quan hệ tình dục đồng giới', 0, 10, 0),
+(5, N'Không', 1, 11, 0);
+-- Q6
+INSERT INTO SurveyOption VALUES
+(6, N'Khỏi bệnh sau mắc bệnh nhiễm trùng', 0, 1, 0),
+(6, N'Đi vùng dịch bệnh lưu hành', 0, 2, 0),
+(6, N'Không', 1, 3, 0);
+-- Q7
+INSERT INTO SurveyOption VALUES
+(7, N'Bị cúm, cảm lạnh, sốt, ho, đau họng', 0, 1, 0),
+(7, N'Không', 1, 2, 0),
+(7, N'Khác (cụ thể)', NULL, 3, 1);
+-- Q8
+INSERT INTO SurveyOption VALUES
+(8, N'Dùng thuốc kháng sinh, Corticoid...', 0, 1, 0),
+(8, N'Không', 1, 2, 0),
+(8, N'Khác (cụ thể)', NULL, 3, 1);
+-- Q9
+INSERT INTO SurveyOption VALUES
+(9, N'Đang mang thai hoặc nuôi con nhỏ', 0, 1, 0),
+(9, N'Chấm dứt thai kỳ trong 12 tháng', 0, 2, 0),
+(9, N'Không', 1, 3, 0);
+
+
+-- Dữ liệu mẫu UserSurveyAnswer (giả sử các OptionId tương ứng với "Không")
+INSERT INTO UserSurveyAnswer (AppointmentId, QuestionId, OptionId, AdditionalText)
+VALUES
+(1, 1, 2, NULL),
+(1, 2, 4, NULL),
+(1, 3, 6, NULL),
+(1, 4, 10, NULL),
+(1, 5, 21, NULL),
+(1, 6, 24, NULL),
+(1, 7, 27, NULL),
+(1, 8, 30, NULL),
+(1, 9, 33, NULL);

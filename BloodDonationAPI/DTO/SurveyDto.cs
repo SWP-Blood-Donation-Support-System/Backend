@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 
@@ -16,7 +16,13 @@ namespace BloodDonationAPI.DTO
     {
         public int OptionId { get; set; }
         public string OptionText { get; set; }
+        public  int? displayOrder { get; set; }  // Thêm thuộc tính displayOrder
+        public bool? requireText { get; set; } // Thêm thuộc tính requiredText
     }
+
+
+
+
 
     public class SubmitAnswerDto
     {
@@ -40,5 +46,49 @@ namespace BloodDonationAPI.DTO
         public string AnswerText { get; set; }
         public DateTime CreatedAt { get; set; }
         public int EventId { get; set; }
+    }
+
+
+    public class SurveyAnswerDto
+    {
+      public int appointmentId { get; set; }
+      public List<AnswerItemDto> Answers { get; set; } = new List<AnswerItemDto>();
+    }
+
+    public class AnswerItemDto
+    {
+        public int QuestionId { get; set; }
+        public int OptionId { get; set; }
+        public string? AdditionalText { get; set; }
+    }
+
+    public class  SurveyAnsweredByAppointmentIdDto
+    {
+        public int AppointmentId { get; set; }
+        public string? Status { get; set; }
+        public List<SurveyAnsweredItemsDto> AnsweredItems { get; set; } = new List<SurveyAnsweredItemsDto>();
+
+    }
+    public class SurveyAnsweredDto 
+    { 
+        public int? appointmentId { get; set; }
+       public List<SurveyAnsweredItemsDto> AnsweredItems { get; set; } = new List<SurveyAnsweredItemsDto>();
+
+    }
+    public class SurveyAnsweredItemsDto
+    {
+        public int? QuestionId { get; set; }
+        public string QuestionText { get; set; }
+        public int? OptionId { get; set; }
+        public string OptionText { get; set; }
+        public string? AdditionalText { get; set; }
+
+        public DateTime? AnswerDate { get; set; }
+    }
+
+    public class UpdataAppointmentStatusDto
+    {
+        public int AppointmentId { get; set; }
+        public string Status { get; set; }
     }
 } 

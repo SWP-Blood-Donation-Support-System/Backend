@@ -45,7 +45,13 @@ namespace BloodDonationAPI.Controllers
                         username = user.Username,
                         email = user.Email,
                         role = user.Role,
-                        fullName = user.FullName
+                        fullName = user.FullName,
+                        dateOfBirth = user.DateOfBirth,
+                        gender = user.Gender,
+                        phone = user.Phone,
+                        address = user.Address,
+                        bloodType = user.BloodType,
+
                     }
                 });
             }
