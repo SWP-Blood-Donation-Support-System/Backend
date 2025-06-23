@@ -11,8 +11,8 @@ namespace BloodDonationAPI.Controllers
     [ApiController]
     public class AppointmentController : ControllerBase
     {
-        private readonly IAppointmentServiece  _appointmentService;
-            public AppointmentController(IAppointmentServiece appointmentService)
+        private readonly IAppointmentServiece _appointmentService;
+        public AppointmentController(IAppointmentServiece appointmentService)
         {
             _appointmentService = appointmentService;
         }
@@ -26,7 +26,7 @@ namespace BloodDonationAPI.Controllers
         [HttpGet("GetEventsLists")]
         public async Task<IActionResult> GetAppointmentLists()
         {
-           var appointmentLists = await _appointmentService.GetEventsLists();
+            var appointmentLists = await _appointmentService.GetEventsLists();
             if (appointmentLists == null || !appointmentLists.Any())
             {
                 return NotFound(new { message = "No appointments found." });
@@ -45,18 +45,18 @@ namespace BloodDonationAPI.Controllers
         /// <returns></returns>
         [HttpPost("RegisterAppointment")]
         [Authorize(Roles = "User")]
-            public async Task<IActionResult> RegisterAppointment([FromBody] RegisterAppointmentDto dto)
+        public async Task<IActionResult> RegisterAppointment([FromBody] RegisterAppointmentDto dto)
+        {
+            var userName = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (userName == null) return Unauthorized(new { message = "User not authenticated." });
+            var result = await _appointmentService.RegisterAppointment(userName, dto);
+            if (result.IsSuccess)
             {
-                var userName = User.FindFirst(ClaimTypes.Name)?.Value;
-                if(userName == null) return Unauthorized(new { message = "User not authenticated." });
-                var result = await _appointmentService.RegisterAppointment(userName, dto);
-                if (result.IsSuccess)
-                {
-                    return Ok(new { message = "Đăng ký lịch hẹn thành công.", appointmentId = result.AppointmentId });
-                }
-                else
-                {
-                    return BadRequest(new { message = result.Message });
+                return Ok(new { message = "Đăng ký lịch hẹn thành công.", appointmentId = result.AppointmentId });
+            }
+            else
+            {
+                return BadRequest(new { message = result.Message });
             }
         }
         /// <summary>
@@ -70,7 +70,7 @@ namespace BloodDonationAPI.Controllers
         /// <param name="username"></param>
         /// <returns></returns>
         [HttpGet("AppointmentHistory/{username}")]
-        [Authorize(Roles ="User")]
+        [Authorize(Roles = "User")]
         public async Task<IActionResult> GetAppointmentHistoryByUsername(string username)
         {
             var histories = await _appointmentService.GetByUsernameAsync(username);
@@ -101,6 +101,24 @@ namespace BloodDonationAPI.Controllers
                 return NotFound(new { message = "Lịch hẹn không tồn tại hoặc đã bị hủy." });
 
             return Ok(new { message = "Đã hủy lịch hẹn thành công." });
+        }
+        [HttpPost("RegisterAppointmentV2")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> RegisterAppointmentV2([FromBody] RegisterAppointmentDtoV2 dto)
+        {
+            var userName = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (userName == null) return Unauthorized(new { message = "User not authenticated." });
+
+            var result = await _appointmentService.RegisterAppointmentV2(userName, dto);
+            if (result.IsSuccess)
+            {
+                return Ok(new { message = result.Message, appointmentId = result.AppointmentId });
+            }
+            else
+            {
+                return BadRequest(new { message = result.Message });
+            }
+
         }
     }
 }
