@@ -10,19 +10,23 @@ namespace BloodDonationAPI.Service
         {
             _eventRepository = eventRepository;
         }
+        
         public async Task<List<Event>> GetAllEventsAsync()
         {
             return (await _eventRepository.GetAllAsync()).ToList();
         }
+        
         public async Task<Event?> GetEventByIdAsync(int id)
         {
             return await _eventRepository.GetByIdAsync(id);
         }
+       
         public async Task AddEventAsync(Event newEvent)
         {
             await _eventRepository.AddAsync(newEvent);
             await _eventRepository.SaveChangesAsync();
         }
+       
         public async Task UpdateEventAsync(int id, Event updatedEvent)
         {
             var existingEvent = await _eventRepository.GetByIdAsync(id);

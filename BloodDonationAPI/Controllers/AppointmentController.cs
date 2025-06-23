@@ -102,8 +102,21 @@ namespace BloodDonationAPI.Controllers
 
             return Ok(new { message = "Đã hủy lịch hẹn thành công." });
         }
+
+
+        /// <summary>
+        /// Api này là cái nâng cấp của đặt lịch hẹn , phải trả lời survey thì mới tạo bản ghi cho appoimentRecord cũng có kiểm tra survey và cập nhật status cho lịch hẹn 
+        /// </summary>
+        /// <remarks>
+        /// truyền vào cái eventID và cái username cùng với các câu trả lời của survey ---  để tạo bản ghi cho lịch hẹn, nếu không có câu trả lời thì sẽ không tạo bản ghi cho lịch hẹn
+        /// 
+        /// khi kiểm tra thấy đã trả lời tất cả các câu hỏi thì tạo lịch hẹn rồi tự lấy appointmentID đó tự truyền vào để tạo bản ghi cho UsersurveyAnswer 
+        /// </remarks>
+        /// <param name="dto"></param>
+        /// <returns></returns>
         [HttpPost("RegisterAppointmentV2")]
         [Authorize(Roles = "User")]
+
         public async Task<IActionResult> RegisterAppointmentV2([FromBody] RegisterAppointmentDtoV2 dto)
         {
             var userName = User.FindFirst(ClaimTypes.Name)?.Value;
