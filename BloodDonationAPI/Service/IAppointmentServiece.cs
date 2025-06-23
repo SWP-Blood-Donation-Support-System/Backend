@@ -12,5 +12,8 @@ namespace BloodDonationAPI.Service
 
         Task<bool> CancelAppointmentAsync(int appointmentRecordId);
 
+
+        Task<RegisterAppointmentResultDto> RegisterAppointmentV2(string userName, RegisterAppointmentDtoV2 Dto);
+
     }
 }
