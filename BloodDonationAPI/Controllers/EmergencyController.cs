@@ -41,6 +41,17 @@ namespace BloodDonationAPI.Controllers
                 if (string.IsNullOrEmpty(dto.BloodType))
                     return BadRequest(new { message = "Blood type is required." });
 
+                var validBloodTypes = new[] { "A+", "A-", "B+", "B-", "O+", "O-", "AB+", "AB-" };
+                var normalizedBloodType = dto.BloodType.Trim().ToUpper();
+                if (!validBloodTypes.Contains(normalizedBloodType))
+                    return BadRequest(new { message = "BloodType must be one of: A+, A-, B+, B-, O+, O-, AB+, AB-." });
+
+                if (!dto.RequiredUnits.HasValue || dto.RequiredUnits <= 0)
+                    return BadRequest(new { message = "RequiredUnits must be greater than 0." });
+
+                if (dto.EndDate.HasValue && dto.EndDate < DateOnly.FromDateTime(DateTime.Now))
+                    return BadRequest(new { message = "EndDate cannot be in the past." });
+
                 var result = await _emergencyService.RegisterEmergency(username, role, dto);
                 if (result == "Emergency registration successful.")
                     return Ok(new { message = result });
@@ -67,7 +78,20 @@ namespace BloodDonationAPI.Controllers
             try
             {
                 var emergencies = await _emergencyService.GetEmergencies();
-                return Ok(emergencies);
+                var result = emergencies.Select(e => new {
+                    e.EmergencyId,
+                    e.Username,
+                    e.EmergencyDate,
+                    e.BloodType,
+                    e.EmergencyStatus,
+                    e.EmergencyNote,
+                    e.RequiredUnits,
+                    e.HospitalId,
+                    e.EmergencyMedical,
+                    e.EmergencyImage,
+                    e.EndDate
+                });
+                return Ok(result);
             }
             catch (Exception ex)
             {
@@ -139,6 +163,9 @@ namespace BloodDonationAPI.Controllers
                 if (username == null || role == null)
                     return Unauthorized(new { message = "User not authenticated." });
 
+                if (dto.EndDate.HasValue && dto.EndDate < DateOnly.FromDateTime(DateTime.Now))
+                    return BadRequest(new { message = "EndDate cannot be in the past." });
+
                 var result = await _emergencyService.UpdateEmergency(emergencyId, username, role, dto);
                 if (result == "Emergency updated successfully.")
                     return Ok(new { message = result });
@@ -173,6 +200,67 @@ namespace BloodDonationAPI.Controllers
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error deleting emergency");
+                return StatusCode(500, new { message = "An error occurred while processing your request.", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách các đơn khẩn cấp do chính user tạo
+        /// </summary>
+        [HttpGet("GetMyEmergencies")]
+        [Authorize(Roles = "User,Staff,Admin")]
+        public async Task<IActionResult> GetMyEmergencies()
+        {
+            try
+            {
+                var username = User.FindFirst(ClaimTypes.Name)?.Value;
+                if (string.IsNullOrEmpty(username))
+                    return Unauthorized(new { message = "User not authenticated." });
+
+                var emergencies = await _emergencyService.GetEmergenciesByUsername(username);
+                var result = emergencies.Select(e => new {
+                    e.EmergencyId,
+                    e.Username,
+                    e.EmergencyDate,
+                    e.BloodType,
+                    e.EmergencyStatus,
+                    e.EmergencyNote,
+                    e.RequiredUnits,
+                    e.HospitalId,
+                    e.EmergencyMedical,
+                    e.EmergencyImage,
+                    e.EndDate
+                });
+                return Ok(result);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error getting my emergencies");
+                return StatusCode(500, new { message = "An error occurred while processing your request.", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Cho phép người tạo đơn cập nhật trạng thái emergencyStatus thành 'Đã được đáp ứng' nếu trạng thái cũ là 'Đã xét duyệt'
+        /// </summary>
+        [HttpPut("MarkAsFulfilled/{emergencyId}")]
+        [Authorize(Roles = "User,Staff,Admin")]
+        public async Task<IActionResult> MarkAsFulfilled(int emergencyId)
+        {
+            try
+            {
+                var username = User.FindFirst(ClaimTypes.Name)?.Value;
+                if (string.IsNullOrEmpty(username))
+                    return Unauthorized(new { message = "User not authenticated." });
+
+                var result = await _emergencyService.MarkEmergencyAsFulfilled(emergencyId, username);
+                if (result == "Emergency marked as fulfilled.")
+                    return Ok(new { message = result });
+                return BadRequest(new { message = result });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError(ex, "Error marking emergency as fulfilled");
                 return StatusCode(500, new { message = "An error occurred while processing your request.", error = ex.Message });
             }
         }
