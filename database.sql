@@ -49,6 +49,9 @@ CREATE TABLE Emergency (
   EmergencyStatus NVARCHAR(50),
   EmergencyNote NVARCHAR(MAX),
   RequiredUnits INT,
+  EmergencyMedical NVARCHAR(MAX),
+  EmergencyImage NVARCHAR(MAX),
+  EndDate Date,
   HospitalId INT FOREIGN KEY REFERENCES Hospital(HospitalId)
 );
 
@@ -157,7 +160,9 @@ CREATE TABLE NotificationRecipient (
   NotificationId INT FOREIGN KEY REFERENCES Notification(NotificationId),
   Username NVARCHAR(50) FOREIGN KEY REFERENCES [User](Username),
   ResponseStatus NVARCHAR(50), -- VD: Chưa phản hồi, Chấp nhận, Từ chối
-  ResponseDate DATETIME
+  ResponseDate DATETIME,
+  ResponseGo DATE,
+  ResponseTime TIME
 );
 
 
@@ -168,83 +173,83 @@ INSERT INTO [User] (Username, Password, Email, Role, FullName,DateOfBirth, Gende
  '1990-01-01', N'Nam', N'0909090909', N'Đà Nẵng', NULL, NULL),
  
 (N'staff1', N'staff1', N'user1@example.com', N'Staff', N'Nguyễn Văn A',
- '1995-05-10', N'Nam', N'0912345678', N'TP. Hồ Chí Minh', NULL, NULL),
+ '1995-05-10', N'Nam', N'0912345678', N'TP.Hồ Chí Minh', NULL, NULL),
 
 (N'string', N'string', 'Nuser4@email.com', N'Staff', N'Phạm Thị D', 
-  N'1992-11-25', N'Nữ', '0978123456', N'321 Đường Lý Tự Trọng, Q1, TP.HCM', NULL, NULL),
+  N'1992-11-25', N'Nữ', '0978123456', N'321 Đường Lý Tự Trọng, Q1, TP.Hồ Chí Minh', NULL, NULL),
 
 (N'user1', N'pass1', N'user2@example.com', N'User', N'Trần Thị B',
- '1998-07-20', N'Nữ', N'0987654321', N'Hà Nội', N'Sẵn sàng hiến máu', 'B-'),
+ '1998-07-20', N'Nữ', N'0987654321', N'Hà Nội', N'Active', 'B-'),
 
 (N'user2', N'pass2', N'user1@email.com', N'User', N'Nguyễn Văn A', 
- N'1990-05-15', N'Nam', N'0912345678', N'123 Đường Lê Lợi, Q1, TP.HCM',N'Sẵn sàng hiến máu', N'A+'),
+ N'1990-05-15', N'Nam', N'0912345678', N'103 Đ. 30 Tháng 4, Phường Thống Nhất, Vũng Tàu, Bà Rịa - Vũng Tàu',N'Active', N'A+'),
 
 (N'user3', N'pass3', N'user2@email.com', N'User', N'Trần Thị B', 
-  N'1995-08-20', N'Nữ', N'0987654321', N'456 Đường Nguyễn Huệ, Q1, TP.HCM', N'Sẵn sàng hiến máu', N'B+'),
+  N'1995-08-20', N'Nữ', N'0987654321', N'456 Đường Nguyễn Huệ, Q1, TP.Hồ Chí Minh', N'Active', N'B+'),
 
 (N'user4', N'pass4', N'user3@email.com', N'User', N'Lê Văn C', 
-  N'1985-03-10', 'Nam', N'0909123456', N'789 Đường CMT8, Q3, TP.HCM', N'Sẵn sàng hiến máu', N'O+'),
+  N'1985-03-10', 'Nam', N'0909123456', N'789 Đường CMT8, Q3, TP.Hồ Chí Minh', N'Active', N'O+'),
 
 (N'user5', N'pass5', N'user5@email.com', N'User', N'Hoàng Thị E', 
- '1993-04-12', N'Nữ', N'0911223344', N'101 Đường Hai Bà Trưng, Q1, TP.HCM', N'Sẵn sàng hiến máu', N'AB+'),
+ '1993-04-12', N'Nữ', N'0911223344', N'101 Đường Hai Bà Trưng, Q1, TP.Hồ Chí Minh', N'Active', N'AB+'),
 
 (N'user6', N'pass6', N'user6@email.com', N'User', N'Vũ Văn F', 
- '1988-09-05', N'Nam', N'0988776655', N'202 Đường Lê Duẩn, Q1, TP.HCM', N'Sẵn sàng hiến máu', N'AB-'),
+ '1988-09-05', N'Nam', N'0988776655', N'202 Đường Lê Duẩn, Q1, TP.Hồ Chí Minh', N'Active', N'AB-'),
 
 (N'user7', N'pass7', N'user7@email.com', N'User', N'Đặng Thị G', 
- '1997-12-30', N'Nữ', N'0901122334', N'303 Đường Pasteur, Q3, TP.HCM', N'Sẵn sàng hiến máu', N'O-'),
+ '1997-12-30', N'Nữ', N'0901122334', N'303 Đường Pasteur, Q3, TP.Hồ Chí Minh', N'Active', N'O-'),
 
 (N'user8', N'pass8', N'user8@email.com', N'User', N'Bùi Văn H', 
- '1991-07-18', N'Nam', N'0912345000', N'404 Đường Nguyễn Đình Chiểu, Q1, TP.HCM', N'Sẵn sàng hiến máu', N'A-'),
+ '1991-07-18', N'Nam', N'0912345000', N'404 Đường Nguyễn Đình Chiểu, Q1, TP.Hồ Chí Minh', N'Active', N'A-'),
 
 (N'user9', N'pass9', N'user9@email.com', N'User', N'Lý Thị I', 
- '1994-02-22', N'Nữ', N'0987650001', N'505 Đường Trần Hưng Đạo, Q5, TP.HCM', N'Sẵn sàng hiến máu', N'B-'),
+ '1994-02-22', N'Nữ', N'0987650001', N'505 Đường Trần Hưng Đạo, Q5, TP.Hồ Chí Minh', N'Active', N'B-'),
 
 (N'user10', N'pass10', N'user10@email.com', N'User', N'Phan Văn K', 
- '1989-06-15', N'Nam', N'0909111222', N'606 Đường Cách Mạng Tháng 8, Q10, TP.HCM', N'Sẵn sàng hiến máu', N'A+'),
+ '1989-06-15', N'Nam', N'0909111222', N'606 Đường Cách Mạng Tháng 8, Q10, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'A+'),
 
 (N'user11', N'pass11', N'user11@email.com', N'User', N'Mai Thị L', 
- '1996-10-08', N'Nữ', N'0912121212', N'707 Đường 3 Tháng 2, Q10, TP.HCM', N'Sẵn sàng hiến máu', N'B+'),
+ '1996-10-08', N'Nữ', N'0912121212', N'707 Đường 3 Tháng 2, Q10, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'B+'),
 
 (N'user12', N'pass12', N'user12@email.com', N'User', N'Trịnh Văn M', 
- '1990-11-11', N'Nam', N'0988989898', N'808 Đường Lý Thường Kiệt, Q10, TP.HCM', N'Sẵn sàng hiến máu', N'O+');
+ '1990-11-11', N'Nam', N'0988989898', N'808 Đường Lý Thường Kiệt, Q10, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'O+');
 
 --2
 INSERT INTO Hospital (HospitalName, HospitalAddress, HospitalImage, HospitalPhone)
 VALUES
-(N'Bệnh viện Chợ Rẫy', N'201B Nguyễn Chí Thanh, Quận 5, TP.HCM', N'https://example.com/images/choray.jpg', '02838554137'),
+(N'Bệnh viện Chợ Rẫy', N'201B Nguyễn Chí Thanh, Quận 5, TP.Hồ Chí Minh', N'https://example.com/images/choray.jpg', '02838554137'),
 (N'Bệnh viện Bạch Mai', N'78 Giải Phóng, Đống Đa, Hà Nội', N'https://example.com/images/bachmai.jpg', '02438693731'),
-(N'Bệnh viện Trung ương Huế', N'16 Lê Lợi, TP. Huế', N'https://example.com/images/hue.jpg', '02343822231'),
-(N'Bệnh viện Đại học Y Dược', N'215 Hồng Bàng, Quận 5, TP.HCM', N'https://example.com/images/ydhcm.jpg', '02839525353'),
+(N'Bệnh viện Trung ương Huế', N'16 Lê Lợi, TP.Huế', N'https://example.com/images/hue.jpg', '02343822231'),
+(N'Bệnh viện Đại học Y Dược', N'215 Hồng Bàng, Quận 5, TP.Hồ Chí Minh', N'https://example.com/images/ydhcm.jpg', '02839525353'),
 (N'Bệnh viện 108', N'1 Trần Hưng Đạo, Hai Bà Trưng, Hà Nội', N'https://example.com/images/108.jpg', '02462784108'),
-(N'Bệnh viện FV', N'6 Nguyễn Lương Bằng, Phú Mỹ Hưng, Quận 7, TP.HCM', N'https://example.com/images/fv.jpg', '02854113333'),
+(N'Bệnh viện FV', N'6 Nguyễn Lương Bằng, Phú Mỹ Hưng, Quận 7, TP.Hồ Chí Minh', N'https://example.com/images/fv.jpg', '02854113333'),
 (N'Bệnh viện Hữu nghị Việt Đức', N'40 Tràng Thi, Hoàn Kiếm, Hà Nội', N'https://example.com/images/vietduc.jpg', '02438253531'),
-(N'Bệnh viện Nhi đồng 1', N'341 Sư Vạn Hạnh, Quận 10, TP.HCM', N'https://example.com/images/nhidong1.jpg', '02839271119'),
-(N'Bệnh viện Từ Dũ', N'284 Cống Quỳnh, Quận 1, TP.HCM', N'https://example.com/images/tudu.jpg', '02854042525'),
+(N'Bệnh viện Nhi đồng 1', N'341 Sư Vạn Hạnh, Quận 10, TP.Hồ Chí Minh', N'https://example.com/images/nhidong1.jpg', '02839271119'),
+(N'Bệnh viện Từ Dũ', N'284 Cống Quỳnh, Quận 1, TP.Hồ Chí Minh', N'https://example.com/images/tudu.jpg', '02854042525'),
 (N'Bệnh viện Phụ sản Hà Nội', N'929 La Thành, Ba Đình, Hà Nội', N'https://example.com/images/phusanhanoi.jpg', '02438343223'),
-(N'Bệnh viện Nhi đồng 2', N'14 Lý Tự Trọng, Quận 1, TP.HCM', N'https://example.com/images/nhidong2.jpg', '02838295725'),
-(N'Bệnh viện Ung bướu TP.HCM', N'3 Nơ Trang Long, Bình Thạnh, TP.HCM', N'https://example.com/images/ungbuouhcm.jpg', '02838412939'),
+(N'Bệnh viện Nhi đồng 2', N'14 Lý Tự Trọng, Quận 1, TP.Hồ Chí Minh', N'https://example.com/images/nhidong2.jpg', '02838295725'),
+(N'Bệnh viện Ung bướu TP.Hồ Chí Minh', N'3 Nơ Trang Long, Bình Thạnh, TP.Hồ Chí Minh', N'https://example.com/images/ungbuouhcm.jpg', '02838412939'),
 (N'Bệnh viện Tai Mũi Họng TW', N'78 Giải Phóng, Đống Đa, Hà Nội', N'https://example.com/images/taimuihong.jpg', '02438691337'),
-(N'Bệnh viện Mắt TP.HCM', N'280 Điện Biên Phủ, Quận 3, TP.HCM', N'https://example.com/images/mathcm.jpg', '02839327546'),
+(N'Bệnh viện Mắt TP.Hồ Chí Minh', N'280 Điện Biên Phủ, Quận 3, TP.Hồ Chí Minh', N'https://example.com/images/mathcm.jpg', '02839327546'),
 (N'Bệnh viện Việt Pháp', N'1 Phương Mai, Đống Đa, Hà Nội', N'https://example.com/images/vietphap.jpg', '02435771111'),
 (N'Bệnh viện Đa khoa Quốc tế Vinmec', N'458 Minh Khai, Hai Bà Trưng, Hà Nội', N'https://example.com/images/vinmec.jpg', '02439743456'),
 (N'Bệnh viện Đại học Y Hà Nội', N'1 Tôn Thất Tùng, Đống Đa, Hà Nội', N'https://example.com/images/ydhn.jpg', '02435743291'),
-(N'Bệnh viện Thống Nhất', N'1 Lý Thường Kiệt, Quận Tân Bình, TP.HCM', N'https://example.com/images/thongnhat.jpg', '02838695735'),
-(N'Bệnh viện Nhân dân 115', N'527 Sư Vạn Hạnh, Quận 10, TP.HCM', N'https://example.com/images/115.jpg', '02838654127'),
+(N'Bệnh viện Thống Nhất', N'1 Lý Thường Kiệt, Quận Tân Bình, TP.Hồ Chí Minh', N'https://example.com/images/thongnhat.jpg', '02838695735'),
+(N'Bệnh viện Nhân dân 115', N'527 Sư Vạn Hạnh, Quận 10, TP.Hồ Chí Minh', N'https://example.com/images/115.jpg', '02838654127'),
 (N'Bệnh viện Phổi Trung ương', N'463 Hoàng Hoa Thám, Ba Đình, Hà Nội', N'https://example.com/images/phoitw.jpg', '02438233044');
 
 --2
 INSERT INTO Events(EventDate, EventTime, EventTitle, EventContent, Location, MaxParticipants)
 VALUES
 ('2024-03-15', '09:00', N'Ngày hội hiến máu mùa xuân', N'Sự kiện hiến máu đầu năm tại Bệnh viện B', N'456 Nguyễn Trãi, Q5', 60),
-('2024-07-10', '13:30', N'Hiến máu nhân đạo', N'Chương trình hiến máu do Đoàn trường tổ chức', N'Đại học Y Dược TP.HCM', 80),
+('2024-07-10', '13:30', N'Hiến máu nhân đạo', N'Chương trình hiến máu do Đoàn trường tổ chức', N'Đại học Y Dược TP.Hồ Chí Minh', 80),
 ('2023-11-25', '08:15', N'Giọt máu yêu thương', N'Hiến máu cứu người tại Bệnh viện C', N'789 Trần Hưng Đạo, Q3', 45),
-('2024-01-20', '10:00', N'Tình nguyện vì sự sống', N'Chương trình hiến máu cho bệnh nhi ung thư', N'Viện Huyết học TP.HCM', 70),
+('2024-01-20', '10:00', N'Tình nguyện vì sự sống', N'Chương trình hiến máu cho bệnh nhi ung thư', N'Viện Huyết học TP.Hồ Chí Minh', 70),
 ('2025-06-20', '08:00', N'Ngày hội hiến máu', N'Hiến máu cứu người tại Bệnh viện A', N'123 Lê Lợi, Q1', 50),
 ('2025-07-05', '07:30', N'Mỗi giọt máu – Một tấm lòng', N'Ngày hội hiến máu toàn thành phố', N'Công viên 23/9, Q1', 100),
 ('2025-08-12', '09:00', N'Hiến máu cứu người', N'Sự kiện phối hợp giữa Hội chữ thập đỏ và Bệnh viện D', N'12 Nguyễn Văn Cừ, Q5', 55),
 ('2025-09-01', '08:30', N'Trái tim nhân ái', N'Hiến máu vào dịp Quốc khánh', N'Nhà văn hóa Thanh Niên', 65),
-('2025-10-15', '10:15', N'Ngày hội đỏ', N'Trao giọt máu – Trao hy vọng', N'Đại học Quốc Gia TP.HCM', 120),
+('2025-10-15', '10:15', N'Ngày hội đỏ', N'Trao giọt máu – Trao hy vọng', N'Đại học Quốc Gia TP.Hồ Chí Minh', 120),
 ('2025-11-30', '13:00', N'Chung tay vì cộng đồng', N'Sự kiện lớn do Thành đoàn tổ chức', N'Nhà thi đấu Phú Thọ, Q11', 150);
 
 --2
@@ -296,9 +301,9 @@ VALUES
 ('user12', 2, '2025-06-05', N'Đã hiến', 'O+', 1);
 
 --3
-INSERT INTO Emergency (Username, EmergencyDate, bloodType, EmergencyStatus, EmergencyNote, RequiredUnits, HospitalId)
+INSERT INTO Emergency (Username, EmergencyDate, bloodType, EmergencyStatus, EmergencyNote, RequiredUnits, HospitalId, EmergencyMedical, EmergencyImage, EndDate)
 VALUES 
-(N'user5', '2025-06-11', N'B-', N'Đã xét duyệt', N'Cần 5 đơn vị nhóm máu B- tại Bệnh viện 108', 5, 5);
+(N'user5', '2025-06-11', N'B-', N'Đã xét duyệt', N'Cần 5 đơn vị nhóm máu B- tại Bệnh viện 108', 5, 5, N'Tai nạn giao thông', NULL, '2025-06-26');
 
 --4
 INSERT INTO Notification (EmergencyId, NotificationStatus, NotificationTitle, NotificationContent, NotificationDate)
@@ -308,13 +313,13 @@ VALUES
 --4
 INSERT INTO BloodBank (BloodType, BloodVolumeTotal, BloodBankStatus)
 VALUES 
-('O+', 5, N'Còn'),
+('O+', 1, N'Còn'),
 ('A+', 8, N'Còn'),
 ('B+', 3, N'Còn'),
 ('AB+', 0, N'Hết'),
 ('O-', 2, N'Còn'),
-('A-', 1, N'Còn'),
-('B-', 0, N'Hết'),
+('A-', 0, N'Hết'),
+('B-', 1, N'Còn'),
 ('AB-', 4, N'Còn');
 
 --4
@@ -330,21 +335,21 @@ VALUES
 INSERT INTO BloodDetail (BloodType, Volume, AppointmentId, HospitalId, BloodDetailDate, BloodDetailStatus, Note)
 VALUES 
 ('O+', 1, 1, 1, '2025-06-21', N'Còn hạn', NULL),
-('A+', 1, 2, 1, '2025-06-20', N'Còn hạn', NULL),
-('B+', 1, 3, 2, '2025-06-19', N'Còn hạn', NULL),
+('A+', 4, 2, 1, '2025-06-20', N'Còn hạn', NULL),
+('B+', 3, 3, 2, '2025-06-19', N'Còn hạn', NULL),
 ('AB+', 1, 4, 3, '2025-06-18', N'Hết hạn', N'Sử dụng trước 2025-06-25'),
-('O-', 1, 5, 2, '2025-06-17', N'Còn hạn', NULL),
+('O-', 2, 5, 2, '2025-06-17', N'Còn hạn', NULL),
 ('A-', 1, 6, 1, '2025-06-16', N'Hết hạn', N'Không sử dụng được'),
 ('B-', 1, 7, 3, '2025-06-15', N'Còn hạn', NULL),
-('AB-', 1, 8, 2, '2025-06-14', N'Còn hạn', NULL),
+('AB-', 4, 8, 2, '2025-06-14', N'Còn hạn', NULL),
 ('O+', 1, 9, 1, '2025-06-13', N'Hết hạn', N'Đã lưu trữ quá thời hạn cho phép'),
-('A+', 1, 10, 3, '2025-06-12', N'Còn hạn', NULL);
+('A+', 4, 10, 3, '2025-06-12', N'Còn hạn', NULL);
 
 --5
-INSERT INTO NotificationRecipient (NotificationID, Username, ResponseStatus, ResponseDate)
+INSERT INTO NotificationRecipient (NotificationID, Username, ResponseStatus, ResponseDate, ResponseGo, ResponseTime)
 VALUES 
-(1, N'user1', N'Chấp nhận', '2025-10-01 10:30:00'),
-(1, N'user9', N'Chưa phản hồi', NULL);
+(1, N'user1', N'Chấp nhận', '2025-10-01 10:30:00', '2025-10-05', '09:00:00'),
+(1, N'user9', N'Chưa phản hồi', NULL, NULL, NULL);
 
 
 -- Bảng câu hỏi

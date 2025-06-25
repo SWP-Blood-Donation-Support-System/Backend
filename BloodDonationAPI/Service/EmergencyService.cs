@@ -52,7 +52,10 @@ namespace BloodDonationAPI.Service
                     EmergencyStatus = emergencyStatus,
                     EmergencyNote = $"Cần {dto.RequiredUnits} đơn vị nhóm máu {dto.BloodType} tại {hospital.HospitalName}",
                     RequiredUnits = dto.RequiredUnits,
-                    HospitalId = dto.HospitalId
+                    HospitalId = dto.HospitalId,
+                    EmergencyMedical = dto.EmergencyMedical,
+                    EmergencyImage = dto.EmergencyImage,
+                    EndDate = dto.EndDate
                 };
 
                 _context.Emergencies.Add(emergency);
@@ -72,34 +75,17 @@ namespace BloodDonationAPI.Service
             try
             {
                 var emergencies = await _context.Emergencies
-                    .Select(e => new Emergency
-                    {
-                        EmergencyId = e.EmergencyId,
-                        Username = e.Username,
-                        EmergencyDate = e.EmergencyDate,
-                        BloodType = e.BloodType,
-                        EmergencyStatus = e.EmergencyStatus,
-                        EmergencyNote = e.EmergencyNote,
-                        RequiredUnits = e.RequiredUnits,
-                        HospitalId = e.HospitalId,
-                        Hospital = e.HospitalId.HasValue ? new Hospital
-                        {
-                            HospitalId = e.Hospital.HospitalId,
-                            HospitalName = e.Hospital.HospitalName,
-                            HospitalAddress = e.Hospital.HospitalAddress,
-                            HospitalPhone = e.Hospital.HospitalPhone
-                        } : null,
-                        UsernameNavigation = new User
-                        {
-                            Username = e.UsernameNavigation.Username,
-                            FullName = e.UsernameNavigation.FullName,
-                            Phone = e.UsernameNavigation.Phone,
-                            Email = e.UsernameNavigation.Email
-                        }
-                    })
                     .OrderByDescending(e => e.EmergencyDate)
                     .ToListAsync();
-
+                var today = DateOnly.FromDateTime(DateTime.Now);
+                foreach (var e in emergencies)
+                {
+                    if (e.EndDate.HasValue && e.EndDate < today && e.EmergencyStatus != "Đã quá hạn" && e.EmergencyStatus != "Đã được đáp ứng")
+                    {
+                        e.EmergencyStatus = "Đã quá hạn";
+                    }
+                }
+                await _context.SaveChangesAsync();
                 return emergencies;
             }
             catch (Exception ex)
@@ -189,6 +175,12 @@ namespace BloodDonationAPI.Service
                 emergency.RequiredUnits = dto.RequiredUnits;
             if (dto.HospitalId.HasValue)
                 emergency.HospitalId = dto.HospitalId;
+            if (!string.IsNullOrEmpty(dto.EmergencyMedical))
+                emergency.EmergencyMedical = dto.EmergencyMedical;
+            if (!string.IsNullOrEmpty(dto.EmergencyImage))
+                emergency.EmergencyImage = dto.EmergencyImage;
+            if (dto.EndDate.HasValue)
+                emergency.EndDate = dto.EndDate;
             // Có thể cập nhật thêm các trường khác nếu cần
 
             await _context.SaveChangesAsync();
@@ -208,6 +200,42 @@ namespace BloodDonationAPI.Service
             _context.Emergencies.Remove(emergency);
             await _context.SaveChangesAsync();
             return "Emergency deleted successfully.";
+        }
+
+        public async Task<List<Emergency>> GetEmergenciesByUsername(string username)
+        {
+            var emergencies = await _context.Emergencies
+                .Where(e => e.Username == username)
+                .OrderByDescending(e => e.EmergencyDate)
+                .ToListAsync();
+            var today = DateOnly.FromDateTime(DateTime.Now);
+            bool changed = false;
+            foreach (var e in emergencies)
+            {
+                if (e.EndDate.HasValue && e.EndDate < today && e.EmergencyStatus != "Đã quá hạn" && e.EmergencyStatus != "Đã được đáp ứng")
+                {
+                    e.EmergencyStatus = "Đã quá hạn";
+                    changed = true;
+                }
+            }
+            if (changed) await _context.SaveChangesAsync();
+            return emergencies;
+        }
+
+        public async Task<string> MarkEmergencyAsFulfilled(int emergencyId, string username)
+        {
+            var emergency = await _context.Emergencies.FindAsync(emergencyId);
+            if (emergency == null)
+                return "Emergency not found.";
+            if (emergency.Username != username)
+                return "You are not authorized to update this emergency.";
+            if (emergency.EmergencyStatus == "Từ chối" || emergency.EmergencyStatus == "Đợi xét duyệt")
+                return "Cannot mark as fulfilled when status is 'Từ chối' or 'Đợi xét duyệt'.";
+            if (emergency.EmergencyStatus != "Đã xét duyệt")
+                return "Only emergencies with status 'Đã xét duyệt' can be marked as fulfilled.";
+            emergency.EmergencyStatus = "Đã được đáp ứng";
+            await _context.SaveChangesAsync();
+            return "Emergency marked as fulfilled.";
         }
 
         private bool IsValidBloodType(string bloodType)

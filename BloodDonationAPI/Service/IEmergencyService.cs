@@ -11,5 +11,7 @@ namespace BloodDonationAPI.Service
         Task<BloodCompareResultDto> CompareBloodForEmergency(int emergencyId);
         Task<string> UpdateEmergency(int emergencyId, string username, string role, RegisterEmergencyDto dto);
         Task<string> DeleteEmergency(int emergencyId, string username, string role);
+        Task<List<Emergency>> GetEmergenciesByUsername(string username);
+        Task<string> MarkEmergencyAsFulfilled(int emergencyId, string username);
     }
 } 

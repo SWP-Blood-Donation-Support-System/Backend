@@ -17,9 +17,14 @@ public partial class Emergency
 
     public string? EmergencyNote { get; set; }
 
+    public string? EmergencyMedical { get; set; }
+    public string? EmergencyImage { get; set; }
+
     public int? RequiredUnits { get; set; }
 
     public int? HospitalId { get; set; }
+
+    public DateOnly? EndDate { get; set; }
 
     public virtual Hospital? Hospital { get; set; }
 
