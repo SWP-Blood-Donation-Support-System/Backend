@@ -33,18 +33,72 @@ namespace BloodDonationAPI.Service
 
         }
 
-        public async Task<bool> CheckInAsync(CheckInDto checkInDto)
+        public async Task<bool> VerifyUserIdentityAsync(CheckInDto checkInDto)
         {
-            var check = await _context.AppointmentRecords.FindAsync(checkInDto.AppointmentId);
-            if (check == null || check.Status== "Đã hiến")
+            // Tìm lịch hẹn theo ID
+            var appointment = await _context.AppointmentRecords.FindAsync(checkInDto.AppointmentId);
+            if (appointment == null || appointment.Status == "Đã hiến")
                 return false;
-
-            check.Status = "Đã đến";
+            
+            // Tìm người dùng theo fullname và email để xác minh danh tính
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.FullName == checkInDto.FullName && 
+                                      u.Email == checkInDto.Email && 
+                                      u.Username == appointment.Username);
+            
+            if (user == null)
+                return false; // Không tìm thấy user với thông tin đã cung cấp
+            
+            return true; // Xác thực danh tính thành công
+        }
+        
+        public async Task<bool> UpdateDonationStatusAsync(int appointmentId, string status, string staffNote)
+        {
+            // Tìm lịch hẹn theo ID
+            var appointment = await _context.AppointmentRecords.FindAsync(appointmentId);
+            if (appointment == null)
+                return false;
+            
+            // Cập nhật trạng thái và ghi chú
+            appointment.Status = status;
+            appointment.StaffNote = staffNote;
+            
             await _context.SaveChangesAsync();
-
             return true;
         }
 
+        public async Task<bool> CheckInAsync(CheckInDto checkInDto)
+        {
+            // Tìm lịch hẹn theo ID
+            var appointment = await _context.AppointmentRecords.FindAsync(checkInDto.AppointmentId);
+            if (appointment == null || appointment.Status == "Đã hiến")
+                return false;
+            
+            // Tìm người dùng theo fullname và email để xác minh danh tính
+            var user = await _context.Users
+                .FirstOrDefaultAsync(u => u.FullName == checkInDto.FullName && 
+                                      u.Email == checkInDto.Email && 
+                                      u.Username == appointment.Username);
+            
+            if (user == null)
+                return false; // Không tìm thấy user với thông tin đã cung cấp
+            
+            // Cập nhật trạng thái lịch hẹn dựa trên tình huống
+            if (checkInDto.CanDonate)
+            {
+                appointment.Status = "Đã đến";
+            }
+            else
+            {
+                // User không thể hiến máu, cập nhật trạng thái thành "Đang chờ"
+                appointment.Status = "Đang chờ";
+                
+            }
+            
+            await _context.SaveChangesAsync();
+            return true;
+        }
+        
         public async Task<bool> RecordDonationAsync(DonateDto donateDto)
         {
             var appointment = await _context.AppointmentRecords.FirstOrDefaultAsync(a => a.AppointmentId == donateDto.AppointmentId);
@@ -55,8 +109,17 @@ namespace BloodDonationAPI.Service
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == appointment.Username);
             if (user == null )
                 return false;
-            //kiểm tra xem người này đã được ghi nhận hiến máu chưa
             
+            // Kiểm tra nếu người dùng không thể hiến máu
+            if (!donateDto.CanDonate)
+            {
+                appointment.Status = "Đang chờ";
+                appointment.StaffNote = donateDto.StaffNote;
+                await _context.SaveChangesAsync();
+                return true;
+            }
+            
+            //kiểm tra xem người này đã được ghi nhận hiến máu chưa
             if (appointment.Status == "Đã hiến" )
             {
                 throw new Exception("Người dùng đã được ghi nhận hiến máu ");
