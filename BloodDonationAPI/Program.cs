@@ -71,7 +71,11 @@ namespace BloodDonationAPI
                 c.IncludeXmlComments(xmlPath);
 
             });
+            
+            // Đăng ký các service
             builder.Services.AddScoped<IUserService, UserService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddSingleton<IOtpService, OtpService>();
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<IAppointmentServiece, AppointmentServiece>();
             builder.Services.AddScoped<IBloodDonationProcessService, BloodDonationProcessService>();
@@ -82,6 +86,7 @@ namespace BloodDonationAPI
             builder.Services.AddScoped<IBlogService, BlogService>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<ISurveyService, SurveyService>();
+            
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {

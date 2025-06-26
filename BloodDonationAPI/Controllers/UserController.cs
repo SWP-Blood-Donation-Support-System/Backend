@@ -67,19 +67,46 @@ namespace BloodDonationAPI.Controllers
             return inputPassword == storedPassword; // Đây chỉ là ví dụ, nên dùng proper password hashing
         }
 
+        // ENDPOINT 1: Đăng ký và gửi OTP
         [HttpPost("register")]
-        public IActionResult Register([FromBody] RegisterDto registerDto)
+        public async Task<IActionResult> RegisterAndSendOtp([FromBody] RegisterDto registerDto)
         {
             if (!ModelState.IsValid)
             {
                 return BadRequest(ModelState);
             }
-            var result = _userService.Register(registerDto);
-            if (result == "Username already exists.")
+
+            var result = await _userService.RegisterAndSendOtpAsync(registerDto);
+            
+            if (result.Contains("gửi"))
             {
-                return Conflict(result);
+                return Ok(new { message = result });
             }
-            return Ok(result);
+            
+            return BadRequest(new { message = result });
         }
+
+        // ENDPOINT 2: Xác thực OTP và tạo tài khoản (CHỈ CẦN EMAIL VÀ OTP)
+        [HttpPost("verify-otp")]
+        public IActionResult VerifyOtp([FromBody] VerifyOtpDto verifyOtpDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = _userService.VerifyOtpAndCreateAccount(verifyOtpDto);
+            
+            if (result.Contains("thành công"))
+            {
+                return Ok(new { message = result });
+            }
+            
+            return BadRequest(new { message = result });
+        }
+
+        // TEST EMAIL - Thêm endpoint này để debug
+       
+        
     }
 }
