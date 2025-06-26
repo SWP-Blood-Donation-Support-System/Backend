@@ -11,6 +11,7 @@ namespace BloodDonationAPI.Controllers
     public class BloodDonationProcessController : ControllerBase
     {
         private readonly IBloodDonationProcessService _service;
+        private bool result;
 
         public BloodDonationProcessController(IBloodDonationProcessService service)
         {
@@ -52,17 +53,19 @@ namespace BloodDonationAPI.Controllers
         [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> CheckIn([FromBody] CheckInDto checkInDto)
         {
-            if (checkInDto == null || checkInDto.AppointmentId <= 0)
+            if (checkInDto == null || checkInDto.AppointmentId <= 0 || 
+                string.IsNullOrEmpty(checkInDto.FullName) || string.IsNullOrEmpty(checkInDto.Email))
             {
-                return BadRequest(new { message = "Invalid appointment history ID." });
+                return BadRequest(new { message = "Thiếu thông tin cần thiết. Vui lòng cung cấp AppointmentId, FullName và Email." });
             }
 
-            var result = await _service.CheckInAsync(checkInDto);
+            var result = await _service.VerifyUserIdentityAsync(checkInDto);
             if (!result)
             {
-                return NotFound(new { message = "Appointment history not found or update failed." });
+                return NotFound(new { message = "Không tìm thấy lịch hẹn hoặc thông tin người dùng không khớp." });
             }
-            return Ok(new { message = "Appointment status updated successfully." });
+            
+            return Ok(new { message = "Xác nhận người dùng đã đến thành công.", verified = true });
         }
         /// <summary>
         /// API nay dùng để ghi nhận hiến máu của người đã đăng ký tham gia hiến máu 
@@ -82,11 +85,34 @@ namespace BloodDonationAPI.Controllers
         [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> RecordDonation([FromBody] DonateDto donateDto)
         {
-            if (donateDto == null || donateDto.AppointmentId <= 0 || string.IsNullOrEmpty(donateDto.BloodType) || donateDto.Volume <= 0)
+            if (donateDto == null || donateDto.AppointmentId <= 0)
             {
                 return BadRequest("Invalid donation data.");
             }
-            var result = await _service.RecordDonationAsync(donateDto);
+
+            // Nếu người dùng không thể hiến máu vì lý do sức khỏe
+            if (!donateDto.CanDonate)
+            {
+                if (string.IsNullOrEmpty(donateDto.StaffNote))
+                {
+                    return BadRequest("Vui lòng cung cấp lý do người này không thể hiến máu.");
+                }
+
+                var updateResult = await _service.UpdateDonationStatusAsync(donateDto.AppointmentId, "Đang chờ", donateDto.StaffNote);
+                if (!updateResult)
+                {
+                    return NotFound(new { message = "Không tìm thấy lịch hẹn hoặc không thể cập nhật trạng thái" });
+                }
+                return Ok(new { message = "Đã cập nhật trạng thái người hiến thành 'Đang chờ' và ghi chú lý do" });
+            }
+
+            // Nếu người dùng có thể hiến máu, tiến hành ghi nhận thông tin hiến máu
+            if (string.IsNullOrEmpty(donateDto.BloodType) || donateDto.Volume <= 0)
+            {
+                return BadRequest("Vui lòng cung cấp nhóm máu và thể tích máu hiến.");
+            }
+            
+            var donationResult = await _service.RecordDonationAsync(donateDto);
             if (!result)
             {
                 return NotFound(new { message = "Không tìm thấy lịch hẹn hoặc không thể ghi nhận hiến máu" });

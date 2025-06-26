@@ -91,7 +91,8 @@ CREATE TABLE AppointmentRecord (
   RegistrationDate DATETIME,
   Status NVARCHAR(50), -- VD: Đã hiến, Chờ xác nhận, Huỷ
   BloodType NVARCHAR(5),
-  DonationUnit INT -- Số đơn vị máu đã hiến (nếu có)
+  DonationUnit INT, -- Số đơn vị máu đã hiến (nếu có)
+  StaffNote NVARCHAR(MAX); -- Ghi chú của nhân viên y tế về ca hiến máu
 );
 
 ----------------------------------------------------------
@@ -285,21 +286,21 @@ VALUES
 (N'Những điều cần biết sau khi hiến máu', N'Sau khi hiến máu, bạn cần lưu ý những điều sau để đảm bảo sức khỏe...', N'https://example.com/hienmau3.jpg', N'unavailable', NULL, N'staff1');
 
 --3
-INSERT INTO AppointmentRecord (Username, EventId, RegistrationDate, Status, BloodType, DonationUnit)
+INSERT INTO AppointmentRecord (Username, EventId, RegistrationDate, Status, BloodType, DonationUnit, StaffNote)
 VALUES 
-('user1', 1, '2025-06-15', N'Đã hiến', 'B-', 1),
-('user2', 2, '2025-06-14', N'Đã hiến', 'A+', 1),
-('user3', 3, '2025-06-13', N'Chưa hiến', 'B+', 1),
-('user4', 4, '2025-06-10', N'Hủy', 'O+', 0),
-('user5', 5, '2025-06-11', N'Đã hiến', 'AB+', 1),
-('user6', 1, '2025-06-12', N'Chưa hiến', 'AB-', 1),
-('user7', 2, '2025-06-10', N'Đã hiến', 'O-', 1),
-('user8', 3, '2025-06-08', N'Đã hiến', 'A-', 1),
-('user9', 4, '2025-06-09', N'Hủy', 'B-', 0),
-('user10', 5, '2025-06-07', N'Chưa hiến', 'A+', 1),
-('user11', 1, '2025-06-06', N'Đã hiến', 'B+', 1),
-('user12', 2, '2025-06-05', N'Đã hiến', 'O+', 1);
-
+('user1', 1, '2025-06-15', N'Đã hiến', 'B-', 1, NULL),
+('user2', 2, '2025-06-14', N'Đã hiến', 'A+', 1, NULL),
+('user3', 3, '2025-06-13', N'Chưa hiến', 'B+', 1, NULL),
+('user4', 4, '2025-06-10', N'Hủy', 'O+', 0, NULL),
+('user5', 5, '2025-06-11', N'Đã hiến', 'AB+', 1, NULL),
+('user6', 1, '2025-06-12', N'Chưa hiến', 'AB-', 1, NULL),
+('user7', 2, '2025-06-10', N'Đã hiến', 'O-', 1, NULL),
+('user8', 3, '2025-06-08', N'Đã hiến', 'A-', 1, NULL),
+('user9', 4, '2025-06-09', N'Hủy', 'B-', 0, NULL),
+('user10', 5, '2025-06-07', N'Chưa hiến', 'A+', 1, NULL),
+('user11', 1, '2025-06-06', N'Đã hiến', 'B+', 1, NULL),
+('user12', 2, '2025-06-05', N'Đã hiến', 'O+', 1, NULL),
+('user3', 5, '2025-06-20', N'Đang chờ', 'B+', NULL, N'Người hiến có huyết áp cao (150/90 mmHg). Yêu cầu nghỉ ngơi, giảm muối và caffeine trong chế độ ăn. Hẹn ngày mai quay lại kiểm tra lại huyết áp trước khi hiến máu.');
 --3
 INSERT INTO Emergency (Username, EmergencyDate, bloodType, EmergencyStatus, EmergencyNote, RequiredUnits, HospitalId, EmergencyMedical, EmergencyImage, EndDate)
 VALUES 

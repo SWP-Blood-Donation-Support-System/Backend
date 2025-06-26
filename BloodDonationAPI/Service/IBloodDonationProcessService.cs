@@ -9,6 +9,10 @@ namespace BloodDonationAPI.Service
 
         Task<bool> CheckInAsync(CheckInDto checkInDto);
 
+        Task<bool> VerifyUserIdentityAsync(CheckInDto checkInDto);
+
+        Task<bool> UpdateDonationStatusAsync(int appointmentId, string status, string staffNote);
+
         Task<bool> RecordDonationAsync(DonateDto donateDto);
 
         Task UpdateEligibleUsersAsync ();
