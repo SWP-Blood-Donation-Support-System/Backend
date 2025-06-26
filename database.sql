@@ -92,7 +92,7 @@ CREATE TABLE AppointmentRecord (
   Status NVARCHAR(50), -- VD: Đã hiến, Chờ xác nhận, Huỷ
   BloodType NVARCHAR(5),
   DonationUnit INT, -- Số đơn vị máu đã hiến (nếu có)
-  StaffNote NVARCHAR(MAX); -- Ghi chú của nhân viên y tế về ca hiến máu
+  StaffNote NVARCHAR(MAX), -- Ghi chú của nhân viên y tế về ca hiến máu
 );
 
 ----------------------------------------------------------
