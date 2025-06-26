@@ -206,13 +206,13 @@ INSERT INTO [User] (Username, Password, Email, Role, FullName,DateOfBirth, Gende
  '1994-02-22', N'Nữ', N'0987650001', N'505 Đường Trần Hưng Đạo, Q5, TP.Hồ Chí Minh', N'Active', N'B-'),
 
 (N'user10', N'pass10', N'user10@email.com', N'User', N'Phan Văn K', 
- '1989-06-15', N'Nam', N'0909111222', N'606 Đường Cách Mạng Tháng 8, Q10, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'A+'),
+ '1989-06-15', N'Nam', N'0909111222', N'606 Đường Cách Mạng Tháng 8, Q10, TP.Hồ Chí Minh', N'Active', N'A+'),
 
 (N'user11', N'pass11', N'user11@email.com', N'User', N'Mai Thị L', 
- '1996-10-08', N'Nữ', N'0912121212', N'707 Đường 3 Tháng 2, Q10, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'B+'),
+ '1996-10-08', N'Nữ', N'0912121212', N'707 Đường 3 Tháng 2, Q10, TP.Hồ Chí Minh', N'Active', N'B+'),
 
 (N'user12', N'pass12', N'user12@email.com', N'User', N'Trịnh Văn M', 
- '1990-11-11', N'Nam', N'0988989898', N'808 Đường Lý Thường Kiệt, Q10, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'O+');
+ '1990-11-11', N'Nam', N'0988989898', N'808 Đường Lý Thường Kiệt, Q10, TP.Hồ Chí Minh', N'Active', N'O+');
 
 --2
 INSERT INTO Hospital (HospitalName, HospitalAddress, HospitalImage, HospitalPhone)
