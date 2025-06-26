@@ -26,6 +26,10 @@ public partial class BloodDonationSystemContext : DbContext
 
     public virtual DbSet<Certificate> Certificates { get; set; }
 
+    public virtual DbSet<DeferralReason> DeferralReasons { get; set; }
+
+    public virtual DbSet<DonorDeferral> DonorDeferrals { get; set; }
+
     public virtual DbSet<Emergency> Emergencies { get; set; }
 
     public virtual DbSet<Event> Events { get; set; }
@@ -46,7 +50,9 @@ public partial class BloodDonationSystemContext : DbContext
 
     public virtual DbSet<UserSurveyAnswer> UserSurveyAnswers { get; set; }
 
- 
+    protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+#warning To protect potentially sensitive information in your connection string, you should move it out of source code. You can avoid scaffolding the connection string by using the Name= syntax to read it from configuration - see https://go.microsoft.com/fwlink/?linkid=2131148. For more guidance on storing connection strings, see https://go.microsoft.com/fwlink/?LinkId=723263.
+        => optionsBuilder.UseSqlServer("Server=DESKTOP-BUQQBSF\\QUOCHUY;Database=Blood_Donation_System;User Id=sa;Password=12345;TrustServerCertificate=True");
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -131,6 +137,36 @@ public partial class BloodDonationSystemContext : DbContext
                 .HasConstraintName("FK__Certifica__Appoi__1CF15040");
         });
 
+        modelBuilder.Entity<DeferralReason>(entity =>
+        {
+            entity.HasKey(e => e.ReasonCode).HasName("PK__Deferral__A6278DA230C33EC3");
+
+            entity.ToTable("DeferralReason");
+
+            entity.Property(e => e.ReasonCode).HasMaxLength(50);
+            entity.Property(e => e.ReasonText).HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<DonorDeferral>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__DonorDef__3214EC073B40CD36");
+
+            entity.ToTable("DonorDeferral");
+
+            entity.Property(e => e.ReasonCode).HasMaxLength(50);
+            entity.Property(e => e.Username).HasMaxLength(50);
+
+            entity.HasOne(d => d.ReasonCodeNavigation).WithMany(p => p.DonorDeferrals)
+                .HasForeignKey(d => d.ReasonCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__DonorDefe__Reaso__3F115E1A");
+
+            entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.DonorDeferrals)
+                .HasForeignKey(d => d.Username)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__DonorDefe__Usern__3E1D39E1");
+        });
+
         modelBuilder.Entity<Emergency>(entity =>
         {
             entity.HasKey(e => e.EmergencyId).HasName("PK__Emergenc__7B5544D307020F21");
@@ -154,6 +190,8 @@ public partial class BloodDonationSystemContext : DbContext
         {
             entity.HasKey(e => e.EventId).HasName("PK__Events__7944C810117F9D94");
 
+            entity.Property(e => e.BloodTypeRequired).HasMaxLength(10);
+            entity.Property(e => e.CurrentParticipants).HasDefaultValue(0);
             entity.Property(e => e.EventTitle).HasMaxLength(100);
             entity.Property(e => e.Location).HasMaxLength(255);
         });
@@ -258,7 +296,7 @@ public partial class BloodDonationSystemContext : DbContext
 
         modelBuilder.Entity<UserSurveyAnswer>(entity =>
         {
-            entity.HasKey(e => e.AnswerId).HasName("PK__UserSurv__D482500418EBB532");
+            entity.HasKey(e => e.AnswerId).HasName("PK__UserSurv__D4825004282DF8C2");
 
             entity.ToTable("UserSurveyAnswer");
 
@@ -268,15 +306,15 @@ public partial class BloodDonationSystemContext : DbContext
 
             entity.HasOne(d => d.Appointment).WithMany(p => p.UserSurveyAnswers)
                 .HasForeignKey(d => d.AppointmentId)
-                .HasConstraintName("FK__UserSurve__Appoi__1AD3FDA4");
+                .HasConstraintName("FK__UserSurve__Appoi__2A164134");
 
             entity.HasOne(d => d.Option).WithMany(p => p.UserSurveyAnswers)
                 .HasForeignKey(d => d.OptionId)
-                .HasConstraintName("FK__UserSurve__Optio__1CBC4616");
+                .HasConstraintName("FK__UserSurve__Optio__2BFE89A6");
 
             entity.HasOne(d => d.Question).WithMany(p => p.UserSurveyAnswers)
                 .HasForeignKey(d => d.QuestionId)
-                .HasConstraintName("FK__UserSurve__Quest__1BC821DD");
+                .HasConstraintName("FK__UserSurve__Quest__2B0A656D");
         });
 
         OnModelCreatingPartial(modelBuilder);

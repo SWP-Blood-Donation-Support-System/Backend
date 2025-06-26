@@ -453,3 +453,50 @@ VALUES
 (1, 7, 27, NULL),
 (1, 8, 30, NULL),
 (1, 9, 33, NULL);
+
+
+--chay dong nay de them vao Event:
+
+ALTER TABLE Events
+ADD
+  BloodTypeRequired NVARCHAR(10),
+  CurrentParticipants INT DEFAULT 0;
+
+--them 2 bảng mới 
+
+CREATE TABLE DeferralReason (
+    ReasonCode NVARCHAR(50) PRIMARY KEY,
+    ReasonText NVARCHAR(255) NOT NULL,
+    MinDays INT NULL,
+    IsPermanent BIT NOT NULL DEFAULT 0,
+    Note NVARCHAR(MAX)
+);
+
+-- Dữ liệu đầy đủ
+INSERT INTO DeferralReason (ReasonCode, ReasonText, MinDays, IsPermanent, Note)
+VALUES
+-- Tạm thời
+('LOW_HB',         N'Thiếu Hemoglobin (Hb)',         30, 0, N'Hb < 12.5 (nữ) hoặc < 13.0 (nam), cần bổ sung sắt'),
+('HIGH_BP',        N'Huyết áp cao (>140/90)',        14, 0, N'Nghỉ ngơi, ăn nhạt, theo dõi lại'),
+('LOW_BP',         N'Huyết áp thấp (<90/60)',         7, 0, N'Bù nước, tăng vận động, theo dõi'),
+('HEART_RATE',     N'Nhịp tim bất thường',           10, 0, N'Nhịp tim trên 100 hoặc dưới 50 bpm, đo lại khi bình tĩnh'),
+('SYPHILIS_POS',   N'Nhiễm giang mai (+)',          365, 0, N'Tạm hoãn 12 tháng, cần điều trị'),
+
+-- Vĩnh viễn
+('HIV_POS',        N'Nhiễm HIV (+)',                NULL, 1, N'HIV dương tính, không đủ điều kiện hiến máu'),
+('HBV_POS',        N'Nhiễm viêm gan B (+)',         NULL, 1, N'HBsAg dương tính'),
+('HCV_POS',        N'Nhiễm viêm gan C (+)',         NULL, 1, N'HCV dương tính');
+
+
+CREATE TABLE DonorDeferral (
+    Id INT IDENTITY(1,1) PRIMARY KEY,
+    Username NVARCHAR(50) NOT NULL,               -- Khóa ngoại liên kết với User
+    ReasonCode NVARCHAR(50) NOT NULL,             -- Khóa ngoại liên kết lý do trì hoãn
+    StartDate DATE NOT NULL,
+    EndDate DATE NULL,                            -- NULL nếu trì hoãn vĩnh viễn
+    IsPermanent BIT NOT NULL DEFAULT 0,           -- 1 = vĩnh viễn
+    Note NVARCHAR(MAX),                           -- Ghi chú chi tiết
+
+    FOREIGN KEY (Username) REFERENCES [User](Username),
+    FOREIGN KEY (ReasonCode) REFERENCES DeferralReason(ReasonCode)
+);

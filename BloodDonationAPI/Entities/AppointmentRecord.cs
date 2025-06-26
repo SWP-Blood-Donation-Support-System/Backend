@@ -28,5 +28,4 @@ public partial class AppointmentRecord
     public virtual ICollection<UserSurveyAnswer> UserSurveyAnswers { get; set; } = new List<UserSurveyAnswer>();
 
     public virtual User? UsernameNavigation { get; set; }
-    public string StaffNote { get; internal set; }
 }
