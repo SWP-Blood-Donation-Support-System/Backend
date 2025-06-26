@@ -31,7 +31,7 @@ namespace BloodDonationAPI
 
             // ?? Add DbContext with connection string from appsettings.json
             builder.Services.AddDbContext<BloodDonationSystemContext>(options =>
-                options.UseSqlServer(builder.Configuration.GetConnectionString("AzureConnection")));
+                options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
             // Add services to the container.
 
