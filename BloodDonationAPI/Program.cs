@@ -1,4 +1,5 @@
 using BloodDonationAPI.Entities;
+using BloodDonationAPI.Repositories;
 using BloodDonationAPI.Service;
 using BloodDonationAPI.Service.Impl;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -71,11 +72,7 @@ namespace BloodDonationAPI
                 c.IncludeXmlComments(xmlPath);
 
             });
-            
-            // Đăng ký các service
             builder.Services.AddScoped<IUserService, UserService>();
-            builder.Services.AddScoped<IEmailService, EmailService>();
-            builder.Services.AddSingleton<IOtpService, OtpService>();
             builder.Services.AddScoped<JwtService>();
             builder.Services.AddScoped<IAppointmentServiece, AppointmentServiece>();
             builder.Services.AddScoped<IBloodDonationProcessService, BloodDonationProcessService>();
@@ -86,7 +83,9 @@ namespace BloodDonationAPI
             builder.Services.AddScoped<IBlogService, BlogService>();
             builder.Services.AddScoped<IReportService, ReportService>();
             builder.Services.AddScoped<ISurveyService, SurveyService>();
-            
+            builder.Services.AddScoped<IEventService, EventService>();
+            // them cai generic repository
+            builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
                 {

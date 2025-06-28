@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using BloodDonationAPI.Entities;
 using Microsoft.EntityFrameworkCore;
 
+
 namespace BloodDonationAPI;
 
 public partial class BloodDonationSystemContext : DbContext
@@ -26,6 +27,10 @@ public partial class BloodDonationSystemContext : DbContext
 
     public virtual DbSet<Certificate> Certificates { get; set; }
 
+    public virtual DbSet<DeferralReason> DeferralReasons { get; set; }
+
+    public virtual DbSet<DonorDeferral> DonorDeferrals { get; set; }
+
     public virtual DbSet<Emergency> Emergencies { get; set; }
 
     public virtual DbSet<Event> Events { get; set; }
@@ -46,7 +51,7 @@ public partial class BloodDonationSystemContext : DbContext
 
     public virtual DbSet<UserSurveyAnswer> UserSurveyAnswers { get; set; }
 
- 
+   
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -131,6 +136,36 @@ public partial class BloodDonationSystemContext : DbContext
                 .HasConstraintName("FK__Certifica__Appoi__1CF15040");
         });
 
+        modelBuilder.Entity<DeferralReason>(entity =>
+        {
+            entity.HasKey(e => e.ReasonCode).HasName("PK__Deferral__A6278DA24BAC3F29");
+
+            entity.ToTable("DeferralReason");
+
+            entity.Property(e => e.ReasonCode).HasMaxLength(50);
+            entity.Property(e => e.ReasonText).HasMaxLength(255);
+        });
+
+        modelBuilder.Entity<DonorDeferral>(entity =>
+        {
+            entity.HasKey(e => e.Id).HasName("PK__DonorDef__3214EC075070F446");
+
+            entity.ToTable("DonorDeferral");
+
+            entity.Property(e => e.ReasonCode).HasMaxLength(50);
+            entity.Property(e => e.Username).HasMaxLength(50);
+
+            entity.HasOne(d => d.ReasonCodeNavigation).WithMany(p => p.DonorDeferrals)
+                .HasForeignKey(d => d.ReasonCode)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__DonorDefe__Reaso__5441852A");
+
+            entity.HasOne(d => d.UsernameNavigation).WithMany(p => p.DonorDeferrals)
+                .HasForeignKey(d => d.Username)
+                .OnDelete(DeleteBehavior.ClientSetNull)
+                .HasConstraintName("FK__DonorDefe__Usern__534D60F1");
+        });
+
         modelBuilder.Entity<Emergency>(entity =>
         {
             entity.HasKey(e => e.EmergencyId).HasName("PK__Emergenc__7B5544D307020F21");
@@ -154,6 +189,8 @@ public partial class BloodDonationSystemContext : DbContext
         {
             entity.HasKey(e => e.EventId).HasName("PK__Events__7944C810117F9D94");
 
+            entity.Property(e => e.BloodTypeRequired).HasMaxLength(10);
+            entity.Property(e => e.CurrentParticipants).HasDefaultValue(0);
             entity.Property(e => e.EventTitle).HasMaxLength(100);
             entity.Property(e => e.Location).HasMaxLength(255);
         });
@@ -218,7 +255,7 @@ public partial class BloodDonationSystemContext : DbContext
 
         modelBuilder.Entity<SurveyOption>(entity =>
         {
-            entity.HasKey(e => e.OptionId).HasName("PK__SurveyOp__92C7A1FF0B91BA14");
+            entity.HasKey(e => e.OptionId).HasName("PK__SurveyOp__92C7A1FF3D5E1FD2");
 
             entity.ToTable("SurveyOption");
 
@@ -226,12 +263,12 @@ public partial class BloodDonationSystemContext : DbContext
 
             entity.HasOne(d => d.Question).WithMany(p => p.SurveyOptions)
                 .HasForeignKey(d => d.QuestionId)
-                .HasConstraintName("FK__SurveyOpt__Quest__0D7A0286");
+                .HasConstraintName("FK__SurveyOpt__Quest__3F466844");
         });
 
         modelBuilder.Entity<SurveyQuestion>(entity =>
         {
-            entity.HasKey(e => e.QuestionId).HasName("PK__SurveyQu__0DC06FAC07C12930");
+            entity.HasKey(e => e.QuestionId).HasName("PK__SurveyQu__0DC06FAC398D8EEE");
 
             entity.ToTable("SurveyQuestion");
 
@@ -258,7 +295,7 @@ public partial class BloodDonationSystemContext : DbContext
 
         modelBuilder.Entity<UserSurveyAnswer>(entity =>
         {
-            entity.HasKey(e => e.AnswerId).HasName("PK__UserSurv__D482500418EBB532");
+            entity.HasKey(e => e.AnswerId).HasName("PK__UserSurv__D48250044316F928");
 
             entity.ToTable("UserSurveyAnswer");
 
@@ -268,15 +305,15 @@ public partial class BloodDonationSystemContext : DbContext
 
             entity.HasOne(d => d.Appointment).WithMany(p => p.UserSurveyAnswers)
                 .HasForeignKey(d => d.AppointmentId)
-                .HasConstraintName("FK__UserSurve__Appoi__1AD3FDA4");
+                .HasConstraintName("FK__UserSurve__Appoi__44FF419A");
 
             entity.HasOne(d => d.Option).WithMany(p => p.UserSurveyAnswers)
                 .HasForeignKey(d => d.OptionId)
-                .HasConstraintName("FK__UserSurve__Optio__1CBC4616");
+                .HasConstraintName("FK__UserSurve__Optio__46E78A0C");
 
             entity.HasOne(d => d.Question).WithMany(p => p.UserSurveyAnswers)
                 .HasForeignKey(d => d.QuestionId)
-                .HasConstraintName("FK__UserSurve__Quest__1BC821DD");
+                .HasConstraintName("FK__UserSurve__Quest__45F365D3");
         });
 
         OnModelCreatingPartial(modelBuilder);

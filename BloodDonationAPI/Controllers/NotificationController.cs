@@ -93,7 +93,7 @@ namespace BloodDonationAPI.Controllers
         /// Dùng để user lấy thông báo được gửi đến
         /// </summary>
         /// <remarks>
-        /// Chỉ xem được thông báo ngưới đến tk đăng nhập
+        /// Chỉ xem được thông báo gửi đến tk đăng nhập
         /// </remarks>
         /// <param name="dto"></param>
         /// <returns></returns>
@@ -121,13 +121,13 @@ namespace BloodDonationAPI.Controllers
         /// Dùng để phản hồi thông báo của người dùng
         /// </summary>
         /// <remarks>
-        /// Cần nhập đúng chuỗi "Chấp nhật" or "Từ chối"
+        /// Cần nhập đúng chuỗi "Chấp nhận" or "Từ chối"
         /// </remarks>
         /// <param name="dto"></param>
         /// <returns></returns>
         [HttpPut("UpdateResponse/{notificationId}")]
         [Authorize(Roles = "User")]
-        public async Task<IActionResult> UpdateNotificationResponse(int notificationId, [FromBody] string responseStatus)
+        public async Task<IActionResult> UpdateNotificationResponse(int notificationId, [FromBody] NotificationRecipientResponseDto dto)
         {
             try
             {
@@ -135,7 +135,7 @@ namespace BloodDonationAPI.Controllers
                 if (username == null)
                     return Unauthorized(new { message = "User not authenticated." });
 
-                var result = await _notificationService.UpdateNotificationResponse(notificationId, username, responseStatus);
+                var result = await _notificationService.UpdateNotificationResponse(notificationId, username, dto.ResponseStatus, dto.ResponseGo, dto.ResponseTime);
                 if (result == "Notification response updated successfully.")
                     return Ok(new { message = result });
 

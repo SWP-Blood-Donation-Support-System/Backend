@@ -15,6 +15,10 @@ public partial class NotificationRecipient
 
     public DateTime? ResponseDate { get; set; }
 
+    public DateOnly? ResponseGo { get; set; }
+
+    public TimeOnly? ResponseTime { get; set; }
+
     public virtual Notification? Notification { get; set; }
 
     public virtual User? UsernameNavigation { get; set; }

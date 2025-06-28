@@ -19,6 +19,8 @@ public partial class AppointmentRecord
 
     public int? DonationUnit { get; set; }
 
+    public string? StaffNote { get; set; }
+
     public virtual ICollection<BloodDetail> BloodDetails { get; set; } = new List<BloodDetail>();
 
     public virtual Certificate? Certificate { get; set; }

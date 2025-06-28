@@ -22,5 +22,14 @@ namespace BloodDonationAPI.DTO
         public string FullName { get; set; }
         public string ResponseStatus { get; set; }
         public DateTime? ResponseDate { get; set; }
+        public DateOnly? ResponseGo { get; set; }
+        public TimeOnly? ResponseTime { get; set; }
+    }
+
+    public class NotificationRecipientResponseDto
+    {
+        public string ResponseStatus { get; set; }
+        public DateOnly? ResponseGo { get; set; }
+        public TimeOnly? ResponseTime { get; set; }
     }
 } 

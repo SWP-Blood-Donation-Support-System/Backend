@@ -1,6 +1,7 @@
 ﻿using BloodDonationAPI.DTO;
 using BloodDonationAPI.Entities;
 using Microsoft.EntityFrameworkCore;
+using System.Linq;
 using System.Threading.Tasks;
 
 namespace BloodDonationAPI.Service
@@ -31,7 +32,7 @@ namespace BloodDonationAPI.Service
                 .ToListAsync();
 
         }
-        public async Task<RegisterAppointmentResultDto> RegisterAppointment(string userName , RegisterAppointmentDto Dto)
+        public async Task<RegisterAppointmentResultDto> RegisterAppointment(string userName, RegisterAppointmentDto Dto)
         {
             //kiểm tra người dùng có tồn tại và đủ điều kiện đăng ký không
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userName);
@@ -52,7 +53,7 @@ namespace BloodDonationAPI.Service
                     AppointmentId = null
                 };
             }
-                
+
             //kiểm tra lịch hẹn có tồn tại không
             var appointment = await _context.Events
                 .FirstOrDefaultAsync(a => a.EventId == Dto.eventId);
@@ -66,14 +67,14 @@ namespace BloodDonationAPI.Service
                     AppointmentId = null
                 };
             }
-               
+
             //kiểm tra xem đã đăng ký lịch hẹn này chưa
             bool alreadyRegistered = await _context.AppointmentRecords.AnyAsync(h =>
                 h.Username == userName && h.EventId == Dto.eventId && h.Status != "Hủy");
 
             if (alreadyRegistered)
             {
-                 return new RegisterAppointmentResultDto
+                return new RegisterAppointmentResultDto
                 {
                     IsSuccess = false,
                     Message = "Bạn đã đăng ký lịch hẹn này rồi.",
@@ -89,8 +90,8 @@ namespace BloodDonationAPI.Service
                 Status = "Đang xét duyệt"
             };
 
-                _context.AppointmentRecords.Add(history);
-                await _context.SaveChangesAsync();
+            _context.AppointmentRecords.Add(history);
+            await _context.SaveChangesAsync();
             return new RegisterAppointmentResultDto
             {
                 IsSuccess = true,
@@ -139,8 +140,8 @@ namespace BloodDonationAPI.Service
             //};
 
         }
-       
-       
+
+
 
 
         public async Task<List<AppointmentHistoryDto>> GetByUsernameAsync(string username)
@@ -179,7 +180,7 @@ namespace BloodDonationAPI.Service
         {
             var appoinment = await _context.AppointmentRecords.FirstOrDefaultAsync(a => a.AppointmentId == appointmentId);
 
-            if (appoinment == null || appoinment.Status=="Hủy")
+            if (appoinment == null || appoinment.Status == "Hủy")
             {
                 return false; // Lịch hẹn không tồn tại
             }
@@ -187,6 +188,160 @@ namespace BloodDonationAPI.Service
             appoinment.Status = "Hủy"; // Cập nhật trạng thái lịch hẹn
             await _context.SaveChangesAsync(); // Lưu thay đổi vào cơ sở dữ liệu
             return true; // Trả về true nếu cập nhật thành công
+        }
+
+        public async Task<RegisterAppointmentResultDto> RegisterAppointmentV2(string userName, RegisterAppointmentDtoV2 Dto)
+        {
+            //kiểm tra người dùng có tồn tại và đủ điều kiện đăng ký không
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userName);
+            if (user == null)
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Người dùng không tồn tại.",
+                    AppointmentId = null
+                };
+
+            if (user.ProfileStatus != "Active")
+            {
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Tài khoản của bạn không đủ điều kiện đăng ký lịch hẹn.",
+                    AppointmentId = null
+                };
+            }
+
+            //kiểm tra lịch hẹn có tồn tại không
+            var appointment = await _context.Events
+                .FirstOrDefaultAsync(a => a.EventId == Dto.eventId);
+
+            if (appointment == null)
+            {
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Lịch hẹn không tồn tại.",
+                    AppointmentId = null
+                };
+            }
+
+            //kiểm tra xem đã đăng ký lịch hẹn này chưa
+            bool alreadyRegistered = await _context.AppointmentRecords.AnyAsync(h =>
+                h.Username == userName && h.EventId == Dto.eventId && h.Status != "Hủy");
+
+            if (alreadyRegistered)
+            {
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Bạn đã đăng ký lịch hẹn này rồi.",
+                    AppointmentId = null
+                };
+            }
+            //// nếu chưa có lịch hẹn thì thêm mới vào bảng AppointmentRecords
+            //var history = new AppointmentRecord
+            //{
+            //    Username = userName,
+            //    EventId = Dto.eventId,
+            //    RegistrationDate = DateTime.Now,
+            //    Status = "Đang xét duyệt"
+            //};
+
+            //_context.AppointmentRecords.Add(history);
+            //await _context.SaveChangesAsync();
+            //return new RegisterAppointmentResultDto
+            //{
+            //    IsSuccess = true,
+            //    Message = "Bạn đã đăng ký thành công lịch hẹn.",
+            //    AppointmentId = history.AppointmentId
+            //};
+
+            // lay tong cau hoi trong bang SurveyQuestions
+            var totalQuestion = await _context.SurveyQuestions.CountAsync();
+            // lay tat cac cac cau tra loi cua nguoi dung moi (bo cac cai trung lap di boi vi co cau hoi chon multiple choice)
+            var answeredQuestions = Dto.userSurveyAnswerDtos.Select(a => a.QuestionId)
+                .Distinct()
+                .Count();
+            // kiem tra xem nguoi dung da tra loi het cac cau hoi chua
+            if (answeredQuestions < totalQuestion)
+            {
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = $"Bạn cần trả lời tất cả {totalQuestion} câu hỏi khảo sát để đăng ký lịch hẹn.",
+                    AppointmentId = null
+                };
+            }
+            // them moi vao bang khi da tra loi day du cac cau hoi
+            var newAppointment = new AppointmentRecord
+            {
+                Username = userName,
+                EventId = Dto.eventId,
+                RegistrationDate = DateTime.Now,
+                Status = "Đang xét duyệt"
+            };
+            _context.AppointmentRecords.Add(newAppointment);
+            await _context.SaveChangesAsync();
+
+            // luu cac cau tra loi cua nguoi dung vao bang UserSurveyAnswers
+
+            foreach (var answer in Dto.userSurveyAnswerDtos)
+            {
+                var userSurveyAnswer = new UserSurveyAnswer
+                {
+                    AppointmentId = newAppointment.AppointmentId,
+                    QuestionId = answer.QuestionId,
+                    OptionId = answer.OptionId,
+                    AdditionalText = answer.AdditionalText,
+                    AnswerDate = DateTime.Now
+                };
+                _context.UserSurveyAnswers.Add(userSurveyAnswer);
+            }
+            await _context.SaveChangesAsync();
+
+            // dung de kiem tra cac cau hoi va cap nhat trang thai cho appointmentRecord 
+            var isEligible = await CheckUserSurveyAndSetStatus(newAppointment.AppointmentId);
+            //dat trang thai tui vao cau tra loi
+            var status = isEligible switch
+            {
+                true => "Đã đủ điều kiện",
+                false => "Không đủ điều kiện",
+                null => "Đang xét duyệt"
+            };
+            newAppointment.Status = status;
+            _context.AppointmentRecords.Update(newAppointment);
+            await _context.SaveChangesAsync();
+
+            var message = isEligible switch
+            {
+                true => "Bạn đã đăng ký thành công lịch hẹn và đủ điều kiện hiến máu.",
+                false => "Bạn đã đăng ký thành công lịch hẹn nhưng không đủ điều kiện hiến máu.",
+                null => "Bạn đã đăng ký thành công lịch hẹn và đang chờ xét duyệt."
+            };
+            return new RegisterAppointmentResultDto
+            {
+                IsSuccess = true,
+                Message = message,
+                AppointmentId = newAppointment.AppointmentId
+            };
+        }
+
+        public async Task<bool?> CheckUserSurveyAndSetStatus(int appointmentID)
+        {
+            var answers = await _context.UserSurveyAnswers
+                .Where(a => a.AppointmentId == appointmentID)
+                .Select(a => a.Option.IsEligible).ToListAsync();
+            if (answers.Any(a => a == false))
+            {
+                return false; // Nếu có bất kỳ câu trả lời nào không đủ điều kiện, trả về false
+            }
+            else if (answers.All(a => a == true))
+            {
+                return true; // Nếu tất cả câu trả lời đều đủ điều kiện, trả về true
+            }
+            return null; // Nếu không có câu trả lời nào, trả về null
+
         }
     }
 }

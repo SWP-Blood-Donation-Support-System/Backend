@@ -19,5 +19,9 @@ public partial class Event
 
     public int? MaxParticipants { get; set; }
 
+    public string? BloodTypeRequired { get; set; }
+
+    public int? CurrentParticipants { get; set; }
+
     public virtual ICollection<AppointmentRecord> AppointmentRecords { get; set; } = new List<AppointmentRecord>();
 }

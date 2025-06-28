@@ -14,6 +14,7 @@ public partial class Blog
     public string? BlogImage { get; set; }
 
     public string? BlogStatus { get; set; }
+
     public string? BlogDetail { get; set; }
 
     public string? Username { get; set; }

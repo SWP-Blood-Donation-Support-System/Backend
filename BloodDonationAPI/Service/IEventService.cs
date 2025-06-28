@@ -1,0 +1,13 @@
+﻿using BloodDonationAPI.Entities;
+
+namespace BloodDonationAPI.Service
+{
+    public interface IEventService
+    {
+        Task<List<Event>> GetAllEventsAsync();
+        Task<Event?> GetEventByIdAsync(int id);
+        Task AddEventAsync(Event newEvent);
+        Task UpdateEventAsync(int id ,Event updatedEvent);
+        Task DeleteEventAsync(int id);
+    }
+}
