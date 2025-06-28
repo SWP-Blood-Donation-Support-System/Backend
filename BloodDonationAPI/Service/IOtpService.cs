@@ -6,8 +6,14 @@ namespace BloodDonationAPI.Service
     {
         string GenerateOtp();
         void StoreRegistrationData(string email, string otp, RegisterDto registerDto);
-        bool VerifyOtp(string email, string otp);
-        RegisterDto? GetRegistrationData(string email, string otp);
-        void RemoveOtp(string email);
+        bool VerifyOtp(string otp);
+        RegisterDto? GetRegistrationDataByOtp(string otp);
+        void RemoveOtpByCode(string otp);
+        
+        // Methods for password reset
+        void StorePasswordResetData(string email, string otp, string username);
+        string? GetUsernameByPasswordResetOtp(string otp);
+        bool VerifyPasswordResetOtp(string otp);
+        void RemovePasswordResetOtp(string otp);
     }
 }

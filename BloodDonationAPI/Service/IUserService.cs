@@ -9,6 +9,10 @@ namespace BloodDonationAPI.Service
         string Register(RegisterDto registerDto);
         Task<string> RegisterAndSendOtpAsync(RegisterDto registerDto);
         string VerifyOtpAndCreateAccount(VerifyOtpDto verifyOtpDto);
+        
+        // Password reset methods
+        Task<string> RequestPasswordResetAsync(RequestPasswordResetDto requestDto);
+        string ResetPassword(ResetPasswordDto resetDto);
     }
     
     public class UserService : IUserService
@@ -83,15 +87,15 @@ namespace BloodDonationAPI.Service
             }
             else
             {
-                _otpService.RemoveOtp(registerDto.Email!);
+                _otpService.RemoveOtpByCode(otp);
                 return "Không thể gửi email. Vui lòng thử lại sau.";
             }
         }
 
         public string VerifyOtpAndCreateAccount(VerifyOtpDto verifyOtpDto)
         {
-            // Get registration data by OTP
-            var storedRegisterDto = _otpService.GetRegistrationData(verifyOtpDto.Email, verifyOtpDto.Otp);
+            // Get registration data chỉ bằng OTP
+            var storedRegisterDto = _otpService.GetRegistrationDataByOtp(verifyOtpDto.Otp);
             
             if (storedRegisterDto == null)
             {
@@ -101,13 +105,13 @@ namespace BloodDonationAPI.Service
             // Double check if email or username already exists
             if (_context.Users.Any(u => u.Email == storedRegisterDto.Email))
             {
-                _otpService.RemoveOtp(verifyOtpDto.Email);
+                _otpService.RemoveOtpByCode(verifyOtpDto.Otp);
                 return "Email đã được sử dụng để đăng ký tài khoản khác.";
             }
 
             if (_context.Users.Any(u => u.Username == storedRegisterDto.Username))
             {
-                _otpService.RemoveOtp(verifyOtpDto.Email);
+                _otpService.RemoveOtpByCode(verifyOtpDto.Otp);
                 return "Tên đăng nhập đã tồn tại.";
             }
 
@@ -131,9 +135,70 @@ namespace BloodDonationAPI.Service
             _context.SaveChanges();
             
             // Remove OTP after successful registration
-            _otpService.RemoveOtp(verifyOtpDto.Email);
+            _otpService.RemoveOtpByCode(verifyOtpDto.Otp);
             
             return "Đăng ký tài khoản thành công.";
+        }
+
+        public async Task<string> RequestPasswordResetAsync(RequestPasswordResetDto requestDto)
+        {
+            // Find user by email or username
+            var user = _context.Users.FirstOrDefault(u => 
+                u.Email == requestDto.EmailOrUsername || 
+                u.Username == requestDto.EmailOrUsername);
+
+            if (user == null)
+            {
+                return "Không tìm thấy tài khoản với email hoặc tên đăng nhập này.";
+            }
+
+            // Generate OTP
+            var otp = _otpService.GenerateOtp();
+            
+            // Store password reset data with OTP
+            _otpService.StorePasswordResetData(user.Email!, otp, user.Username);
+
+            // Send OTP via email
+            var emailSent = await _emailService.SendOtpEmailAsync(user.Email!, otp);
+            
+            if (emailSent)
+            {
+                return "Mã OTP đã được gửi tới email của bạn. Vui lòng kiểm tra hộp thư và nhập mã OTP để đặt lại mật khẩu.";
+            }
+            else
+            {
+                _otpService.RemovePasswordResetOtp(otp);
+                return "Không thể gửi email. Vui lòng thử lại sau.";
+            }
+        }
+
+        public string ResetPassword(ResetPasswordDto resetDto)
+        {
+            // Get username by OTP
+            var username = _otpService.GetUsernameByPasswordResetOtp(resetDto.Otp);
+            
+            if (username == null)
+            {
+                return "Mã OTP không đúng hoặc đã hết hạn.";
+            }
+
+            // Find user
+            var user = _context.Users.FirstOrDefault(u => u.Username == username);
+            
+            if (user == null)
+            {
+                _otpService.RemovePasswordResetOtp(resetDto.Otp);
+                return "Không tìm thấy tài khoản.";
+            }
+
+            // Update password
+            user.Password = resetDto.NewPassword;
+            _context.SaveChanges();
+            
+            // Remove OTP after successful password reset
+            _otpService.RemovePasswordResetOtp(resetDto.Otp);
+            
+            return "Đặt lại mật khẩu thành công.";
         }
     }
 }

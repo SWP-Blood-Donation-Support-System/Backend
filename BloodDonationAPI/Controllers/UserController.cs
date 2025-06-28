@@ -105,8 +105,43 @@ namespace BloodDonationAPI.Controllers
             return BadRequest(new { message = result });
         }
 
-        // TEST EMAIL - Thêm endpoint này để debug
-       
+        // ENDPOINT 3: Yêu cầu đặt lại mật khẩu (gửi OTP)
+        [HttpPost("request-password-reset")]
+        public async Task<IActionResult> RequestPasswordReset([FromBody] RequestPasswordResetDto requestDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = await _userService.RequestPasswordResetAsync(requestDto);
+            
+            if (result.Contains("gửi"))
+            {
+                return Ok(new { message = result });
+            }
+            
+            return BadRequest(new { message = result });
+        }
+
+        // ENDPOINT 4: Đặt lại mật khẩu với OTP
+        [HttpPost("reset-password")]
+        public IActionResult ResetPassword([FromBody] ResetPasswordDto resetDto)
+        {
+            if (!ModelState.IsValid)
+            {
+                return BadRequest(ModelState);
+            }
+
+            var result = _userService.ResetPassword(resetDto);
+            
+            if (result.Contains("thành công"))
+            {
+                return Ok(new { message = result });
+            }
+            
+            return BadRequest(new { message = result });
+        }
         
     }
 }
