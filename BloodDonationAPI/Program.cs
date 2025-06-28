@@ -74,6 +74,8 @@ namespace BloodDonationAPI
             });
             builder.Services.AddScoped<IUserService, UserService>();
             builder.Services.AddScoped<JwtService>();
+            builder.Services.AddScoped<IEmailService, EmailService>();
+            builder.Services.AddSingleton<IOtpService, OtpService>();
             builder.Services.AddScoped<IAppointmentServiece, AppointmentServiece>();
             builder.Services.AddScoped<IBloodDonationProcessService, BloodDonationProcessService>();
             builder.Services.AddScoped<IEmergencyService, EmergencyService>();

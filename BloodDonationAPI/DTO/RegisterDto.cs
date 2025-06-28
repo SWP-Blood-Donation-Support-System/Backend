@@ -9,10 +9,10 @@ namespace BloodDonationAPI.DTO
 
         [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
         public string Password { get; set; }
+        
+        [Required(ErrorMessage = "Vui lòng nhập email.")]
         [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
         public string? Email { get; set; }
-
-       
 
         public string? FullName { get; set; }
 
@@ -23,8 +23,6 @@ namespace BloodDonationAPI.DTO
         public string? Phone { get; set; }
 
         public string? Address { get; set; }
-
-       
 
         public string? BloodTypeId { get; set; }
     }
