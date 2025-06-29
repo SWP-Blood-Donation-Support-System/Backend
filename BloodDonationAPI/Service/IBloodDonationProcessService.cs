@@ -9,7 +9,7 @@ namespace BloodDonationAPI.Service
 
         Task<bool> CheckInAsync(CheckInDto checkInDto);
 
-        Task<bool> VerifyUserIdentityAsync(CheckInDto checkInDto);
+        //Task<bool> VerifyUserIdentityAsync(CheckInDto checkInDto);
 
         Task<bool> UpdateDonationStatusAsync(int appointmentId, string status, string staffNote);
 
@@ -20,5 +20,7 @@ namespace BloodDonationAPI.Service
         //Task<BloodBank> AddBloodToBankAsync(AddBloodBankDto dto);
 
         //Task<List<DonationHistoryDto>> GetDonationHistoryByUserNameAsync(string username);
+        Task<bool> UpdateAppointmentNoteAsync(AppointmentNoteDto appointmentNoteDto);
+
     }
 }

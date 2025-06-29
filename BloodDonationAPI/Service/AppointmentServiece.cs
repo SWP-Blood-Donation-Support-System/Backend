@@ -43,13 +43,35 @@ namespace BloodDonationAPI.Service
                     Message = "Người dùng không tồn tại.",
                     AppointmentId = null
                 };
-
+            //kiem tra người dùng có đủ điều kiện đăng ký không
             if (user.ProfileStatus != "Active")
             {
                 return new RegisterAppointmentResultDto
                 {
                     IsSuccess = false,
                     Message = "Tài khoản của bạn không đủ điều kiện đăng ký lịch hẹn.",
+                    AppointmentId = null
+                };
+            }
+            //kiểm tra người dùng có đang bị hoãn hiến máu không
+            var today = DateOnly.FromDateTime(DateTime.Today);
+
+            var activeDeferrals = await _context.DonorDeferrals
+                .Where(d => d.Username == userName &&
+                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= today)))
+                .Include(d => d.ReasonCodeNavigation)
+                .ToListAsync();
+
+            if (activeDeferrals.Any())
+            {
+                var reasons = string.Join("; ", activeDeferrals.Select(d =>
+                    $"{d.ReasonCodeNavigation.ReasonText} - {(d.Note ?? "Không rõ lý do")}"
+                ));
+
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = $"Bạn hiện đang bị tạm hoãn hiến máu và không thể đăng ký lịch hẹn.\nLý do: {reasons}",
                     AppointmentId = null
                 };
             }
@@ -147,32 +169,54 @@ namespace BloodDonationAPI.Service
         public async Task<List<AppointmentHistoryDto>> GetByUsernameAsync(string username)
         {
             var records = await _context.AppointmentRecords
-                .Where(h => h.Username == username)
-                .Include(h => h.Event)
-                .Include(h => h.BloodDetails)
-                    .ThenInclude(b => b.Hospital)
-                .OrderByDescending(h => h.RegistrationDate)
-                .ToListAsync();
+         .Where(h => h.Username == username)
+         .Include(h => h.Event)
+         .Include(h => h.BloodDetails)
+             .ThenInclude(b => b.Hospital)
+         .OrderByDescending(h => h.RegistrationDate)
+         .ToListAsync();
 
-            return records.Select(h => new AppointmentHistoryDto
+            var result = new List<AppointmentHistoryDto>();
+
+            foreach (var h in records)
             {
-                AppointmentId = h.AppointmentId,
-                EventId = h.EventId,
-                AppointmentDate = h.RegistrationDate,
-                AppointmentStatus = h.Status,
+                var deferral = await _context.DonorDeferrals
+                    .Include(d => d.ReasonCodeNavigation)
+                    .FirstOrDefaultAsync(d =>
+                        d.Username == h.Username &&
+                        d.StartDate == DateOnly.FromDateTime(h.RegistrationDate ?? DateTime.MinValue));
 
-                // Thông tin lịch hẹn
-                AppointmentDateOfAppointment = h.Event?.EventDate,
-                AppointmentTime = h.Event?.EventTime,
-                AppointmentTitle = h.Event?.EventTitle,
-                AppointmentContent = h.Event?.EventContent,
+                result.Add(new AppointmentHistoryDto
+                {
+                    // thong tin lich hen
+                    AppointmentId = h.AppointmentId,
+                    EventId = h.EventId,
+                    AppointmentDate = h.RegistrationDate,
+                    AppointmentStatus = h.Status,
 
-                // Thông tin hiến máu (nếu có)
-                BloodType = h.BloodType,
-                DonationUnit = h.DonationUnit,
-                BloodStatus = h.BloodDetails.FirstOrDefault()?.BloodDetailStatus,
-                BloodLocation = h.BloodDetails.FirstOrDefault()?.Hospital?.HospitalName
-            }).ToList();
+                    AppointmentDateOfAppointment = h.Event?.EventDate,
+                    AppointmentTime = h.Event?.EventTime,
+                    AppointmentTitle = h.Event?.EventTitle,
+                    AppointmentContent = h.Event?.EventContent,
+                    // thong tin hien mau
+                    BloodType = h.BloodType,
+                    DonationUnit = h.DonationUnit,
+                    BloodStatus = h.BloodDetails.FirstOrDefault()?.BloodDetailStatus,
+                    BloodLocation = h.BloodDetails.FirstOrDefault()?.Hospital?.HospitalName,
+
+                    StaffNote = h.StaffNote, // Lưu lý do ngắn (ReasonText)
+                    // thong tin li do tu choi neu co
+                    DeferralReasonText = deferral?.ReasonCodeNavigation.ReasonText,
+                    DeferralAdvice = deferral?.ReasonCodeNavigation.Note,
+                    DeferralUserNote = deferral?.Note,
+
+                    CanDonateAgainDate = deferral != null && !deferral.IsPermanent
+        ? deferral.EndDate
+        : null
+                });
+            }
+
+            return result;
 
         }
 
@@ -201,13 +245,35 @@ namespace BloodDonationAPI.Service
                     Message = "Người dùng không tồn tại.",
                     AppointmentId = null
                 };
-
+            // kiem tra người dùng có đủ điều kiện đăng ký không
             if (user.ProfileStatus != "Active")
             {
                 return new RegisterAppointmentResultDto
                 {
                     IsSuccess = false,
                     Message = "Tài khoản của bạn không đủ điều kiện đăng ký lịch hẹn.",
+                    AppointmentId = null
+                };
+            }
+            //kiểm tra người dùng có đang bị hoãn hiến máu không
+            var today = DateOnly.FromDateTime(DateTime.Today);
+
+            var activeDeferrals = await _context.DonorDeferrals
+                .Where(d => d.Username == userName &&
+                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= today)))
+                .Include(d => d.ReasonCodeNavigation)
+                .ToListAsync();
+
+            if (activeDeferrals.Any())
+            {
+                var reasons = string.Join("; ", activeDeferrals.Select(d =>
+                    $"{d.ReasonCodeNavigation.ReasonText} - {(d.Note ?? "Không rõ lý do")}"
+                ));
+
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = $"Bạn hiện đang bị tạm hoãn hiến máu và không thể đăng ký lịch hẹn.\nLý do: {reasons}",
                     AppointmentId = null
                 };
             }

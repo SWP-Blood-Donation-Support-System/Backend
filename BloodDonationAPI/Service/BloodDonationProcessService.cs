@@ -33,24 +33,24 @@ namespace BloodDonationAPI.Service
 
         }
 
-        public async Task<bool> VerifyUserIdentityAsync(CheckInDto checkInDto)
-        {
-            // Tìm lịch hẹn theo ID
-            var appointment = await _context.AppointmentRecords.FindAsync(checkInDto.AppointmentId);
-            if (appointment == null || appointment.Status == "Đã hiến")
-                return false;
+        //public async Task<bool> VerifyUserIdentityAsync(CheckInDto checkInDto)
+        //{
+        //    // Tìm lịch hẹn theo ID
+        //    var appointment = await _context.AppointmentRecords.FindAsync(checkInDto.AppointmentId);
+        //    if (appointment == null || appointment.Status == "Đã hiến")
+        //        return false;
             
-            // Tìm người dùng theo fullname và email để xác minh danh tính
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.FullName == checkInDto.FullName && 
-                                      u.Email == checkInDto.Email && 
-                                      u.Username == appointment.Username);
+        //    // Tìm người dùng theo fullname và email để xác minh danh tính
+        //    var user = await _context.Users
+        //        .FirstOrDefaultAsync(u => u.FullName == checkInDto.FullName && 
+        //                              u.Email == checkInDto.Email && 
+        //                              u.Username == appointment.Username);
             
-            if (user == null)
-                return false; // Không tìm thấy user với thông tin đã cung cấp
+        //    if (user == null)
+        //        return false; // Không tìm thấy user với thông tin đã cung cấp
             
-            return true; // Xác thực danh tính thành công
-        }
+        //    return true; // Xác thực danh tính thành công
+        //}
         
         public async Task<bool> UpdateDonationStatusAsync(int appointmentId, string status, string staffNote)
         {
@@ -69,32 +69,10 @@ namespace BloodDonationAPI.Service
 
         public async Task<bool> CheckInAsync(CheckInDto checkInDto)
         {
-            // Tìm lịch hẹn theo ID
-            var appointment = await _context.AppointmentRecords.FindAsync(checkInDto.AppointmentId);
-            if (appointment == null || appointment.Status == "Đã hiến")
+            var check = await _context.AppointmentRecords.FindAsync(checkInDto.AppointmentId);
+            if (check == null || check.Status == "Đã hiến")
                 return false;
-            
-            // Tìm người dùng theo fullname và email để xác minh danh tính
-            var user = await _context.Users
-                .FirstOrDefaultAsync(u => u.FullName == checkInDto.FullName && 
-                                      u.Email == checkInDto.Email && 
-                                      u.Username == appointment.Username);
-            
-            if (user == null)
-                return false; // Không tìm thấy user với thông tin đã cung cấp
-            
-            // Cập nhật trạng thái lịch hẹn dựa trên tình huống
-            if (checkInDto.CanDonate)
-            {
-                appointment.Status = "Đã đến";
-            }
-            else
-            {
-                // User không thể hiến máu, cập nhật trạng thái thành "Đang chờ"
-                appointment.Status = "Đang chờ";
-                
-            }
-            
+            check.Status = "Đã đến";
             await _context.SaveChangesAsync();
             return true;
         }
@@ -107,20 +85,11 @@ namespace BloodDonationAPI.Service
                 return false;
             // lay nhom mau tu user đã đăng ký de su dung cho việc hiến nếu có 
             var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == appointment.Username);
-            if (user == null )
+            if (user == null)
                 return false;
-            
-            // Kiểm tra nếu người dùng không thể hiến máu
-            if (!donateDto.CanDonate)
-            {
-                appointment.Status = "Đang chờ";
-                appointment.StaffNote = donateDto.StaffNote;
-                await _context.SaveChangesAsync();
-                return true;
-            }
-            
             //kiểm tra xem người này đã được ghi nhận hiến máu chưa
-            if (appointment.Status == "Đã hiến" )
+
+            if (appointment.Status == "Đã hiến")
             {
                 throw new Exception("Người dùng đã được ghi nhận hiến máu ");
             }
@@ -129,7 +98,7 @@ namespace BloodDonationAPI.Service
             string? bloodType = user.BloodType;
             if (string.IsNullOrEmpty(bloodType))
             {
-               if(string.IsNullOrEmpty(donateDto.BloodType))
+                if (string.IsNullOrEmpty(donateDto.BloodType))
                 {
                     throw new Exception("Không có nhóm máu trong hồ sơ người dùng và nhân viên cũng không cung cấp nhóm máu");
                 }
@@ -216,6 +185,41 @@ namespace BloodDonationAPI.Service
 
             }
         }
+
+        public async Task<bool> UpdateAppointmentNoteAsync(AppointmentNoteDto appointmentNoteDto)
+        {
+            var appointment = await _context.AppointmentRecords
+                .FirstOrDefaultAsync(a => a.AppointmentId == appointmentNoteDto.AppointmentId);
+            if (appointment == null) return false;
+
+            var reasonCode = await _context.DeferralReasons
+                .FirstOrDefaultAsync(r => r.ReasonCode == appointmentNoteDto.ReasonCode);
+            if (reasonCode == null) throw new Exception("ReasonCode khong hop le.");
+            appointment.StaffNote = reasonCode.ReasonText;
+
+            var deferral = new DonorDeferral
+            {
+                Username = appointment.Username,
+                ReasonCode = reasonCode.ReasonCode,
+                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                IsPermanent = reasonCode.IsPermanent,
+                Note = appointmentNoteDto.CustomNote,
+            };
+            if (!reasonCode.IsPermanent && reasonCode.MinDays.HasValue)
+            {
+               deferral.EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(reasonCode.MinDays.Value));
+            }
+            else
+            {
+                deferral.EndDate = null; // Không có ngày kết thúc nếu là vĩnh viễn hoặc không có ngày tối thiểu
+            }
+            _context.DonorDeferrals.Add(deferral);
+            await _context.SaveChangesAsync();
+            return true;
+
+
+        }
+
 
 
 
