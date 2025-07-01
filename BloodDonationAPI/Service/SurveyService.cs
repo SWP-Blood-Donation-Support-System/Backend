@@ -176,8 +176,21 @@ namespace BloodDonationAPI.Service
             {
                 return false; // Lịch hẹn không tồn tại
             }
+
+            bool shouldIncrease = dto.Status == "Đã đủ điều kiện" && appointment.Status != "Đã đủ điều kiện";
+
             appointment.Status = dto.Status;
             _context.AppointmentRecords.Update(appointment);
+            if (shouldIncrease) 
+            {
+                var eventRecord = await _context.Events
+                    .FirstOrDefaultAsync(e => e.EventId == appointment.EventId);
+                if (eventRecord != null)
+                {
+                    eventRecord.CurrentParticipants = (eventRecord.CurrentParticipants ?? 0) + 1;
+                    _context.Events.Update(eventRecord);
+                }
+            }
             await _context.SaveChangesAsync();
             return true; // Cập nhật thành công
         }

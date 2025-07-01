@@ -27,7 +27,9 @@ namespace BloodDonationAPI.Service
                     EventDate = a.EventDate,
                     EventTime = a.EventTime,
                     Location = a.Location,
-                    MaxParticipants = a.MaxParticipants
+                    MaxParticipants = a.MaxParticipants,
+                    BloodTypeRequired = a.BloodTypeRequired,
+                    CurrentParticipants = a.CurrentParticipants
                 })
                 .ToListAsync();
 
@@ -71,7 +73,7 @@ namespace BloodDonationAPI.Service
                 return new RegisterAppointmentResultDto
                 {
                     IsSuccess = false,
-                    Message = $"Bạn hiện đang bị tạm hoãn hiến máu và không thể đăng ký lịch hẹn.\nLý do: {reasons}",
+                    Message = $"Bạn hiện không thể đăng ký lịch hẹn.\nLý do: {reasons}",
                     AppointmentId = null
                 };
             }
@@ -112,7 +114,13 @@ namespace BloodDonationAPI.Service
                 Status = "Đang xét duyệt"
             };
 
+            
+
             _context.AppointmentRecords.Add(history);
+
+            // cong them nguoi dang ky vao so luong nguoi dang ky cua su kien
+            appointment.CurrentParticipants = (appointment.CurrentParticipants ?? 0) + 1;
+            _context.Events.Update(appointment);
             await _context.SaveChangesAsync();
             return new RegisterAppointmentResultDto
             {
@@ -230,6 +238,14 @@ namespace BloodDonationAPI.Service
             }
 
             appoinment.Status = "Hủy"; // Cập nhật trạng thái lịch hẹn
+            // Giảm số lượng người đăng ký của sự kiện
+            var eventRecord = await _context.Events.FirstOrDefaultAsync(e => e.EventId == appoinment.EventId);
+            if (eventRecord != null && (eventRecord.CurrentParticipants ?? 0) > 0)
+            {
+                eventRecord.CurrentParticipants = (eventRecord.CurrentParticipants ?? 0) - 1;
+                _context.Events.Update(eventRecord);
+            }
+
             await _context.SaveChangesAsync(); // Lưu thay đổi vào cơ sở dữ liệu
             return true; // Trả về true nếu cập nhật thành công
         }
@@ -273,7 +289,7 @@ namespace BloodDonationAPI.Service
                 return new RegisterAppointmentResultDto
                 {
                     IsSuccess = false,
-                    Message = $"Bạn hiện đang bị tạm hoãn hiến máu và không thể đăng ký lịch hẹn.\nLý do: {reasons}",
+                    Message = $"Bạn hiện đang không thể đăng ký lịch hẹn.\nLý do: {reasons}",
                     AppointmentId = null
                 };
             }
@@ -375,8 +391,15 @@ namespace BloodDonationAPI.Service
                 false => "Không đủ điều kiện",
                 null => "Đang xét duyệt"
             };
+
             newAppointment.Status = status;
             _context.AppointmentRecords.Update(newAppointment);
+
+            if (isEligible == true) 
+            {
+                appointment.CurrentParticipants = (appointment.CurrentParticipants ?? 0) + 1;
+                _context.Events.Update(appointment);
+            }
             await _context.SaveChangesAsync();
 
             var message = isEligible switch
