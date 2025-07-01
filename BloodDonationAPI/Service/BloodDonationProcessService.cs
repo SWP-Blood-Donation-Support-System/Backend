@@ -220,6 +220,61 @@ namespace BloodDonationAPI.Service
 
         }
 
+        public async Task<bool> DestroyBloodDonationAsync(DestroyBloodDonationDto dto)
+        {
+            var bloodDetail = await _context.BloodDetails
+                .Include(b => b.Appointment)
+                .FirstOrDefaultAsync(b => b.BloodDetailId == dto.BloodDetailID);
+            // kiem tra xem co hop le khong
+            if (bloodDetail == null)
+                return false;
+            // cap nhat vap bloodDetail
+            bloodDetail.BloodDetailStatus = "Tiêu hủy";
+            bloodDetail.Note = dto.CustomNote;
+            _context.BloodDetails.Update(bloodDetail);
+            
+            //kiem tra xem co li do nay hay khong va user name nay co ton tai hay ko
+            if (!string.IsNullOrEmpty(dto.ReasonCode) && bloodDetail.Appointment?.Username != null) 
+            {
+                var reasonCode = await _context.DeferralReasons
+                    .FirstOrDefaultAsync(r => r.ReasonCode == dto.ReasonCode);
+                // kiem tra xem li do nay da co hay chua 
+                if (reasonCode != null) 
+                {
+                    bool alreadyExists = await _context.DonorDeferrals
+                        .AnyAsync(d => d.Username == bloodDetail.Appointment.Username &&
+                                       d.ReasonCode == dto.ReasonCode &&
+                                       d.IsPermanent == true);
+                    if (!alreadyExists)
+                    {
+                        var deferral = new DonorDeferral
+                        {
+                            Username = bloodDetail.Appointment.Username,
+                            ReasonCode = reasonCode.ReasonCode,
+                            StartDate = DateOnly.FromDateTime(DateTime.Now),
+                            IsPermanent = reasonCode.IsPermanent,
+                            Note = dto.CustomNote,
+                        };
+                        if (!reasonCode.IsPermanent && reasonCode.MinDays.HasValue)
+                        {
+                            deferral.EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(reasonCode.MinDays.Value));
+                        }
+                        else
+                        {
+                            deferral.EndDate = null; // Không có ngày kết thúc nếu là vĩnh viễn hoặc không có ngày tối thiểu
+                        }
+                        _context.DonorDeferrals.Add(deferral);
+                    }
+
+                }
+
+            }
+            await _context.SaveChangesAsync();
+            return true;
+
+
+        }
+
 
 
 

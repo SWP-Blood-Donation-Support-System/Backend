@@ -22,5 +22,7 @@ namespace BloodDonationAPI.Service
         //Task<List<DonationHistoryDto>> GetDonationHistoryByUserNameAsync(string username);
         Task<bool> UpdateAppointmentNoteAsync(AppointmentNoteDto appointmentNoteDto);
 
+        Task<bool> DestroyBloodDonationAsync(DestroyBloodDonationDto dto);
+
     }
 }

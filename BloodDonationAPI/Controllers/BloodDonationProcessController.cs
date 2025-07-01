@@ -122,6 +122,35 @@ namespace BloodDonationAPI.Controllers
             }
             return Ok(new { message = "Cập nhật ghi chú thành công." });
         }
+        /// <summary>
+        /// api này dùng để hủy máu sau khi đã ghi nhận hiến máu mà xét nghiệm ra các bệnh truyền nhiểm hoặc không đủ tiêu chuẩn để lưu trữ máu trong ngân hàng máu.
+        /// </summary>
+        /// <remarks>
+        /// cac BloodDetailId lay tu Api lay cac Blodetail gi do??( chua lam den )
+        /// 
+        /// dien vao cac resonCode để cập nhật trạng thái của đơn vị máu là đã hủy, các reasonCode có thể là:
+        /// 
+        /// HBV_POS : Dương tính với virus viêm gan B
+        /// 
+        /// HCV_POS : Dương tính với virus viêm gan C
+        /// 
+        /// HIV_POS : Dương tính với virus HIV
+        /// </remarks>
+        /// <param name="dto"></param>
+        /// <returns></returns>
+        [HttpPut("DestroyBloodDonation")]
+
+        public async Task<IActionResult> DestroyBloodDonation([FromBody] DestroyBloodDonationDto dto)
+        {
+           var result = await _service.DestroyBloodDonationAsync(dto);
+            if (!result)
+            {
+                return NotFound(new { message = "Không tìm thấy don vi mau" });
+            }
+            return Ok(new { message = "Cập nhật trạng thái đơn vị máu thành công." });
+        }
+
+
 
         //[HttpPost("AddDonationHistory")]
         //[Authorize(Roles = "Staff")]
