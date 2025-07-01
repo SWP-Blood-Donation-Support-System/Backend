@@ -237,14 +237,25 @@ namespace BloodDonationAPI.Service
                 return false; // Lịch hẹn không tồn tại
             }
 
+            //kiem tra xem lich nay da duoc cong vao so nguoi dang ki chua (da xet duyet hay  khong)
+
+            bool isDecreased = appoinment.Status == "Đã đủ điều kiện";
             appoinment.Status = "Hủy"; // Cập nhật trạng thái lịch hẹn
-            // Giảm số lượng người đăng ký của sự kiện
-            var eventRecord = await _context.Events.FirstOrDefaultAsync(e => e.EventId == appoinment.EventId);
-            if (eventRecord != null && (eventRecord.CurrentParticipants ?? 0) > 0)
+            _context.AppointmentRecords.Update(appoinment);
+
+            if(isDecreased)
             {
-                eventRecord.CurrentParticipants = (eventRecord.CurrentParticipants ?? 0) - 1;
-                _context.Events.Update(eventRecord);
+                // Giảm số lượng người đăng ký của sự kiện
+                var eventRecord = await _context.Events.FirstOrDefaultAsync(e => e.EventId == appoinment.EventId);
+                if (eventRecord != null && (eventRecord.CurrentParticipants ?? 0) > 0)
+                {
+                    eventRecord.CurrentParticipants = (eventRecord.CurrentParticipants ?? 0) - 1;
+                    _context.Events.Update(eventRecord);
+                }
+
             }
+
+            
 
             await _context.SaveChangesAsync(); // Lưu thay đổi vào cơ sở dữ liệu
             return true; // Trả về true nếu cập nhật thành công
