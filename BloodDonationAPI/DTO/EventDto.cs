@@ -15,5 +15,8 @@
         public string? Location { get; set; }
 
         public int? MaxParticipants { get; set; }
+
+        public int? CurrentParticipants { get; set; }
+        public string? BloodTypeRequired { get; set; }
     }
 }
