@@ -443,5 +443,183 @@ namespace BloodDonationAPI.Service
             return null; // Nếu không có câu trả lời nào, trả về null
 
         }
+
+        public async Task<RegisterAppointmentResultDto> RegisterAppointmentV3(string userName, RegisterAppointmentDtoV2 Dto)
+        {
+            //kiểm tra người dùng có tồn tại và đủ điều kiện đăng ký không
+            var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == userName);
+            if (user == null)
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Người dùng không tồn tại.",
+                    AppointmentId = null
+                };
+            // kiem tra người dùng có đủ điều kiện đăng ký không
+            if (user.ProfileStatus != "Active")
+            {
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Tài khoản của bạn không đủ điều kiện đăng ký lịch hẹn.",
+                    AppointmentId = null
+                };
+            }
+            //kiểm tra người dùng có đang bị hoãn hiến máu không
+            var today = DateOnly.FromDateTime(DateTime.Today);
+
+            var activeDeferrals = await _context.DonorDeferrals
+                .Where(d => d.Username == userName &&
+                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= today)))
+                .Include(d => d.ReasonCodeNavigation)
+                .ToListAsync();
+
+            if (activeDeferrals.Any())
+            {
+                var reasons = string.Join("; ", activeDeferrals.Select(d =>
+                    $"{d.ReasonCodeNavigation.ReasonText} - {(d.Note ?? "Không rõ lý do")}"
+                ));
+
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = $"Bạn hiện đang không thể đăng ký lịch hẹn.\nLý do: {reasons}",
+                    AppointmentId = null
+                };
+            }
+
+            //kiểm tra lịch hẹn có tồn tại không
+            var appointment = await _context.Events
+                .FirstOrDefaultAsync(a => a.EventId == Dto.eventId);
+
+            if (appointment == null)
+            {
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Lịch hẹn không tồn tại.",
+                    AppointmentId = null
+                };
+            }
+           
+            //kiểm tra xem đã đăng ký lịch hẹn này chưa
+            bool alreadyRegistered = await _context.AppointmentRecords.AnyAsync(h =>
+                h.Username == userName && h.EventId == Dto.eventId && h.Status != "Hủy");
+
+            if (alreadyRegistered)
+            {
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = "Bạn đã đăng ký lịch hẹn này rồi.",
+                    AppointmentId = null
+                };
+            }
+            // kiem tr xem so luong nguoi dang ki da duoc dat toi da chua 
+            if (appointment.CurrentParticipants.HasValue)
+            {
+                int currentParticipants = appointment.CurrentParticipants ?? 0;
+                if (currentParticipants >= appointment.MaxParticipants.Value)
+                {
+                    return new RegisterAppointmentResultDto
+                    {
+                        IsSuccess = false,
+                        Message = "Sự kiện đã đủ người đăng ký.",
+                        AppointmentId = null
+                    };
+                }
+            }
+            // kiem tra xem nhom mau cua nguoi dung co phu hop voi su kien khong
+            if (!string.IsNullOrWhiteSpace(appointment.BloodTypeRequired))
+            {
+                if (string.IsNullOrWhiteSpace(user.BloodType) || 
+                   !string.Equals(user.BloodType.Trim(), appointment.BloodTypeRequired.Trim(), StringComparison.OrdinalIgnoreCase))
+                {
+                    return new RegisterAppointmentResultDto
+                    {
+                        IsSuccess = false,
+                        Message = "Nhóm máu của bạn không phù hợp với yêu cầu của sự kiện.",
+                        AppointmentId = null
+                    };
+                }
+            }
+
+
+            // lay tong cau hoi trong bang SurveyQuestions
+            var totalQuestion = await _context.SurveyQuestions.CountAsync();
+            // lay tat cac cac cau tra loi cua nguoi dung moi (bo cac cai trung lap di boi vi co cau hoi chon multiple choice)
+            var answeredQuestions = Dto.userSurveyAnswerDtos.Select(a => a.QuestionId)
+                .Distinct()
+                .Count();
+            // kiem tra xem nguoi dung da tra loi het cac cau hoi chua
+            if (answeredQuestions < totalQuestion)
+            {
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = $"Bạn cần trả lời tất cả {totalQuestion} câu hỏi khảo sát để đăng ký lịch hẹn.",
+                    AppointmentId = null
+                };
+            }
+            // them moi vao bang khi da tra loi day du cac cau hoi
+            var newAppointment = new AppointmentRecord
+            {
+                Username = userName,
+                EventId = Dto.eventId,
+                RegistrationDate = DateTime.Now,
+                Status = "Đang xét duyệt"
+            };
+            _context.AppointmentRecords.Add(newAppointment);
+            await _context.SaveChangesAsync();
+
+            // luu cac cau tra loi cua nguoi dung vao bang UserSurveyAnswers
+
+            foreach (var answer in Dto.userSurveyAnswerDtos)
+            {
+                var userSurveyAnswer = new UserSurveyAnswer
+                {
+                    AppointmentId = newAppointment.AppointmentId,
+                    QuestionId = answer.QuestionId,
+                    OptionId = answer.OptionId,
+                    AdditionalText = answer.AdditionalText,
+                    AnswerDate = DateTime.Now
+                };
+                _context.UserSurveyAnswers.Add(userSurveyAnswer);
+            }
+            await _context.SaveChangesAsync();
+
+            // dung de kiem tra cac cau hoi va cap nhat trang thai cho appointmentRecord 
+            var isEligible = await CheckUserSurveyAndSetStatus(newAppointment.AppointmentId);
+            //dat trang thai tui vao cau tra loi
+            var status = isEligible switch
+            {
+                true => "Đã đủ điều kiện",
+                false => "Không đủ điều kiện",
+                null => "Đang xét duyệt"
+            };
+
+            newAppointment.Status = status;
+            _context.AppointmentRecords.Update(newAppointment);
+
+            if (isEligible == true)
+            {
+                appointment.CurrentParticipants = (appointment.CurrentParticipants ?? 0) + 1;
+                _context.Events.Update(appointment);
+            }
+            await _context.SaveChangesAsync();
+
+            var message = isEligible switch
+            {
+                true => "Bạn đã đăng ký thành công lịch hẹn và đủ điều kiện hiến máu.",
+                false => "Bạn đã đăng ký thành công lịch hẹn nhưng không đủ điều kiện hiến máu.",
+                null => "Bạn đã đăng ký thành công lịch hẹn và đang chờ xét duyệt."
+            };
+            return new RegisterAppointmentResultDto
+            {
+                IsSuccess = true,
+                Message = message,
+                AppointmentId = newAppointment.AppointmentId
+            };
+        }
     }
 }
