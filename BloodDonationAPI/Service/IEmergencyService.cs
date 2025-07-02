@@ -5,7 +5,7 @@ namespace BloodDonationAPI.Service
 {
     public interface IEmergencyService
     {
-        Task<string> RegisterEmergency(string username, string role, RegisterEmergencyDto dto);
+        Task<RegisterEmergencyResponseDto> RegisterEmergency(string username, string role, RegisterEmergencyDto dto);
         Task<List<Emergency>> GetEmergencies();
         Task<string> UpdateEmergencyStatus(int emergencyId, string status);
         Task<BloodCompareResultDto> CompareBloodForEmergency(int emergencyId);
@@ -14,4 +14,4 @@ namespace BloodDonationAPI.Service
         Task<List<Emergency>> GetEmergenciesByUsername(string username);
         Task<string> MarkEmergencyAsFulfilled(int emergencyId, string username);
     }
-} 
+}
