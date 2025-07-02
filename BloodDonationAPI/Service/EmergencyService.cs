@@ -16,17 +16,25 @@ namespace BloodDonationAPI.Service
             _logger = logger;
         }
 
-        public async Task<string> RegisterEmergency(string username, string role, RegisterEmergencyDto dto)
+        public async Task<RegisterEmergencyResponseDto> RegisterEmergency(string username, string role, RegisterEmergencyDto dto)
         {
             try
             {
                 var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
                 if (user == null)
-                    return "User not found.";
+                    return new RegisterEmergencyResponseDto 
+                    { 
+                        Message = "User not found.", 
+                        IsSuccess = false 
+                    };
 
                 // Validate blood type
                 if (!IsValidBloodType(dto.BloodType))
-                    return "Invalid blood type.";
+                    return new RegisterEmergencyResponseDto 
+                    { 
+                        Message = "Invalid blood type.", 
+                        IsSuccess = false 
+                    };
 
                 // Validate hospital if provided
                 Hospital? hospital = null;
@@ -34,11 +42,19 @@ namespace BloodDonationAPI.Service
                 {
                     hospital = await _context.Hospitals.FindAsync(dto.HospitalId.Value);
                     if (hospital == null)
-                        return "Invalid hospital ID.";
+                        return new RegisterEmergencyResponseDto 
+                        { 
+                            Message = "Invalid hospital ID.", 
+                            IsSuccess = false 
+                        };
                 }
                 else
                 {
-                    return "Hospital ID is required.";
+                    return new RegisterEmergencyResponseDto 
+                    { 
+                        Message = "Hospital ID is required.", 
+                        IsSuccess = false 
+                    };
                 }
 
                 // Set emergency status based on user role
@@ -61,7 +77,12 @@ namespace BloodDonationAPI.Service
                 _context.Emergencies.Add(emergency);
                 await _context.SaveChangesAsync();
 
-                return "Emergency registration successful.";
+                return new RegisterEmergencyResponseDto 
+                { 
+                    Message = "Emergency registration successful.", 
+                    EmergencyId = emergency.EmergencyId,
+                    IsSuccess = true 
+                };
             }
             catch (Exception ex)
             {
