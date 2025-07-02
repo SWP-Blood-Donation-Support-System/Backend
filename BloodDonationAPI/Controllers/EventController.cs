@@ -81,8 +81,6 @@ namespace BloodDonationAPI.Controllers
         /// json nó hiển thị cũng không chạy được 
         /// 
         /// {
-        ///  "eventId": 1,
-        ///  
         ///  "eventDate": "2025-07-15",
         ///  
         /// "eventTime": "14:00:00",
@@ -105,12 +103,12 @@ namespace BloodDonationAPI.Controllers
         [HttpPut("UpdateEvent/{id}")]
         public async Task<IActionResult> UpdateEvent(int id, [FromBody] Event updatedEvent)
         {
-            if (updatedEvent == null || updatedEvent.EventId != id)
+            if (updatedEvent == null )
             {
                 return BadRequest("Invalid event data.");
             }
             await _eventService.UpdateEventAsync(id, updatedEvent);
-            return NoContent();
+            return Ok(new { message = "da cap nhat thanh cong" });
         }
 
         /// <summary>
