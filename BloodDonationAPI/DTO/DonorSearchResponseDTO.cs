@@ -3,7 +3,7 @@ using System.Collections.Generic;
 
 namespace BloodDonationAPI.DTO
 {
-    public class DonorSearchResponse
+    public class DonorSearchResponseDTO
     {
         public List<NearbyDonor> Donors { get; set; } = new List<NearbyDonor>();
     }    public class NearbyDonor
@@ -12,6 +12,7 @@ namespace BloodDonationAPI.DTO
         public string Distance { get; set; } // Khoảng cách đến vị trí tìm kiếm (đã định dạng, ví dụ: "5.2 km" hoặc "800 m")
         public string BloodType { get; set; }
         public string Status { get; set; } // AVAILABLE, UNAVAILABLE
+        public string ProfileStatus { get; set; } // ProfileStatus từ bảng User
         public DateTime? LastDonationDate { get; set; }
         public ContactInfo ContactInfo { get; set; }
     }

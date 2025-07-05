@@ -12,6 +12,6 @@ namespace BloodDonationAPI.Service
         /// </summary>
         /// <param name="request">Thông tin tìm kiếm</param>
         /// <returns>Danh sách yêu cầu máu phù hợp với tiêu chí tìm kiếm</returns>
-        Task<BloodRequestSearchResponse> FindNearbyBloodRequests(BloodRequestSearchRequest request);
+        Task<BloodRequestSearchResponseDTO> FindNearbyBloodRequests(BloodRequestSearchRequestDTO request);
     }
 }

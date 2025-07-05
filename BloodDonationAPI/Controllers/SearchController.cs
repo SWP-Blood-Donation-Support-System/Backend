@@ -79,67 +79,59 @@ namespace BloodDonationAPI.Controllers
         /// </summary>
         /// <remarks>
         /// API này cho phép tìm kiếm các yêu cầu cần máu theo nhóm máu cụ thể.
-        /// - Staff và Admin: có thể tìm kiếm không giới hạn (bloodType có thể để trống)
-        /// - User và khách: bắt buộc phải cung cấp bloodType
+        /// Chỉ Admin, Staff, và User mới có thể sử dụng chức năng này.
+        /// Kết quả được sắp xếp theo khoảng cách từ điểm mốc: 7 Đ. D1, Long Thạnh Mỹ, Thủ Đức.
+        /// Chỉ hiển thị các yêu cầu có trạng thái "Đã xét duyệt".
         /// </remarks>
         /// <param name="bloodType">Nhóm máu (A+, A-, B+, B-, AB+, AB-, O+, O-)</param>
-        /// <returns>Danh sách người cần máu có nhóm máu đã chỉ định</returns>
+        /// <returns>Danh sách người cần máu có nhóm máu đã chỉ định, sắp xếp theo khoảng cách</returns>
         [HttpGet("requests/byBloodType")]
-        [AllowAnonymous]
-        public async Task<IActionResult> GetEmergenciesByBloodType([FromQuery] string bloodType)
+        [Authorize(Roles = "Admin,Staff,User")]
+        public async Task<IActionResult> GetBloodRequestsByBloodType([FromQuery] string bloodType)
         {
             try
-            {                // Kiểm tra người dùng hiện tại (nếu đã đăng nhập)
-                bool isAuthenticated = User.Identity?.IsAuthenticated == true;
-                string currentUser = User.Identity?.Name ?? string.Empty;
-                string? role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value;
-                bool isStaffOrAdmin = isAuthenticated && (role == "Staff" || role == "Admin");
-                                     
-                if (!isStaffOrAdmin && string.IsNullOrWhiteSpace(bloodType))
+            {
+                // Lấy thông tin người dùng hiện tại từ token
+                var currentUser = User.Identity?.Name ?? string.Empty;
+                var role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+                // Validate input parameters
+                if (string.IsNullOrWhiteSpace(bloodType))
                 {
                     return BadRequest(new { message = "BloodType is required" });
                 }
 
-                // Xử lý tìm kiếm theo bloodType hoặc tất cả
-                if (!string.IsNullOrWhiteSpace(bloodType))
+                // Chuẩn hóa bloodType
+                var normalizedBloodType = bloodType.ToUpper().Trim();
+                var validBloodTypes = new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" };
+                
+                if (!validBloodTypes.Contains(normalizedBloodType))
                 {
-                    // Chuẩn hóa bloodType
-                    var normalizedBloodType = bloodType.ToUpper().Trim();
-                    var validBloodTypes = new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" };
-                    
-                    if (!validBloodTypes.Contains(normalizedBloodType))
-                    {
-                        return BadRequest(new { message = "Invalid blood type. Must be A+, A-, B+, B-, AB+, AB-, O+, or O-" });
+                    return BadRequest(new { message = "Invalid blood type. Must be A+, A-, B+, B-, AB+, AB-, O+, or O-" });
+                }
+                
+                // Gọi service để tìm kiếm yêu cầu máu
+                var bloodRequests = await _searchService.FindBloodRequestsByBloodType(normalizedBloodType);
+                
+                // Log số lượng để kiểm tra
+                Console.WriteLine($"Found {bloodRequests.Count()} approved blood requests for blood type {normalizedBloodType}");
+                
+                return Ok(new { 
+                    bloodRequests,
+                    message = "Blood request search successful. Results are sorted by distance from reference point and only show approved requests.",
+                    currentUser = currentUser,
+                    role = role,
+                    searchCriteria = new {
+                        bloodType = normalizedBloodType,
+                        statusFilter = "Đã xét duyệt",
+                        referencePoint = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh"
                     }
-                    
-                    var emergencies = await _searchService.FindEmergenciesByBloodType(bloodType);
-                    
-                    return Ok(new { 
-                        emergencies,
-                        isAuthenticated,
-                        currentUser = isAuthenticated ? currentUser : "Anonymous",
-                        accessType = isAuthenticated ? "Authenticated user" : "Public access",
-                        message = "Blood request search successful"
-                    });
-                }
-                else if (isStaffOrAdmin) // Chỉ Staff/Admin mới có thể tìm tất cả
-                {
-                    var allEmergencies = await _searchService.FindAllEmergencies();
-                      return Ok(new { 
-                        emergencies = allEmergencies,
-                        currentUser = currentUser ?? string.Empty,
-                        role = role ?? string.Empty,
-                        message = "Staff/Admin all emergencies access successful"
-                    });
-                }
-                else
-                {
-                    // Đây là trường hợp không thể xảy ra do đã kiểm tra ở trên
-                    return BadRequest(new { message = "Invalid request" });
-                }
+                });
             }
             catch (Exception ex)
             {
+                Console.WriteLine($"Error in GetBloodRequestsByBloodType: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
