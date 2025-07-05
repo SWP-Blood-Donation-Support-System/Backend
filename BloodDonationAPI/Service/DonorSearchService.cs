@@ -24,7 +24,7 @@ namespace BloodDonationAPI.Service
         /// <summary>
         /// Tìm kiếm người hiến máu gần đây theo vị trí, nhóm máu và bán kính
         /// </summary>
-        public async Task<DonorSearchResponse> FindNearbyDonorsAsync(DonorSearchRequest request)
+        public async Task<DonorSearchResponseDTO> FindNearbyDonorsAsync(DonorSearchRequestDTO request)
         {
             // Lấy tất cả người dùng có role là User (người hiến máu) và có ProfileStatus "Active"
             var potentialDonors = await _context.Users
@@ -63,6 +63,7 @@ namespace BloodDonationAPI.Service
                         Distance = formattedDistance, // Only use formatted distance string
                         BloodType = donor.BloodType ?? "Unknown",
                         Status = status,
+                        ProfileStatus = donor.ProfileStatus ?? "Unknown",
                         LastDonationDate = lastDonation?.RegistrationDate,
                         ContactInfo = new ContactInfo
                         {
@@ -78,7 +79,7 @@ namespace BloodDonationAPI.Service
             // Sắp xếp danh sách donor từ gần đến xa sử dụng hàm chung
             nearbyDonors = SortDonorsByDistance(nearbyDonors);
 
-            return new DonorSearchResponse
+            return new DonorSearchResponseDTO
             {
                 Donors = nearbyDonors
             };
@@ -87,7 +88,7 @@ namespace BloodDonationAPI.Service
         /// <summary>
         /// Tìm kiếm người hiến máu theo nhóm máu trong TP.HCM
         /// </summary>
-        public async Task<DonorSearchResponse> FindDonorsByBloodTypeAsync(DonorSearchRequest request)
+        public async Task<DonorSearchResponseDTO> FindDonorsByBloodTypeAsync(DonorSearchRequestDTO request)
         {
             // Lấy tất cả người dùng có role là User và có ProfileStatus "Active", và ở TP.HCM
             var potentialDonors = await _context.Users
@@ -135,6 +136,7 @@ namespace BloodDonationAPI.Service
                     Distance = formattedDistance, // Use only formatted distance
                     BloodType = donor.BloodType ?? "Unknown",
                     Status = status,
+                    ProfileStatus = donor.ProfileStatus ?? "Unknown",
                     LastDonationDate = lastDonation?.RegistrationDate,
                     ContactInfo = new ContactInfo
                     {
@@ -149,7 +151,7 @@ namespace BloodDonationAPI.Service
             // Sắp xếp danh sách donor từ gần đến xa sử dụng hàm chung
             donors = SortDonorsByDistance(donors);
 
-            return new DonorSearchResponse
+            return new DonorSearchResponseDTO
             {
                 Donors = donors
             };
@@ -158,7 +160,7 @@ namespace BloodDonationAPI.Service
         /// <summary>
         /// Tìm kiếm người hiến máu theo nhóm máu trên toàn Việt Nam và sắp xếp theo khoảng cách
         /// </summary>
-        public async Task<DonorSearchResponse> FindDonorsInHCMByBloodTypeAsync(DonorSearchRequest request)
+        public async Task<DonorSearchResponseDTO> FindDonorsInHCMByBloodTypeAsync(DonorSearchRequestDTO request)
         {
             // Lấy tất cả người dùng có role là User (người hiến máu) và có ProfileStatus "Active"
             var potentialDonors = await _context.Users
@@ -192,6 +194,7 @@ namespace BloodDonationAPI.Service
                     Distance = formattedDistance, // Use only formatted distance string
                     BloodType = donor.BloodType ?? "Unknown",
                     Status = status,
+                    ProfileStatus = donor.ProfileStatus ?? "Unknown",
                     LastDonationDate = lastDonation?.RegistrationDate,
                     ContactInfo = new ContactInfo
                     {
@@ -206,7 +209,7 @@ namespace BloodDonationAPI.Service
             // Sắp xếp danh sách donor từ gần đến xa sử dụng hàm chung
             donors = SortDonorsByDistance(donors);
 
-            return new DonorSearchResponse
+            return new DonorSearchResponseDTO
             {
                 Donors = donors
             };

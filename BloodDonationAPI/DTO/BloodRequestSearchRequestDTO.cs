@@ -2,7 +2,7 @@
 
 namespace BloodDonationAPI.DTO
 {
-    public class BloodRequestSearchRequest
+    public class BloodRequestSearchRequestDTO
     {
         [Required]
         public double Lat { get; set; }

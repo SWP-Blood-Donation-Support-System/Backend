@@ -28,5 +28,12 @@ namespace BloodDonationAPI.Service
         /// </summary>
         /// <returns>Danh sách tất cả các trường hợp khẩn cấp</returns>
         Task<IEnumerable<object>> FindAllEmergencies();
+
+        /// <summary>
+        /// Tìm kiếm yêu cầu máu theo nhóm máu
+        /// </summary>
+        /// <param name="bloodType">Nhóm máu cần tìm</param>
+        /// <returns>Danh sách yêu cầu máu được sắp xếp theo khoảng cách</returns>
+        Task<IEnumerable<object>> FindBloodRequestsByBloodType(string bloodType);
     }
 }
