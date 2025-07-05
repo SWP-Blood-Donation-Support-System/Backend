@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
-using BloodDonationAPI.Entities;
 using Microsoft.EntityFrameworkCore;
-
-
+using BloodDonationAPI.Entities;
 namespace BloodDonationAPI;
 
 public partial class BloodDonationSystemContext : DbContext
@@ -123,17 +121,22 @@ public partial class BloodDonationSystemContext : DbContext
 
         modelBuilder.Entity<Certificate>(entity =>
         {
-            entity.HasKey(e => e.AppointmentId).HasName("PK__Certific__8ECDFCC21B0907CE");
+            entity.HasKey(e => e.CertificateId).HasName("PK__Certific__BBF8A7C16A30C649");
 
             entity.ToTable("Certificate");
 
-            entity.Property(e => e.AppointmentId).ValueGeneratedNever();
+            entity.Property(e => e.Address).HasMaxLength(255);
             entity.Property(e => e.CertificateCode).HasMaxLength(50);
+            entity.Property(e => e.CreatedAt)
+                .HasDefaultValueSql("(getdate())")
+                .HasColumnType("datetime");
+            entity.Property(e => e.FullName).HasMaxLength(100);
+            entity.Property(e => e.HospitalName).HasMaxLength(255);
 
-            entity.HasOne(d => d.Appointment).WithOne(p => p.Certificate)
-                .HasForeignKey<Certificate>(d => d.AppointmentId)
+            entity.HasOne(d => d.Appointment).WithMany(p => p.Certificates)
+                .HasForeignKey(d => d.AppointmentId)
                 .OnDelete(DeleteBehavior.ClientSetNull)
-                .HasConstraintName("FK__Certifica__Appoi__1CF15040");
+                .HasConstraintName("FK_Certificate_Appointment");
         });
 
         modelBuilder.Entity<DeferralReason>(entity =>

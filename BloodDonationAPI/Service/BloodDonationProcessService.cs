@@ -148,6 +148,26 @@ namespace BloodDonationAPI.Service
             }
             // Lưu tất cả các thay đổi vào cơ sở dữ liệu
             await _context.SaveChangesAsync();
+            //tao chung nhan sau khi hiến máu
+            string hospitalName = "Viện Huyết học - Truyền máu TW"; // Giả sử tên bệnh viện là cố định, bạn có thể thay đổi theo logic của bạn
+            string certificateCode = $"CTF-{DateTime.Today:yyyyMMdd}-{user.Username.ToUpper()}"; // Tạo mã chứng nhận theo định dạng mong muốn
+
+            //them vao bang certificatr
+            var certificate = new Certificate
+            {
+                AppointmentId = donateDto.AppointmentId,
+                FullName = user.FullName,
+                DateOfBirth = user.DateOfBirth ?? DateOnly.FromDateTime(new DateTime(2000, 1, 1)),
+                Address = user.Address ,
+                HospitalName = hospitalName,
+                BloodAmount = donateDto.Volume,
+                DonationDate = DateOnly.FromDateTime(DateTime.Now),
+                CertificateCode = certificateCode,
+                IssueDate = DateOnly.FromDateTime(DateTime.Now),
+            };
+            _context.Certificates.Add(certificate);
+            await _context.SaveChangesAsync();
+
             return true;
         }
 

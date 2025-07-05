@@ -19,10 +19,10 @@
                     await bloodDonationProcessServiece.UpdateEligibleUsersAsync();
                 }
                 // tu dongj chay moi 24h de cap nhat stus cho user
-                //  await Task.Delay(TimeSpan.FromHours(24), stoppingToken); // Check every 24 hours
+                await Task.Delay(TimeSpan.FromHours(24), stoppingToken); // Check every 24 hours
 
-                //👉 đổi thành TimeSpan.FromSeconds(30) nếu bạn đang test
-                await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken); // Check every 30 seconds for testing purposes
+                ////👉 đổi thành TimeSpan.FromSeconds(30) nếu bạn đang test
+                //await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken); // Check every 30 seconds for testing purposes
             }
         }   
     }
