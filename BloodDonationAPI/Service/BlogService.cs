@@ -86,7 +86,7 @@ namespace BloodDonationAPI.Service
                     BlogTitle = dto.BlogTitle,
                     BlogContent = dto.BlogContent,
                     BlogImage = dto.BlogImage,
-                    BlogStatus = dto.BlogStatus,
+                    BlogStatus = "available",
                     BlogDetail = dto.BlogDetail,
                     Username = username
                 };
@@ -103,7 +103,7 @@ namespace BloodDonationAPI.Service
             }
         }
 
-        public async Task<string> UpdateBlog(int id, string username, UpdateBlogDto dto)
+        public async Task<string> UpdateBlog(int id, string username, string role, UpdateBlogDto dto)
         {
             try
             {
@@ -111,7 +111,7 @@ namespace BloodDonationAPI.Service
                 if (blog == null)
                     return "Blog not found.";
 
-                if (blog.Username != username)
+                if (role != "Admin" && blog.Username != username)
                     return "You are not authorized to update this blog.";
 
                 blog.BlogTitle = dto.BlogTitle;
@@ -130,7 +130,7 @@ namespace BloodDonationAPI.Service
             }
         }
 
-        public async Task<string> DeleteBlog(int id, string username)
+        public async Task<string> DeleteBlog(int id, string username, string role)
         {
             try
             {
@@ -138,7 +138,7 @@ namespace BloodDonationAPI.Service
                 if (blog == null)
                     return "Blog not found.";
 
-                if (blog.Username != username)
+                if (role != "Admin" && blog.Username != username)
                     return "You are not authorized to delete this blog.";
 
                 _context.Blogs.Remove(blog);

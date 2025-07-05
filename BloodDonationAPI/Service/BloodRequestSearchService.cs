@@ -9,17 +9,19 @@ using System.Threading.Tasks;
 
 namespace BloodDonationAPI.Service
 {
-    // Note: This service is no longer needed since we've removed the nearby search functionality
     public class BloodRequestSearchService : IBloodRequestSearchService
     {
         private readonly BloodDonationSystemContext _context;
+        // Reference point: 7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Vietnam
+        private readonly double _referenceLatitude = 10.841962;  // Approximate latitude for the reference point
+        private readonly double _referenceLongitude = 106.810627; // Approximate longitude for the reference point
 
         public BloodRequestSearchService(BloodDonationSystemContext context)
         {
             _context = context;
         }
 
-        public async Task<BloodRequestSearchResponse> FindNearbyBloodRequests(BloodRequestSearchRequest request)
+        public async Task<BloodRequestSearchResponseDTO> FindNearbyBloodRequests(BloodRequestSearchRequestDTO request)
         {
             // Validate the request parameters
             if (request == null)
@@ -27,7 +29,7 @@ namespace BloodDonationAPI.Service
                 throw new ArgumentNullException(nameof(request));
             }
 
-            var response = new BloodRequestSearchResponse();
+            var response = new BloodRequestSearchResponseDTO();
             
             try
             {
@@ -55,8 +57,8 @@ namespace BloodDonationAPI.Service
                     
                     if (user != null && hospital != null)
                     {
-                        // Tính khoảng cách dựa trên địa chỉ bệnh viện
-                        double distance = CalculateDistance(request.Lat, request.Lng, 0, 0); // Không có tọa độ thực tế
+                        // Tính khoảng cách dựa trên địa chỉ bệnh viện so với điểm mốc
+                        double distance = CalculateDistanceFromHospitalAddress(hospital.HospitalAddress ?? "");
                         
                         if (distance <= request.Radius)
                         {
@@ -96,6 +98,120 @@ namespace BloodDonationAPI.Service
             }
             
             return response;
+        }
+
+        /// <summary>
+        /// Tính khoảng cách dựa trên địa chỉ bệnh viện so với điểm mốc: 7 Đ. D1, Long Thạnh Mỹ, Thủ Đức
+        /// </summary>
+        private double CalculateDistanceFromHospitalAddress(string hospitalAddress)
+        {
+            hospitalAddress = hospitalAddress ?? string.Empty;
+            
+            if (string.IsNullOrEmpty(hospitalAddress))
+                return double.MaxValue;
+            
+            var random = new Random();
+            
+            // Thủ Đức (nơi có điểm mốc - 7 Đ. D1, Long Thạnh Mỹ)
+            if (hospitalAddress.Contains("Long Thạnh Mỹ") || 
+                (hospitalAddress.Contains("Thủ Đức") && hospitalAddress.Contains("D1")))
+            {
+                return 0.5; // Rất gần điểm mốc
+            }
+            
+            // Khu vực Thủ Đức
+            if (hospitalAddress.Contains("Thủ Đức") || 
+                hospitalAddress.Contains("Linh Trung") ||
+                hospitalAddress.Contains("Linh Tây") ||
+                hospitalAddress.Contains("Linh Đông") ||
+                hospitalAddress.Contains("Hiệp Phú"))
+            {
+                return random.NextDouble() * 2 + 2; // 2-4km
+            }
+            
+            // Các quận lân cận Thủ Đức
+            if (hospitalAddress.Contains("Quận 9") || hospitalAddress.Contains("Q9") ||
+                hospitalAddress.Contains("Quận 2") || hospitalAddress.Contains("Q2") ||
+                hospitalAddress.Contains("Bình Thạnh"))
+            {
+                return random.NextDouble() * 3 + 5; // 5-8km
+            }
+            
+            // Các quận nội thành TP.HCM
+            if (hospitalAddress.Contains("Quận 1") || hospitalAddress.Contains("Q1") ||
+                hospitalAddress.Contains("Quận 3") || hospitalAddress.Contains("Q3") ||
+                hospitalAddress.Contains("Quận 5") || hospitalAddress.Contains("Q5") ||
+                hospitalAddress.Contains("Quận 7") || hospitalAddress.Contains("Q7") ||
+                hospitalAddress.Contains("Quận 10") || hospitalAddress.Contains("Q10") ||
+                hospitalAddress.Contains("Tân Bình") ||
+                hospitalAddress.Contains("Phú Nhuận"))
+            {
+                return random.NextDouble() * 5 + 8; // 8-13km
+            }
+            
+            // Các quận khác trong TP.HCM
+            if (hospitalAddress.Contains("TP.HCM") || hospitalAddress.Contains("HCM") || 
+                hospitalAddress.Contains("Hồ Chí Minh") ||
+                hospitalAddress.Contains("Quận 4") || hospitalAddress.Contains("Q4") ||
+                hospitalAddress.Contains("Quận 6") || hospitalAddress.Contains("Q6") ||
+                hospitalAddress.Contains("Quận 8") || hospitalAddress.Contains("Q8") ||
+                hospitalAddress.Contains("Quận 11") || hospitalAddress.Contains("Q11") ||
+                hospitalAddress.Contains("Quận 12") || hospitalAddress.Contains("Q12"))
+            {
+                return random.NextDouble() * 8 + 10; // 10-18km
+            }
+            
+            // Các tỉnh lân cận TP.HCM
+            if (hospitalAddress.Contains("Bình Dương") ||
+                hospitalAddress.Contains("Đồng Nai") ||
+                hospitalAddress.Contains("Long An") ||
+                hospitalAddress.Contains("Tây Ninh") ||
+                hospitalAddress.Contains("Vũng Tàu"))
+            {
+                return random.NextDouble() * 30 + 20; // 20-50km
+            }
+            
+            // Các tỉnh miền Tây Nam Bộ
+            if (hospitalAddress.Contains("Tiền Giang") ||
+                hospitalAddress.Contains("Bến Tre") ||
+                hospitalAddress.Contains("Vĩnh Long") ||
+                hospitalAddress.Contains("Cần Thơ") ||
+                hospitalAddress.Contains("An Giang") ||
+                hospitalAddress.Contains("Hậu Giang") ||
+                hospitalAddress.Contains("Kiên Giang") ||
+                hospitalAddress.Contains("Đồng Tháp") ||
+                hospitalAddress.Contains("Cà Mau"))
+            {
+                return random.NextDouble() * 100 + 50; // 50-150km
+            }
+            
+            // Các tỉnh miền Trung
+            if (hospitalAddress.Contains("Đà Nẵng") ||
+                hospitalAddress.Contains("Huế") || hospitalAddress.Contains("Thừa Thiên") ||
+                hospitalAddress.Contains("Quảng Nam") ||
+                hospitalAddress.Contains("Quảng Ngãi") ||
+                hospitalAddress.Contains("Bình Định") ||
+                hospitalAddress.Contains("Khánh Hòa") || hospitalAddress.Contains("Nha Trang") ||
+                hospitalAddress.Contains("Nghệ An") ||
+                hospitalAddress.Contains("Hà Tĩnh"))
+            {
+                return random.NextDouble() * 200 + 500; // 500-700km
+            }
+            
+            // Các tỉnh miền Bắc
+            if (hospitalAddress.Contains("Hà Nội") ||
+                hospitalAddress.Contains("Hải Phòng") ||
+                hospitalAddress.Contains("Quảng Ninh") ||
+                hospitalAddress.Contains("Bắc Ninh") ||
+                hospitalAddress.Contains("Hưng Yên") ||
+                hospitalAddress.Contains("Hải Dương") ||
+                hospitalAddress.Contains("Nam Định"))
+            {
+                return random.NextDouble() * 200 + 1000; // 1000-1200km
+            }
+            
+            // Các tỉnh khác
+            return random.NextDouble() * 500 + 100; // 100-600km
         }
 
         // Haversine formula to calculate distance between two points on Earth

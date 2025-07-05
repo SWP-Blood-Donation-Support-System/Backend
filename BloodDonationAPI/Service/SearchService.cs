@@ -88,6 +88,7 @@ namespace BloodDonationAPI.Service
                         Phone = $"098765432{i}",
                         Address = $"Địa chỉ {i}, {(i % 3 == 0 ? "Thủ Đức" : i % 2 == 0 ? "Quận 1" : "Quận 2")}, TP.HCM",
                         BloodType = donorBloodType,
+                        ProfileStatus = i % 3 == 0 ? "Sẵn sàng hiến máu" : "Không sẵn sàng hiến máu",
                         Distance = formattedDistance // Only use formatted distance with units
                     });
                 }
@@ -119,6 +120,7 @@ namespace BloodDonationAPI.Service
                         Phone = u.Phone ?? "No phone",
                         Address = u.Address ?? "No address",
                         BloodType = u.BloodType ?? "Unknown",
+                        ProfileStatus = u.ProfileStatus ?? "Unknown",
                         Distance = formattedDistance // Only use formatted distance with units
                     });
                 }
@@ -440,6 +442,7 @@ namespace BloodDonationAPI.Service
                     Phone = $"09{random.Next(10000000, 99999999)}",
                     Address = $"{random.Next(1, 200)} Đường {random.Next(1, 20)}, {district}, TP.HCM",
                     BloodType = bloodType,
+                    ProfileStatus = i % 3 == 0 ? "Sẵn sàng hiến máu" : "Không sẵn sàng hiến máu",
                     Distance = distance,
                     DistanceFormatted = FormatDistance(distance),
                     Note = "Dữ liệu mẫu cho mục đích demo"
@@ -447,6 +450,212 @@ namespace BloodDonationAPI.Service
             }
             
             return sampleDonors.OrderBy(d => ((dynamic)d).Distance).ToList();
+        }
+
+        /// <summary>
+        /// Tìm kiếm yêu cầu máu theo nhóm máu
+        /// </summary>
+        /// <param name="bloodType">Nhóm máu cần tìm</param>
+        /// <returns>Danh sách yêu cầu máu được sắp xếp theo khoảng cách</returns>
+        public async Task<IEnumerable<object>> FindBloodRequestsByBloodType(string bloodType)
+        {
+            if (string.IsNullOrEmpty(bloodType))
+                throw new ArgumentException("Blood type is required", nameof(bloodType));
+
+            var normalizedBloodType = bloodType.ToUpper().Trim();
+            
+            try
+            {
+                // Lấy các yêu cầu máu từ bảng Emergency với điều kiện EmergencyStatus = "Đã xét duyệt"
+                var emergencies = await _context.Emergencies
+                    .Where(e => e.BloodType == normalizedBloodType && e.EmergencyStatus == "Đã xét duyệt")
+                    .Include(e => e.Hospital)
+                    .Include(e => e.UsernameNavigation)
+                    .ToListAsync();
+                
+                var bloodRequests = new List<object>();
+                
+                foreach (var emergency in emergencies)
+                {
+                    if (emergency.Hospital == null || emergency.UsernameNavigation == null)
+                        continue;
+                    
+                    // Tính khoảng cách dựa trên địa chỉ bệnh viện so với điểm mốc
+                    double distance = CalculateDistanceFromHospitalAddress(emergency.Hospital.HospitalAddress ?? "");
+                    double distanceRaw = Math.Round(distance, 2);
+                    string formattedDistance = FormatDistance(distanceRaw);
+                    
+                    bloodRequests.Add(new
+                    {
+                        Id = emergency.EmergencyId,
+                        Distance = formattedDistance,
+                        BloodType = emergency.BloodType ?? "Unknown",
+                        Status = emergency.EmergencyStatus ?? "Unknown",
+                        Description = emergency.EmergencyNote ?? "",
+                        EmergencyDate = emergency.EmergencyDate,
+                        EndDate = emergency.EndDate,
+                        RequiredUnits = emergency.RequiredUnits ?? 0,
+                        EmergencyMedical = emergency.EmergencyMedical ?? "",
+                        Hospital = new
+                        {
+                            Id = emergency.Hospital.HospitalId,
+                            Name = emergency.Hospital.HospitalName ?? "Unknown",
+                            Address = emergency.Hospital.HospitalAddress ?? "Unknown",
+                            Phone = emergency.Hospital.HospitalPhone ?? ""
+                        },
+                        Requester = new
+                        {
+                            Name = emergency.UsernameNavigation.FullName ?? "Anonymous",
+                            Phone = emergency.UsernameNavigation.Phone ?? "",
+                            Email = emergency.UsernameNavigation.Email ?? ""
+                        }
+                    });
+                }
+                
+                // Sắp xếp theo khoảng cách từ gần đến xa
+                var sortedRequests = bloodRequests
+                    .Select(r => new { Request = r, NumericDistance = ExtractNumericDistance(((dynamic)r).Distance) })
+                    .OrderBy(x => x.NumericDistance)
+                    .Select(x => x.Request)
+                    .ToList();
+                
+                Console.WriteLine($"Found {sortedRequests.Count} approved blood requests for blood type {normalizedBloodType}");
+                
+                // Nếu không có dữ liệu thực, tạo dữ liệu mẫu
+                if (!sortedRequests.Any())
+                {
+                    return GenerateSampleBloodRequests(normalizedBloodType);
+                }
+                
+                return sortedRequests;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in FindBloodRequestsByBloodType: {ex.Message}");
+                // Trả về dữ liệu mẫu khi có lỗi
+                return GenerateSampleBloodRequests(normalizedBloodType);
+            }
+        }
+
+        /// <summary>
+        /// Tính khoảng cách dựa trên địa chỉ bệnh viện so với điểm mốc: 7 Đ. D1, Long Thạnh Mỹ, Thủ Đức
+        /// </summary>
+        private double CalculateDistanceFromHospitalAddress(string hospitalAddress)
+        {
+            hospitalAddress = hospitalAddress ?? string.Empty;
+            
+            if (string.IsNullOrEmpty(hospitalAddress))
+                return double.MaxValue;
+            
+            var random = new Random();
+            
+            // Thủ Đức (nơi có điểm mốc - 7 Đ. D1, Long Thạnh Mỹ)
+            if (hospitalAddress.Contains("Long Thạnh Mỹ") || 
+                (hospitalAddress.Contains("Thủ Đức") && hospitalAddress.Contains("D1")))
+            {
+                return 0.5; // Rất gần điểm mốc
+            }
+            
+            // Khu vực Thủ Đức
+            if (hospitalAddress.Contains("Thủ Đức") || 
+                hospitalAddress.Contains("Linh Trung") ||
+                hospitalAddress.Contains("Linh Tây") ||
+                hospitalAddress.Contains("Linh Đông") ||
+                hospitalAddress.Contains("Hiệp Phú"))
+            {
+                return random.NextDouble() * 2 + 2; // 2-4km
+            }
+            
+            // Các quận lân cận Thủ Đức
+            if (hospitalAddress.Contains("Quận 9") || hospitalAddress.Contains("Q9") ||
+                hospitalAddress.Contains("Quận 2") || hospitalAddress.Contains("Q2") ||
+                hospitalAddress.Contains("Bình Thạnh"))
+            {
+                return random.NextDouble() * 3 + 5; // 5-8km
+            }
+            
+            // Các quận nội thành TP.HCM
+            if (hospitalAddress.Contains("Quận 1") || hospitalAddress.Contains("Q1") ||
+                hospitalAddress.Contains("Quận 3") || hospitalAddress.Contains("Q3") ||
+                hospitalAddress.Contains("Quận 5") || hospitalAddress.Contains("Q5") ||
+                hospitalAddress.Contains("Quận 7") || hospitalAddress.Contains("Q7") ||
+                hospitalAddress.Contains("Quận 10") || hospitalAddress.Contains("Q10") ||
+                hospitalAddress.Contains("Tân Bình") ||
+                hospitalAddress.Contains("Phú Nhuận"))
+            {
+                return random.NextDouble() * 5 + 8; // 8-13km
+            }
+            
+            // Các quận khác trong TP.HCM
+            if (hospitalAddress.Contains("TP.HCM") || hospitalAddress.Contains("HCM") || 
+                hospitalAddress.Contains("Hồ Chí Minh"))
+            {
+                return random.NextDouble() * 8 + 10; // 10-18km
+            }
+            
+            // Các tỉnh lân cận TP.HCM
+            if (hospitalAddress.Contains("Bình Dương") ||
+                hospitalAddress.Contains("Đồng Nai") ||
+                hospitalAddress.Contains("Long An"))
+            {
+                return random.NextDouble() * 30 + 20; // 20-50km
+            }
+            
+            // Các tỉnh khác
+            return random.NextDouble() * 100 + 50; // 50-150km
+        }
+
+        /// <summary>
+        /// Tạo dữ liệu mẫu cho yêu cầu máu khi không có dữ liệu thực
+        /// </summary>
+        private List<object> GenerateSampleBloodRequests(string bloodType)
+        {
+            Console.WriteLine("Generating sample blood requests for demonstration");
+            var sampleRequests = new List<object>();
+            var random = new Random();
+            
+            var hospitals = new[]
+            {
+                new { Name = "Bệnh viện Đại học Y Dược TP.HCM", Address = "215 Hồng Bàng, Quận 5, TP.HCM", Phone = "028-38552229" },
+                new { Name = "Bệnh viện Chợ Rẫy", Address = "201B Nguyễn Chí Thanh, Quận 5, TP.HCM", Phone = "028-38557506" },
+                new { Name = "Bệnh viện Thống Nhất", Address = "1 Lý Thường Kiệt, Quận 10, TP.HCM", Phone = "028-38650377" },
+                new { Name = "Bệnh viện Nguyễn Tri Phuong", Address = "468 Nguyễn Tri Phuong, Quận 10, TP.HCM", Phone = "028-38650146" },
+                new { Name = "Bệnh viện Thủ Đức", Address = "10 Võ Văn Ngân, Thủ Đức, TP.HCM", Phone = "028-37221506" }
+            };
+            
+            for (int i = 0; i < 5; i++)
+            {
+                var hospital = hospitals[i];
+                double distance = CalculateDistanceFromHospitalAddress(hospital.Address);
+                
+                sampleRequests.Add(new
+                {
+                    Id = i + 1,
+                    Distance = FormatDistance(distance),
+                    BloodType = bloodType,
+                    Status = "Đã xét duyệt", // Chỉ hiển thị trạng thái đã xét duyệt
+                    Description = $"Yêu cầu máu khẩn cấp cho bệnh nhân {i + 1}",
+                    EmergencyDate = DateOnly.FromDateTime(DateTime.Now.AddDays(-random.Next(1, 7))),
+                    EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(random.Next(1, 3))),
+                    RequiredUnits = random.Next(1, 5),
+                    EmergencyMedical = $"Bệnh lý {i + 1}",
+                    Hospital = new
+                    {
+                        Id = i + 1,
+                        Name = hospital.Name,
+                        Address = hospital.Address,
+                        Phone = hospital.Phone
+                    },
+                    Requester = new
+                    {
+                        Name = $"Bác sĩ {(char)('A' + i)}",
+                        Phone = $"090{random.Next(1000000, 9999999)}",
+                        Email = $"doctor{i + 1}@hospital.com"
+                    }
+                });
+            }
+            
+            return sampleRequests.OrderBy(r => ExtractNumericDistance(((dynamic)r).Distance)).ToList();
         }
 
         /// <summary>

@@ -11,11 +11,13 @@ namespace BloodDonationAPI.Controllers
     public class EmergencyController : ControllerBase
     {
         private readonly IEmergencyService _emergencyService;
+        private readonly INotificationService _notificationService;
         private readonly ILogger<EmergencyController> _logger;
 
-        public EmergencyController(IEmergencyService emergencyService, ILogger<EmergencyController> logger)
+        public EmergencyController(IEmergencyService emergencyService, INotificationService notificationService, ILogger<EmergencyController> logger)
         {
             _emergencyService = emergencyService;
+            _notificationService = notificationService;
             _logger = logger;
         }
         /// <summary>
@@ -53,10 +55,50 @@ namespace BloodDonationAPI.Controllers
                     return BadRequest(new { message = "EndDate cannot be in the past." });
 
                 var result = await _emergencyService.RegisterEmergency(username, role, dto);
-                if (result == "Emergency registration successful.")
-                    return Ok(new { message = result });
+                if (result.IsSuccess)
+                {
+                    // Nếu là Staff hoặc Admin, tự động tạo notification
+                    if (role == "Staff" || role == "Admin")
+                    {
+                        try
+                        {
+                            var notificationResult = await _notificationService.CreateNotificationForEmergency(result.EmergencyId.Value);
+                            if (notificationResult == "Notification created successfully.")
+                            {
+                                return Ok(new { 
+                                    message = result.Message, 
+                                    emergencyId = result.EmergencyId,
+                                    notificationMessage = "Notification created automatically for staff/admin emergency." 
+                                });
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Failed to create notification automatically: {NotificationResult}", notificationResult);
+                                return Ok(new { 
+                                    message = result.Message, 
+                                    emergencyId = result.EmergencyId,
+                                    notificationMessage = "Emergency created but notification creation failed: " + notificationResult 
+                                });
+                            }
+                        }
+                        catch (Exception notificationEx)
+                        {
+                            _logger.LogError(notificationEx, "Error creating notification automatically for staff/admin emergency");
+                            return Ok(new { 
+                                message = result.Message, 
+                                emergencyId = result.EmergencyId,
+                                notificationMessage = "Emergency created but notification creation failed due to an error." 
+                            });
+                        }
+                    }
+                    
+                    return Ok(new { 
+                        message = result.Message, 
+                        emergencyId = result.EmergencyId 
+                    });
+                }
 
-                return BadRequest(new { message = result });
+                return BadRequest(new { message = result.Message });
             }
             catch (Exception ex)
             {
@@ -66,9 +108,11 @@ namespace BloodDonationAPI.Controllers
         }
         
         /// <summary>
-        /// Dùng để hiển thị danh sách các đơn khẩn cấp 
+        /// Dùng để hiển thị tất cả danh sách các đơn khẩn cấp chỉ dành cho staff và admin
         /// </summary>
-        
+        ///<remarks>
+        /// Nếu staff và admin tạo, thông báo sẽ được tự động tạo
+        ///</remarks>
         /// <param name="dto"></param>
         /// <returns></returns>
         [HttpGet("GetEmergencies")]
@@ -105,6 +149,7 @@ namespace BloodDonationAPI.Controllers
         /// </summary>
         /// <remarks>
         /// Cần nhập đúng chuỗi "Đã xét duyệt" or "Từ chối"
+        /// Sau khi xác nhận "Đã xét duyệt" thông báo sẽ tự động tạo
         /// </remarks>
         /// <param name="dto"></param>
         /// <returns></returns>
@@ -119,7 +164,41 @@ namespace BloodDonationAPI.Controllers
 
                 var result = await _emergencyService.UpdateEmergencyStatus(emergencyId, status);
                 if (result == "Emergency status updated successfully.")
+                {
+                    // Nếu status được cập nhật thành "Đã xét duyệt", tự động tạo notification
+                    if (status == "Đã xét duyệt")
+                    {
+                        try
+                        {
+                            var notificationResult = await _notificationService.CreateNotificationForEmergency(emergencyId);
+                            if (notificationResult == "Notification created successfully.")
+                            {
+                                return Ok(new { 
+                                    message = result, 
+                                    notificationMessage = "Notification created automatically for approved emergency." 
+                                });
+                            }
+                            else
+                            {
+                                _logger.LogWarning("Failed to create notification automatically: {NotificationResult}", notificationResult);
+                                return Ok(new { 
+                                    message = result, 
+                                    notificationMessage = "Emergency status updated but notification creation failed: " + notificationResult 
+                                });
+                            }
+                        }
+                        catch (Exception notificationEx)
+                        {
+                            _logger.LogError(notificationEx, "Error creating notification automatically for approved emergency");
+                            return Ok(new { 
+                                message = result, 
+                                notificationMessage = "Emergency status updated but notification creation failed due to an error." 
+                            });
+                        }
+                    }
+                    
                     return Ok(new { message = result });
+                }
 
                 return BadRequest(new { message = result });
             }

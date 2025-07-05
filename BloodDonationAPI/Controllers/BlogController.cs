@@ -62,7 +62,7 @@ namespace BloodDonationAPI.Controllers
         /// Tạo blog mới
         /// </summary>
         [HttpPost("CreateBlog")]
-        [Authorize(Roles = "Staff, Admin")]
+        [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> CreateBlog([FromBody] CreateBlogDto dto)
         {
             try
@@ -88,16 +88,17 @@ namespace BloodDonationAPI.Controllers
         /// Cập nhật blog theo ID
         /// </summary>
         [HttpPut("UpdateBlog/{id}")]
-        [Authorize(Roles = "Staff, Admin")]
+        [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> UpdateBlog(int id, [FromBody] UpdateBlogDto dto)
         {
             try
             {
                 var username = User.FindFirst(ClaimTypes.Name)?.Value;
-                if (username == null)
+                var role = User.FindFirst(ClaimTypes.Role)?.Value;
+                if (username == null || role == null)
                     return Unauthorized(new { message = "User not authenticated." });
 
-                var result = await _blogService.UpdateBlog(id, username, dto);
+                var result = await _blogService.UpdateBlog(id, username, role, dto);
                 if (result == "Blog updated successfully.")
                     return Ok(new { message = result });
 
@@ -114,16 +115,17 @@ namespace BloodDonationAPI.Controllers
         /// Xóa blog theo ID
         /// </summary>
         [HttpDelete("DeleteBlog/{id}")]
-        [Authorize(Roles = "Staff, Admin")]
+        [Authorize(Roles = "Staff,Admin")]
         public async Task<IActionResult> DeleteBlog(int id)
         {
             try
             {
                 var username = User.FindFirst(ClaimTypes.Name)?.Value;
-                if (username == null)
+                var role = User.FindFirst(ClaimTypes.Role)?.Value;
+                if (username == null || role == null)
                     return Unauthorized(new { message = "User not authenticated." });
 
-                var result = await _blogService.DeleteBlog(id, username);
+                var result = await _blogService.DeleteBlog(id, username, role);
                 if (result == "Blog deleted successfully.")
                     return Ok(new { message = result });
 

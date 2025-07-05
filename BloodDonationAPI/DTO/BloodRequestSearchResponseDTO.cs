@@ -2,7 +2,7 @@
 
 namespace BloodDonationAPI.DTO
 {
-    public class BloodRequestSearchResponse
+    public class BloodRequestSearchResponseDTO
     {
         public List<BloodRequestResult> Requests { get; set; } = new List<BloodRequestResult>();
     }    public class BloodRequestResult
