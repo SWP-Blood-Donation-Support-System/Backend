@@ -99,9 +99,18 @@ CREATE TABLE AppointmentRecord (
 -- 7. Bảng Certificate: Giấy chứng nhận cho người đã hiến máu
 ----------------------------------------------------------
 CREATE TABLE Certificate (
-  AppointmentId INT PRIMARY KEY FOREIGN KEY REFERENCES AppointmentRecord(AppointmentId),
-  CertificateCode NVARCHAR(50),
-  IssueDate DATE
+    CertificateId INT IDENTITY(1,1) PRIMARY KEY,
+    AppointmentId INT NOT NULL,
+    FullName NVARCHAR(100) NOT NULL,
+    DateOfBirth DATE NOT NULL,
+    Address NVARCHAR(255) NOT NULL,
+    HospitalName NVARCHAR(255) NOT NULL,
+    BloodAmount INT NOT NULL,
+    DonationDate DATE NOT NULL,
+    CertificateCode NVARCHAR(50) NOT NULL,
+    IssueDate DATE NOT NULL,
+    CreatedAt DATETIME NOT NULL DEFAULT GETDATE(),
+    CONSTRAINT FK_Certificate_Appointment FOREIGN KEY (AppointmentId) REFERENCES AppointmentRecord(AppointmentId)
 );
 
 ----------------------------------------------------------
