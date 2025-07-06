@@ -15,5 +15,6 @@ namespace BloodDonationAPI.Service
 
         Task<RegisterAppointmentResultDto> RegisterAppointmentV2(string userName, RegisterAppointmentDtoV2 Dto);
 
+        Task<RegisterAppointmentResultDto> RegisterAppointmentV3(string userName, RegisterAppointmentDtoV2 Dto);
     }
 }

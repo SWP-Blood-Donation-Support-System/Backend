@@ -148,6 +148,26 @@ namespace BloodDonationAPI.Service
             }
             // Lưu tất cả các thay đổi vào cơ sở dữ liệu
             await _context.SaveChangesAsync();
+            //tao chung nhan sau khi hiến máu
+            string hospitalName = "Viện Huyết học - Truyền máu TW"; // Giả sử tên bệnh viện là cố định, bạn có thể thay đổi theo logic của bạn
+            string certificateCode = $"CTF-{DateTime.Today:yyyyMMdd}-{user.Username.ToUpper()}"; // Tạo mã chứng nhận theo định dạng mong muốn
+
+            //them vao bang certificatr
+            var certificate = new Certificate
+            {
+                AppointmentId = donateDto.AppointmentId,
+                FullName = user.FullName,
+                DateOfBirth = user.DateOfBirth ?? DateOnly.FromDateTime(new DateTime(2000, 1, 1)),
+                Address = user.Address ,
+                HospitalName = hospitalName,
+                BloodAmount = donateDto.Volume,
+                DonationDate = DateOnly.FromDateTime(DateTime.Now),
+                CertificateCode = certificateCode,
+                IssueDate = DateOnly.FromDateTime(DateTime.Now),
+            };
+            _context.Certificates.Add(certificate);
+            await _context.SaveChangesAsync();
+
             return true;
         }
 
@@ -214,6 +234,61 @@ namespace BloodDonationAPI.Service
                 deferral.EndDate = null; // Không có ngày kết thúc nếu là vĩnh viễn hoặc không có ngày tối thiểu
             }
             _context.DonorDeferrals.Add(deferral);
+            await _context.SaveChangesAsync();
+            return true;
+
+
+        }
+
+        public async Task<bool> DestroyBloodDonationAsync(DestroyBloodDonationDto dto)
+        {
+            var bloodDetail = await _context.BloodDetails
+                .Include(b => b.Appointment)
+                .FirstOrDefaultAsync(b => b.BloodDetailId == dto.BloodDetailID);
+            // kiem tra xem co hop le khong
+            if (bloodDetail == null)
+                return false;
+            // cap nhat vap bloodDetail
+            bloodDetail.BloodDetailStatus = "Tiêu hủy";
+            bloodDetail.Note = dto.CustomNote;
+            _context.BloodDetails.Update(bloodDetail);
+            
+            //kiem tra xem co li do nay hay khong va user name nay co ton tai hay ko
+            if (!string.IsNullOrEmpty(dto.ReasonCode) && bloodDetail.Appointment?.Username != null) 
+            {
+                var reasonCode = await _context.DeferralReasons
+                    .FirstOrDefaultAsync(r => r.ReasonCode == dto.ReasonCode);
+                // kiem tra xem li do nay da co hay chua 
+                if (reasonCode != null) 
+                {
+                    bool alreadyExists = await _context.DonorDeferrals
+                        .AnyAsync(d => d.Username == bloodDetail.Appointment.Username &&
+                                       d.ReasonCode == dto.ReasonCode &&
+                                       d.IsPermanent == true);
+                    if (!alreadyExists)
+                    {
+                        var deferral = new DonorDeferral
+                        {
+                            Username = bloodDetail.Appointment.Username,
+                            ReasonCode = reasonCode.ReasonCode,
+                            StartDate = DateOnly.FromDateTime(DateTime.Now),
+                            IsPermanent = reasonCode.IsPermanent,
+                            Note = dto.CustomNote,
+                        };
+                        if (!reasonCode.IsPermanent && reasonCode.MinDays.HasValue)
+                        {
+                            deferral.EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(reasonCode.MinDays.Value));
+                        }
+                        else
+                        {
+                            deferral.EndDate = null; // Không có ngày kết thúc nếu là vĩnh viễn hoặc không có ngày tối thiểu
+                        }
+                        _context.DonorDeferrals.Add(deferral);
+                    }
+
+                }
+
+            }
             await _context.SaveChangesAsync();
             return true;
 

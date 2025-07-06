@@ -23,7 +23,7 @@ public partial class AppointmentRecord
 
     public virtual ICollection<BloodDetail> BloodDetails { get; set; } = new List<BloodDetail>();
 
-    public virtual Certificate? Certificate { get; set; }
+    public virtual ICollection<Certificate> Certificates { get; set; } = new List<Certificate>();
 
     public virtual Event? Event { get; set; }
 

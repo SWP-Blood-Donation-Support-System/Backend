@@ -133,5 +133,32 @@ namespace BloodDonationAPI.Controllers
             }
 
         }
+        /// <summary>
+        /// Api nay la bang nap cap cua dang ki lich hen V2 
+        /// 
+        /// </summary>
+        /// <remarks>
+        /// Api nay co the kiem tra xem so luong nguoi dang ki va nhom mau xem co phu hop yeu cau hay khong
+        /// 
+        /// (neu trong database de null thi nhom mau nao cung co the hien mau duoc)
+        /// </remarks>
+        /// <param name="dto"></param>
+        /// <returns></returns>
+        [HttpPost("RegisterAppointmentV3")]
+        [Authorize(Roles = "User")]
+        public async Task<IActionResult> RegisterAppointmentV3([FromBody] RegisterAppointmentDtoV2 dto)
+        {
+            var userName = User.FindFirst(ClaimTypes.Name)?.Value;
+            if (userName == null) return Unauthorized(new { message = "User not authenticated." });
+            var result = await _appointmentService.RegisterAppointmentV3(userName, dto);
+            if (result.IsSuccess)
+            {
+                return Ok(new { message = result.Message, appointmentId = result.AppointmentId });
+            }
+            else
+            {
+                return BadRequest(new { message = result.Message });
+            }
+        }
     }
 }
