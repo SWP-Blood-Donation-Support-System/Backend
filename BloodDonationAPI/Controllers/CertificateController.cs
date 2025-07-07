@@ -26,5 +26,19 @@ namespace BloodDonationAPI.Controllers
             }
             return Ok(certificate);
         }
+
+        [HttpGet("{appointmentId}/pdf")]
+        public async Task<IActionResult> GetCertificatePdf(int appointmentId)
+        {
+            var certificate = await _certificateService.GetCertificateAsync(appointmentId);
+            if (certificate == null)
+            {
+                return NotFound(new { Message = "Certificate not found." });
+            }
+            var pdfBytes = _certificateService.GenerateCertificatePdf(certificate);
+           var fileName = $"Certificate_{certificate.FullName}_{DateTime.Now:yyyyMMddHHmmss}.pdf";
+
+            return File(pdfBytes, "application/pdf", fileName);
+        }
     }
 }
