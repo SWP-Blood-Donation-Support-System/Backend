@@ -333,13 +333,7 @@ VALUES
 ('AB-', 4, N'Còn');
 
 --4
-INSERT INTO Certificate (AppointmentId, CertificateCode, IssueDate)
-VALUES 
-(1, N'CERT-2023-0001', '2025-01-15'),
-(2, N'CERT-2023-0002', '2025-02-20'),
-(3, N'CERT-2023-0003', '2025-05-10'),
-(4, N'CERT-2023-0004', '2025-06-25'),
-(5, N'CERT-2023-0005', '2025-08-12');
+
 
 --5
 INSERT INTO BloodDetail (BloodType, Volume, AppointmentId, HospitalId, BloodDetailDate, BloodDetailStatus, Note)
