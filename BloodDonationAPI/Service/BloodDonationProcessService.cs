@@ -246,7 +246,7 @@ namespace BloodDonationAPI.Service
                 .Include(b => b.Appointment)
                 .FirstOrDefaultAsync(b => b.BloodDetailId == dto.BloodDetailID);
             // kiem tra xem co hop le khong
-            if (bloodDetail == null)
+            if (bloodDetail == null || bloodDetail.BloodDetailStatus == "Tiêu hủy")
                 return false;
             // cap nhat vap bloodDetail
             bloodDetail.BloodDetailStatus = "Tiêu hủy";
