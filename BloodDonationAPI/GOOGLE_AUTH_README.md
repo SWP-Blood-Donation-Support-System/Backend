@@ -15,7 +15,7 @@
 ```json
 {
   "GoogleAuth": {
-    "ClientId": "YOUR_GOOGLE_CLIENT_ID_HERE"
+    "ClientId": "371304679772-2hjjiqu8ek5hnj5feaf93ek80pbbg3do.apps.googleusercontent.com"
   }
 }
 ```
@@ -722,10 +722,13 @@ export const useAuth = () => {
 
 #### 📝 **Flow hoạt động:**
 1. **User click Google Sign-In** → Google hiển thị popup đăng nhập
-2. **User đăng nhập thành công** → Google trả về ID Token
-3. **Frontend gửi token đến backend** → Backend verify với Google API  
-4. **Backend trả về JWT token** → Frontend lưu vào localStorage
-5. **Redirect theo trạng thái user** → New user → Complete profile, Existing user → Dashboard
+2. **User nhập tài khoản Google** → Email và mật khẩu Google account
+3. **User cấp quyền cho app** → Click "Cho phép" để app truy cập thông tin
+4. **Google trả về ID Token** → Token chứa thông tin user đã verify
+5. **Frontend gửi token đến backend** → Backend verify với Google API
+6. **Backend tạo/tìm user** → Tạo user mới hoặc tìm user hiện có
+7. **Backend trả về JWT token** → Frontend lưu vào localStorage
+8. **Redirect theo trạng thái user** → New user → Complete profile, Existing user → Dashboard
 
 #### 🔐 **Security Notes:**
 - ✅ **Luôn verify token ở backend**, không tin tưởng frontend
@@ -1325,278 +1328,243 @@ async function testAPI() {
 }
 ```
 
-## 🔑 **Google Token Workflow - Chi tiết hoạt động**
+## 🔐 **Quy trình đăng nhập Google chi tiết**
 
-### Bước 1: User ấn button "Login with Google"
+### 🎯 **Flow đăng nhập Google hoàn chỉnh:**
+
+#### **Bước 1: User click "Đăng nhập với Google"**
 ```javascript
-// Khi user ấn button này:
+// Khi user click button này:
 <button onclick="googleSignIn()">🔐 Đăng nhập với Google</button>
-
-// Hoặc Google tự động render button:
-<div class="g_id_signin" data-callback="handleCredentialResponse"></div>
 ```
 
-### Bước 2: Google hiển thị popup đăng nhập
-```javascript
-function googleSignIn() {
-    // Gọi Google API để hiển thị popup
-    window.google.accounts.id.prompt();
-    
-    // Google sẽ mở popup window cho user đăng nhập
-    // User nhập email/password hoặc chọn account
-}
+#### **Bước 2: Google hiển thị popup/redirect đăng nhập**
+- Google mở popup window hoặc redirect đến trang đăng nhập Google
+- User thấy giao diện đăng nhập chính thức của Google
+
+#### **Bước 3: User nhập thông tin đăng nhập Google**
+```
+┌─────────────────────────────────────┐
+│        🔐 Đăng nhập Google          │
+├─────────────────────────────────────┤
+│ Email: user@gmail.com               │
+│ Password: ************              │
+│                                     │
+│ [ ] Ghi nhớ tôi                     │
+│                                     │
+│        [Tiếp theo]                  │
+└─────────────────────────────────────┘
 ```
 
-### Bước 3: Google trả về ID Token
+**User phải nhập thông tin Google Account của họ:**
+- ✅ **Email Google** (ví dụ: `user@gmail.com`) - Tài khoản Gmail hiện có
+- ✅ **Mật khẩu Google** (mật khẩu tài khoản Google của họ) - Để xác thực danh tính
+- ✅ **2FA nếu có** (SMS, Authenticator app, v.v.) - Bảo mật bổ sung
+
+💡 **Lưu ý quan trọng**: User phải có tài khoản Google/Gmail để đăng nhập. Nếu chưa có, họ cần tạo tài khoản Google trước.
+
+#### **Bước 4: Google yêu cầu cấp quyền**
+```
+┌─────────────────────────────────────┐
+│    🩸 Blood Donation System         │
+│    muốn truy cập tài khoản Google   │
+├─────────────────────────────────────┤
+│ Ứng dụng này sẽ có thể:             │
+│ ✓ Xem địa chỉ email                 │
+│ ✓ Xem thông tin cá nhân cơ bản      │
+│                                     │
+│ Tài khoản: user@gmail.com           │
+│                                     │
+│   [Hủy]        [Cho phép]          │
+└─────────────────────────────────────┘
+```
+
+#### **Bước 5: Google trả về token cho app**
 ```javascript
-// Sau khi user đăng nhập thành công, Google gọi callback function:
+// Sau khi user click "Cho phép", Google gọi callback:
 function handleCredentialResponse(response) {
-    // response.credential chính là googleToken (JWT format)
-    const googleToken = response.credential;
+    const googleToken = response.credential; // JWT token từ Google
     
-    console.log("Google Token:", googleToken);
-    // Output: "eyJhbGciOiJSUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJhY2NvdW50cy5nb29nbGUuY29tIiwiYXVkIjoieW91ci1jbGllbnQtaWQiLCJzdWIiOiIxMjM0NTY3ODkwIiwiZW1haWwiOiJ1c2VyQGdtYWlsLmNvbSIsImVtYWlsX3ZlcmlmaWVkIjp0cnVlLCJuYW1lIjoiTmd1ecSbbiDEkMOuw7QgQSIsInBpY3R1cmUiOiJodHRwczovL2xoMy5nb29nbGV1c2VyY29udGVudC5jb20vYS9BQ2c4b2NMdXNlcl9waWMiLCJpYXQiOjE2MjM0NTY3ODksImV4cCI6MTYyMzQ2MDM4OX0.signature"
-}
-```
-
-### Bước 4: Parse token để lấy thông tin user
-```javascript
-function handleCredentialResponse(response) {
-    const googleToken = response.credential;
+    // Token chứa thông tin user đã được Google verify:
+    const payload = JSON.parse(atob(googleToken.split('.')[1]));
+    console.log("Thông tin từ Google:", {
+        email: payload.email,           // user@gmail.com
+        name: payload.name,             // "Nguyễn Văn A"
+        picture: payload.picture,       // URL avatar
+        email_verified: payload.email_verified // true
+    });
     
-    // Parse JWT token để lấy payload (chỉ để hiển thị, không verify)
-    try {
-        const base64Url = googleToken.split('.')[1]; // Lấy phần payload
-        const base64 = base64Url.replace(/-/g, '+').replace(/_/g, '/');
-        const jsonPayload = decodeURIComponent(atob(base64).split('').map(function(c) {
-            return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
-        }).join(''));
-        
-        const payload = JSON.parse(jsonPayload);
-        console.log("User Info từ Google:", payload);
-        
-        // Thông tin có trong payload:
-        // {
-        //   "iss": "accounts.google.com",
-        //   "aud": "your-client-id",
-        //   "sub": "1234567890",
-        //   "email": "user@gmail.com",
-        //   "email_verified": true,
-        //   "name": "Nguyễn Văn A",
-        //   "picture": "https://lh3.googleusercontent.com/a/...",
-        //   "given_name": "Văn A",
-        //   "family_name": "Nguyễn",
-        //   "locale": "vi",
-        //   "iat": 1623456789,
-        //   "exp": 1623460389
-        // }
-        
-        // Gửi token và email đến backend
-        loginWithGoogle(googleToken, payload.email);
-        
-    } catch (error) {
-        console.error("Lỗi parse token:", error);
-    }
+    // Gửi token đến backend để xử lý
+    loginWithGoogle(googleToken, payload.email);
 }
 ```
 
-### Bước 5: Gửi token đến backend
-```javascript
-async function loginWithGoogle(googleToken, email) {
-    try {
-        const response = await fetch('/api/User/google-login', {
-            method: 'POST',
-            headers: {
-                'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-                email: email,           // Email từ Google
-                googleToken: googleToken // Token từ Google (để verify)
-            })
-        });
-        
-        const data = await response.json();
-        
-        if (response.ok) {
-            // Lưu JWT token từ backend
-            localStorage.setItem('authToken', data.token);
-            localStorage.setItem('userInfo', JSON.stringify(data.user));
-            
-            // Redirect user
-            if (data.isNewUser) {
-                window.location.href = '/complete-profile';
-            } else {
-                window.location.href = '/dashboard';
-            }
-        }
-    } catch (error) {
-        console.error("Login error:", error);
-    }
-}
-```
-
-### Bước 6: Backend verify token
+#### **Bước 6: Backend xử lý token**
 ```csharp
-// Backend C# code:
 [HttpPost("google-login")]
 public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto dto)
 {
-    try 
-    {
-        // Verify Google token với Google API
-        var payload = await GoogleJsonWebSignature.ValidateAsync(dto.GoogleToken, new GoogleJsonWebSignature.ValidationSettings()
-        {
-            Audience = new[] { _configuration["GoogleAuth:ClientId"] }
-        });
-        
-        // payload.Email - email đã verify bởi Google
-        // payload.Name - tên người dùng
-        // payload.Picture - avatar URL
-        
-        // Tìm hoặc tạo user trong database
-        var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == payload.Email);
-        
-        if (user == null) {
-            // Tạo user mới
-            user = new User {
-                Email = payload.Email,
-                FullName = payload.Name,
-                Username = GenerateUsername(payload.Email),
-                ProfileStatus = "Chưa hoàn thành"
-            };
-            _context.Users.Add(user);
-            await _context.SaveChangesAsync();
-        }
-        
-        // Tạo JWT token cho user
-        var jwtToken = GenerateJwtToken(user);
-        
-        return Ok(new {
-            token = jwtToken,
-            isNewUser = user.ProfileStatus == "Chưa hoàn thành",
-            user = user
-        });
-    }
-    catch (Exception ex)
-    {
-        return BadRequest(new { message = "Invalid Google token" });
-    }
-}
-```
-
-### 🔒 **Security Flow:**
-
-1. **Frontend**: User ấn button → Google popup → Nhận googleToken
-2. **Frontend**: Gửi googleToken + email đến backend
-3. **Backend**: Verify googleToken với Google API
-4. **Backend**: Tạo/tìm user trong database
-5. **Backend**: Tạo JWT token cho user
-6. **Frontend**: Nhận JWT token và lưu vào localStorage
-
-### 🎯 **Key Points:**
-
-#### ✅ **Đúng:**
-- Google token chỉ dùng để verify với Google API
-- Backend tạo JWT token riêng cho hệ thống
-- Frontend chỉ parse token để lấy thông tin hiển thị
-- Luôn verify token ở backend trước khi tin tưởng
-
-#### ❌ **Sai:**
-- Không được dùng Google token làm auth token cho hệ thống
-- Không được tin tưởng thông tin từ frontend mà không verify
-- Không được skip việc verify token với Google API
-
-### 💡 **Ví dụ thực tế:**
-```javascript
-// ✅ ĐÚNG - Complete flow:
-function handleCredentialResponse(response) {
-    const googleToken = response.credential;
+    // 1. Verify token với Google API
+    var payload = await GoogleJsonWebSignature.ValidateAsync(dto.GoogleToken);
     
-    // Parse để lấy email (chỉ để gửi kèm request)
-    const payload = JSON.parse(atob(googleToken.split('.')[1]));
+    // 2. Kiểm tra user đã tồn tại chưa
+    var user = await _context.Users.FirstOrDefaultAsync(u => u.Email == payload.Email);
     
-    // Gửi cả token và email đến backend
-    fetch('/api/User/google-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-            googleToken: googleToken,  // Backend sẽ verify cái này
-            email: payload.email       // Chỉ để tiện, backend vẫn lấy từ verified token
-        })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.token) {
-            // Lưu JWT token từ backend (không phải Google token)
-            localStorage.setItem('authToken', data.token);
-            
-            // Redirect dựa trên trạng thái user
-            if (data.isNewUser) {
-                window.location.href = '/complete-profile';
-            } else {
-                window.location.href = '/dashboard';
-            }
-        }
+    if (user == null) {
+        // 3. Tạo user mới nếu chưa có
+        user = new User {
+            Email = payload.Email,
+            FullName = payload.Name,
+            Username = GenerateUsername(payload.Email),
+            Password = GenerateRandomPassword(), // Random password
+            ProfileStatus = "Chưa hoàn thành"
+        };
+        
+        _context.Users.Add(user);
+        await _context.SaveChangesAsync();
+    }
+    
+    // 4. Tạo JWT token cho hệ thống
+    var jwtToken = GenerateJwtToken(user);
+    
+    return Ok(new {
+        token = jwtToken,
+        isNewUser = user.ProfileStatus == "Chưa hoàn thành",
+        user = user
     });
 }
-
-// ❌ SAI - Không được làm thế này:
-function handleCredentialResponse(response) {
-    const googleToken = response.credential;
-    
-    // SAI: Dùng Google token làm auth token
-    localStorage.setItem('authToken', googleToken);
-    
-    // SAI: Tin tưởng thông tin mà không verify
-    const payload = JSON.parse(atob(googleToken.split('.')[1]));
-    localStorage.setItem('userInfo', JSON.stringify(payload));
-    
-    window.location.href = '/dashboard';
-}
 ```
 
-### 🔧 **Debug Google Token:**
-```javascript
-// Function để debug Google token:
-function debugGoogleToken(token) {
-    try {
-        const parts = token.split('.');
-        const header = JSON.parse(atob(parts[0]));
-        const payload = JSON.parse(atob(parts[1]));
-        
-        console.log("🔍 Google Token Debug:");
-        console.log("Header:", header);
-        console.log("Payload:", payload);
-        console.log("Expires at:", new Date(payload.exp * 1000));
-        console.log("Issued at:", new Date(payload.iat * 1000));
-        console.log("Valid for:", payload.aud);
-        
-        return { header, payload };
-    } catch (error) {
-        console.error("❌ Invalid token format:", error);
-        return null;
-    }
-}
+### 🎯 **Kịch bản cụ thể:**
 
-// Sử dụng:
-function handleCredentialResponse(response) {
-    const googleToken = response.credential;
+#### **Scenario 1: User lần đầu đăng nhập (Tạo tài khoản mới)**
+```
+1. User: Click "Đăng nhập với Google"
+2. Google: Hiển thị popup đăng nhập Google
+3. User: Nhập email Google "john@gmail.com" 
+4. User: Nhập mật khẩu tài khoản Google
+5. User: Hoàn thành 2FA (nếu có)
+6. Google: Yêu cầu cấp quyền cho Blood Donation App
+7. User: Click "Cho phép" để app truy cập thông tin cơ bản
+8. Google: Trả về token chứa thông tin John đã verify
+9. Backend: Không tìm thấy user với email "john@gmail.com"
+10. Backend: TỰ ĐỘNG tạo tài khoản mới với:
+    - Email: "john@gmail.com" (từ Google)
+    - FullName: "John Doe" (từ Google)
+    - Username: "john_doe_123" (tự tạo)
+    - Password: "random_generated_password" (tự tạo)
+    - ProfileStatus: "Chưa hoàn thành"
+11. Backend: Trả về JWT token và isNewUser: true
+12. Frontend: Redirect đến trang hoàn thiện thông tin
+```
+
+#### **Scenario 2: User đã có tài khoản (Đăng nhập lại)**
+```
+1. User: Click "Đăng nhập với Google" 
+2. Google: Hiển thị popup (có thể auto-login nếu đã đăng nhập)
+3. User: Chọn account hoặc nhập lại password Google
+4. Google: Trả về token
+5. Backend: Tìm thấy user với email này trong database
+6. Backend: Trả về JWT token và isNewUser: false
+7. Frontend: Redirect đến dashboard
+```
+
+### 🔒 **Bảo mật và lưu ý:**
+
+#### **Về mật khẩu:**
+- ✅ **User chỉ nhập mật khẩu Google** (không phải mật khẩu của app)
+- ✅ **Backend tự tạo random password** cho user trong database
+- ✅ **User không bao giờ biết password này** - chỉ đăng nhập qua Google
+- ✅ **Không thể đăng nhập trực tiếp** với username/password
+
+#### **Về quyền riêng tư:**
+- ✅ **Google chỉ chia sẻ thông tin cơ bản** (email, tên, avatar)
+- ✅ **User có thể revoke quyền** bất kỳ lúc nào
+- ✅ **Không lưu mật khẩu Google** trong hệ thống
+
+### 🎯 **UI/UX Flow:**
+
+#### **Giao diện đăng nhập:**
+```html
+<!-- Trang đăng nhập của app -->
+<div class="login-container">
+    <h2>🩸 Blood Donation System</h2>
+    <p>Đăng nhập để tham gia hiến máu cứu người</p>
     
-    // Debug token
-    const tokenInfo = debugGoogleToken(googleToken);
-    if (!tokenInfo) {
-        console.error("Invalid Google token");
-        return;
-    }
+    <!-- Google Sign-In Button -->
+    <button onclick="googleSignIn()" class="google-btn">
+        <img src="google-icon.png" alt="Google">
+        Đăng nhập với Google
+    </button>
     
-    // Kiểm tra token chưa expire
-    const now = Date.now() / 1000;
-    if (tokenInfo.payload.exp < now) {
-        console.error("Token đã hết hạn");
-        return;
-    }
-    
-    // Gửi đến backend
-    loginWithGoogle(googleToken, tokenInfo.payload.email);
-}
+    <p class="note">
+        Bằng cách đăng nhập, bạn đồng ý với điều khoản sử dụng
+    </p>
+</div>
+```
+
+#### **Sau khi đăng nhập:**
+```javascript
+// Nếu user mới (isNewUser: true):
+localStorage.setItem('authToken', data.token);
+showMessage('Chào mừng! Vui lòng hoàn thiện thông tin để bắt đầu.');
+setTimeout(() => {
+    window.location.href = '/complete-profile';
+}, 2000);
+
+// Nếu user cũ (isNewUser: false):
+localStorage.setItem('authToken', data.token);
+showMessage('Chào mừng bạn trở lại!');
+setTimeout(() => {
+    window.location.href = '/dashboard';
+}, 2000);
+```
+
+### 🚨 **Lưu ý quan trọng:**
+
+#### **User cần hiểu:**
+1. **Phải có tài khoản Google/Gmail** - Không có tài khoản Google thì không thể đăng nhập
+2. **Nhập email và mật khẩu Google** - Đăng nhập bằng thông tin Google hiện có
+3. **App tự động tạo tài khoản** - Không cần đăng ký riêng cho Blood Donation System
+4. **Không tạo mật khẩu mới** - App tự tạo password random trong database
+5. **Thông tin cơ bản từ Google** - Email, tên đã có sẵn
+6. **Cần hoàn thiện thông tin** - SĐT, địa chỉ, nhóm máu cần nhập thêm
+
+#### **Bảo mật:**
+- ✅ **Chỉ Google xử lý password** - App không bao giờ thấy
+- ✅ **Token có thời hạn** - Tự động hết hiệu lực
+- ✅ **Có thể revoke quyền** từ Google Account Settings
+- ✅ **HTTPS required** - Không hoạt động trên HTTP
+
+### 📱 **Hướng dẫn cho User:**
+
+```markdown
+## Cách đăng nhập và tạo tài khoản:
+
+### Bước 1: Chuẩn bị
+- ✅ Đảm bảo bạn có tài khoản Google/Gmail (ví dụ: yourname@gmail.com)
+- ✅ Nhớ mật khẩu tài khoản Google của bạn
+- ✅ Chuẩn bị 2FA nếu bạn có bật (Authenticator app, SMS)
+
+### Bước 2: Đăng nhập
+1. **Click "Đăng nhập với Google"** trên trang Blood Donation
+2. **Nhập email Gmail** của bạn (ví dụ: yourname@gmail.com)
+3. **Nhập mật khẩu Gmail** (mật khẩu tài khoản Google)
+4. **Hoàn thành 2FA** nếu bạn có bật
+5. **Click "Cho phép"** để cấp quyền cho app truy cập thông tin cơ bản
+
+### Bước 3: Hoàn thiện (chỉ lần đầu)
+6. **Hệ thống tự động tạo tài khoản** cho bạn
+7. **Hoàn thiện thông tin** cần thiết:
+   - Ngày sinh
+   - Giới tính  
+   - Số điện thoại
+   - Địa chỉ
+   - Nhóm máu
+
+## Lưu ý quan trọng:
+- ✅ **Cần có tài khoản Google** - Nếu chưa có, tạo tại accounts.google.com
+- ✅ **Tự động tạo tài khoản** - Không cần đăng ký riêng
+- ✅ **Bảo mật cao** - Thông tin được bảo vệ bởi Google
+- ✅ **Có thể hủy quyền** - Revoke từ Google Account Settings bất kỳ lúc nào
 ```

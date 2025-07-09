@@ -25,6 +25,12 @@ namespace BloodDonationAPI.Controllers
             _googleAuthService = googleAuthService;
         }
 
+        /// <summary>
+        /// Đăng nhập truyền thống với username/password
+        /// Dùng cho admin hoặc user đã có tài khoản từ đăng ký thủ công.
+        /// </summary>
+        /// <param name="loginDto">Username và password</param>
+        /// <returns>JWT token và thông tin người dùng</returns>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto loginDto)
         {
@@ -148,8 +154,10 @@ namespace BloodDonationAPI.Controllers
 
         /// <summary>
         /// Đăng nhập bằng tài khoản Google
+        /// User nhập email và mật khẩu Google account để đăng nhập.
+        /// Hệ thống sẽ tự động tạo tài khoản nếu lần đầu đăng nhập.
         /// </summary>
-        /// <param name="googleLoginDto">Thông tin đăng nhập Google</param>
+        /// <param name="googleLoginDto">Thông tin đăng nhập Google (email và googleToken)</param>
         /// <returns>JWT token và thông tin người dùng</returns>
         [HttpPost("google-login")]
         public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto googleLoginDto)
@@ -197,6 +205,8 @@ namespace BloodDonationAPI.Controllers
 
         /// <summary>
         /// Cập nhật thông tin profile người dùng
+        /// Dùng cho user mới từ Google login cần hoàn thiện thông tin,
+        /// hoặc user hiện có muốn cập nhật profile.
         /// </summary>
         /// <param name="updateProfileDto">Thông tin cập nhật</param>
         /// <returns>Thông tin người dùng đã cập nhật</returns>
@@ -302,6 +312,8 @@ namespace BloodDonationAPI.Controllers
 
         /// <summary>
         /// Lấy thông tin profile người dùng hiện tại
+        /// Dùng để kiểm tra thông tin user sau khi đăng nhập Google
+        /// hoặc để verify token hợp lệ.
         /// </summary>
         /// <returns>Thông tin người dùng</returns>
         [HttpGet("profile")]
