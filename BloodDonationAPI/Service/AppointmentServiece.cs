@@ -543,10 +543,29 @@ namespace BloodDonationAPI.Service
                     };
                 }
             }
+            // kiem tra xem nguoi dung da dawng ki lich hen nao khac chua 
+            var existingPendingAppointment = await _context.AppointmentRecords
+               .Where (a => a.Username == userName && (a.Status == "Đang xét duyệt" || a.Status == "Đã đủ điều kiện"))
+               .FirstOrDefaultAsync();
+            if (existingPendingAppointment != null)
+            {
+                string reason = existingPendingAppointment.Status switch
+                {
+                    "Đang xét duyệt" => "Bạn đã có một lịch hẹn đang chờ duyệt.",
+                    "Đã đủ điều kiện" => "Bạn đã có một lịch hẹn đã được duyệt và đủ điều kiện.",
+                    _ => "Bạn đã có một lịch hẹn chưa hoàn tất."
+                };
+                return new RegisterAppointmentResultDto
+                {
+                    IsSuccess = false,
+                    Message = reason,
+                    AppointmentId = null
+                };
+            }
 
 
-            // lay tong cau hoi trong bang SurveyQuestions
-            var totalQuestion = await _context.SurveyQuestions.CountAsync();
+                // lay tong cau hoi trong bang SurveyQuestions
+                var totalQuestion = await _context.SurveyQuestions.CountAsync();
             // lay tat cac cac cau tra loi cua nguoi dung moi (bo cac cai trung lap di boi vi co cau hoi chon multiple choice)
             var answeredQuestions = Dto.userSurveyAnswerDtos.Select(a => a.QuestionId)
                 .Distinct()
