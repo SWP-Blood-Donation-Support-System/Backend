@@ -145,7 +145,7 @@ namespace BloodDonationAPI.Controllers
            var result = await _service.DestroyBloodDonationAsync(dto);
             if (!result)
             {
-                return NotFound(new { message = "Không tìm thấy don vi mau" });
+                return NotFound(new { message = "Không tìm thấy don vi mau hoac da bi tieu huy" });
             }
             return Ok(new { message = "Cập nhật trạng thái đơn vị máu thành công." });
         }
