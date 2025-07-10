@@ -135,7 +135,7 @@ namespace BloodDonationAPI.Service
                     int required = emergency.RequiredUnits ?? 0;
                     if (required > 0 && available >= required)
                     {
-                        emergency.EmergencyStatus = "lượng máu đang được chuyển đến";
+                        emergency.EmergencyStatus = "Lượng máu đang được chuyển đến";
                     }
                     else
                     {
@@ -166,7 +166,7 @@ namespace BloodDonationAPI.Service
                 throw new Exception("Emergency missing blood type or required units");
             // Lấy các dòng máu còn hạn đúng nhóm máu
             var availableBlood = await _context.BloodDetails
-                .Where(b => b.BloodType == emergency.BloodType && b.BloodDetailStatus == "Còn hạn" && b.Volume > 0)
+                .Where(b => b.BloodType == emergency.BloodType && b.BloodDetailStatus == "Đã lưu trữ" && b.Volume > 0)
                 .OrderBy(b => b.BloodDetailDate)
                 .ToListAsync();
             var totalAvailable = availableBlood.Sum(b => b.Volume ?? 0);
