@@ -4,6 +4,7 @@ using BloodDonationAPI.Entities;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.AspNetCore.Authorization;
 
 namespace BloodDonationAPI.Controllers
 {
@@ -14,14 +15,22 @@ namespace BloodDonationAPI.Controllers
         private readonly IUserService _userService;
         private readonly JwtService _jwtService;
         private readonly BloodDonationSystemContext _context;
+        private readonly IGoogleAuthService _googleAuthService;
 
-        public UserController(IUserService userService, JwtService jwtService, BloodDonationSystemContext context)
+        public UserController(IUserService userService, JwtService jwtService, BloodDonationSystemContext context, IGoogleAuthService googleAuthService)
         {
             _userService = userService;
             _jwtService = jwtService;
             _context = context;
+            _googleAuthService = googleAuthService;
         }
 
+        /// <summary>
+        /// Đăng nhập truyền thống với username/password
+        /// Dùng cho admin hoặc user đã có tài khoản từ đăng ký thủ công.
+        /// </summary>
+        /// <param name="loginDto">Username và password</param>
+        /// <returns>JWT token và thông tin người dùng</returns>
         [HttpPost("login")]
         public async Task<IActionResult> Login([FromBody] LoginRequestDto loginDto)
         {
@@ -141,6 +150,214 @@ namespace BloodDonationAPI.Controllers
             }
             
             return BadRequest(new { message = result });
+        }
+
+        /// <summary>
+        /// Đăng nhập bằng tài khoản Google
+        /// User nhập email và mật khẩu Google account để đăng nhập.
+        /// Hệ thống sẽ tự động tạo tài khoản nếu lần đầu đăng nhập.
+        /// </summary>
+        /// <param name="googleLoginDto">Thông tin đăng nhập Google (email và googleToken)</param>
+        /// <returns>JWT token và thông tin người dùng</returns>
+        [HttpPost("google-login")]
+        public async Task<IActionResult> GoogleLogin([FromBody] GoogleLoginDto googleLoginDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                var result = await _googleAuthService.GoogleLoginAsync(googleLoginDto);
+
+                if (result.IsNewUser)
+                {
+                    return Ok(new
+                    {
+                        token = result.Token,
+                        isNewUser = result.IsNewUser,
+                        message = result.Message,
+                        user = result.User,
+                        additionalInfo = "Vui lòng hoàn thành thông tin cá nhân để sử dụng đầy đủ các tính năng"
+                    });
+                }
+                else
+                {
+                    return Ok(new
+                    {
+                        token = result.Token,
+                        isNewUser = result.IsNewUser,
+                        message = result.Message,
+                        user = result.User
+                    });
+                }
+            }
+            catch (UnauthorizedAccessException ex)
+            {
+                return Unauthorized(new { message = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Cập nhật thông tin profile người dùng
+        /// Dùng cho user mới từ Google login cần hoàn thiện thông tin,
+        /// hoặc user hiện có muốn cập nhật profile.
+        /// </summary>
+        /// <param name="updateProfileDto">Thông tin cập nhật</param>
+        /// <returns>Thông tin người dùng đã cập nhật</returns>
+        [HttpPut("update-profile")]
+        [Authorize]
+        public async Task<IActionResult> UpdateProfile([FromBody] UpdateProfileDto updateProfileDto)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(ModelState);
+                }
+
+                // Lấy username từ token
+                var username = User.Identity?.Name;
+                if (string.IsNullOrEmpty(username))
+                {
+                    return Unauthorized(new { message = "Invalid token" });
+                }
+
+                // Tìm user trong database
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
+
+                // Cập nhật thông tin
+                if (updateProfileDto.DateOfBirth.HasValue)
+                    user.DateOfBirth = updateProfileDto.DateOfBirth;
+                
+                if (!string.IsNullOrWhiteSpace(updateProfileDto.Gender))
+                    user.Gender = updateProfileDto.Gender;
+                
+                if (!string.IsNullOrWhiteSpace(updateProfileDto.Phone))
+                    user.Phone = updateProfileDto.Phone;
+                
+                if (!string.IsNullOrWhiteSpace(updateProfileDto.Address))
+                    user.Address = updateProfileDto.Address;
+                
+                if (!string.IsNullOrWhiteSpace(updateProfileDto.BloodType))
+                {
+                    // Validate blood type
+                    var validBloodTypes = new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" };
+                    if (validBloodTypes.Contains(updateProfileDto.BloodType.ToUpper()))
+                    {
+                        user.BloodType = updateProfileDto.BloodType.ToUpper();
+                    }
+                    else
+                    {
+                        return BadRequest(new { message = "Invalid blood type. Must be A+, A-, B+, B-, AB+, AB-, O+, or O-" });
+                    }
+                }
+                
+                if (!string.IsNullOrWhiteSpace(updateProfileDto.ProfileStatus))
+                    user.ProfileStatus = updateProfileDto.ProfileStatus;
+                
+                if (!string.IsNullOrWhiteSpace(updateProfileDto.FullName))
+                    user.FullName = updateProfileDto.FullName;
+
+                // Kiểm tra nếu profile đã hoàn thành
+                if (IsProfileComplete(user))
+                {
+                    user.ProfileStatus = "Sẵn sàng hiến máu";
+                }
+
+                await _context.SaveChangesAsync();
+
+                return Ok(new
+                {
+                    message = "Profile updated successfully",
+                    user = new
+                    {
+                        username = user.Username,
+                        email = user.Email,
+                        role = user.Role,
+                        fullName = user.FullName,
+                        dateOfBirth = user.DateOfBirth,
+                        gender = user.Gender,
+                        phone = user.Phone,
+                        address = user.Address,
+                        bloodType = user.BloodType,
+                        profileStatus = user.ProfileStatus
+                    }
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
+
+        private bool IsProfileComplete(User user)
+        {
+            return !string.IsNullOrWhiteSpace(user.FullName) &&
+                   !string.IsNullOrWhiteSpace(user.Gender) &&
+                   !string.IsNullOrWhiteSpace(user.Phone) &&
+                   !string.IsNullOrWhiteSpace(user.Address) &&
+                   !string.IsNullOrWhiteSpace(user.BloodType) &&
+                   user.DateOfBirth.HasValue;
+        }
+
+        /// <summary>
+        /// Lấy thông tin profile người dùng hiện tại
+        /// Dùng để kiểm tra thông tin user sau khi đăng nhập Google
+        /// hoặc để verify token hợp lệ.
+        /// </summary>
+        /// <returns>Thông tin người dùng</returns>
+        [HttpGet("profile")]
+        [Authorize]
+        public async Task<IActionResult> GetProfile()
+        {
+            try
+            {
+                // Lấy username từ token
+                var username = User.Identity?.Name;
+                if (string.IsNullOrEmpty(username))
+                {
+                    return Unauthorized(new { message = "Invalid token" });
+                }
+
+                // Tìm user trong database
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+                if (user == null)
+                {
+                    return NotFound(new { message = "User not found" });
+                }
+
+                return Ok(new
+                {
+                    user = new
+                    {
+                        username = user.Username,
+                        email = user.Email,
+                        role = user.Role,
+                        fullName = user.FullName,
+                        dateOfBirth = user.DateOfBirth,
+                        gender = user.Gender,
+                        phone = user.Phone,
+                        address = user.Address,
+                        bloodType = user.BloodType,
+                        profileStatus = user.ProfileStatus
+                    },
+                    isProfileComplete = IsProfileComplete(user)
+                });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
         }
         
     }

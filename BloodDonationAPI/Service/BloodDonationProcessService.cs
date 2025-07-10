@@ -119,7 +119,7 @@ namespace BloodDonationAPI.Service
             var bloodDetail = new BloodDetail
             {
                 AppointmentId = donateDto.AppointmentId,
-                BloodType = donateDto.BloodType,
+                BloodType = bloodType,
                 Volume = donateDto.Volume,
                 HospitalId = 1, // Giả sử HospitalId là 1, bạn có thể thay đổi theo logic của bạn
                 BloodDetailDate = DateOnly.FromDateTime(DateTime.Now),
@@ -246,7 +246,7 @@ namespace BloodDonationAPI.Service
                 .Include(b => b.Appointment)
                 .FirstOrDefaultAsync(b => b.BloodDetailId == dto.BloodDetailID);
             // kiem tra xem co hop le khong
-            if (bloodDetail == null)
+            if (bloodDetail == null || bloodDetail.BloodDetailStatus == "Tiêu hủy")
                 return false;
             // cap nhat vap bloodDetail
             bloodDetail.BloodDetailStatus = "Tiêu hủy";
@@ -286,9 +286,24 @@ namespace BloodDonationAPI.Service
                         _context.DonorDeferrals.Add(deferral);
                     }
 
+
+
                 }
 
             }
+            if(!string.IsNullOrWhiteSpace(bloodDetail.BloodType) && bloodDetail.Volume > 0)
+            {
+                // Cập nhật tổng lượng máu trong ngân hàng máu
+                var bloodBank = await _context.BloodBanks.FirstOrDefaultAsync(b => b.BloodType == bloodDetail.BloodType);
+                if (bloodBank != null)
+                {
+                    bloodBank.BloodVolumeTotal -= bloodDetail.Volume; // Giảm lượng máu trong ngân hàng máu
+                    if (bloodBank.BloodVolumeTotal < 0)
+                        bloodBank.BloodVolumeTotal = 0; // Đảm bảo không âm
+                    _context.BloodBanks.Update(bloodBank);
+                }
+            }
+
             await _context.SaveChangesAsync();
             return true;
 

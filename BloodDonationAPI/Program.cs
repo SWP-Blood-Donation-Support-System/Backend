@@ -88,7 +88,7 @@ namespace BloodDonationAPI
             builder.Services.AddScoped<ISurveyService, SurveyService>();
             builder.Services.AddScoped<IEventService, EventService>();
             builder.Services.AddScoped<ICertificateService, CertificateService>();
-            // them cái generic repository
+            // them cai generic repository
             builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>
