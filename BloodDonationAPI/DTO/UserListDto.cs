@@ -105,4 +105,52 @@ namespace BloodDonationAPI.DTO
         
         public string? Reason { get; set; }
     }
+
+    // DTO cho việc tạo account admin/staff bởi admin
+    public class CreateAdminAccountDto
+    {
+        [Required(ErrorMessage = "Vui lòng nhập tên đăng nhập.")]
+        [StringLength(50, MinimumLength = 3, ErrorMessage = "Tên đăng nhập phải từ 3 đến 50 ký tự.")]
+        public string Username { get; set; } = null!;
+
+        [Required(ErrorMessage = "Vui lòng nhập mật khẩu.")]
+        [StringLength(100, MinimumLength = 6, ErrorMessage = "Mật khẩu phải từ 6 đến 100 ký tự.")]
+        public string Password { get; set; } = null!;
+        
+        [Required(ErrorMessage = "Vui lòng nhập email.")]
+        [EmailAddress(ErrorMessage = "Email không hợp lệ.")]
+        public string Email { get; set; } = null!;
+
+        [Required(ErrorMessage = "Vui lòng chọn vai trò.")]
+        [RegularExpression("^(Admin|Staff)$", ErrorMessage = "Vai trò chỉ có thể là Admin hoặc Staff.")]
+        public string Role { get; set; } = null!;
+
+        [StringLength(100, ErrorMessage = "Họ và tên không được vượt quá 100 ký tự.")]
+        public string? FullName { get; set; }
+
+        public DateOnly? DateOfBirth { get; set; }
+
+        [RegularExpression("^(Nam|Nữ)$", ErrorMessage = "Giới tính chỉ có thể là Nam hoặc Nữ.")]
+        public string? Gender { get; set; }
+        
+        [RegularExpression(@"^[0-9]{10}$", ErrorMessage = "Số điện thoại phải có đúng 10 số.")]
+        public string? Phone { get; set; }
+
+        [StringLength(200, ErrorMessage = "Địa chỉ không được vượt quá 200 ký tự.")]
+        public string? Address { get; set; }
+
+        [RegularExpression("^(A|B|AB|O)[+-]$", ErrorMessage = "Nhóm máu không hợp lệ. Ví dụ: A+, B-, AB+, O-.")]
+        public string? BloodType { get; set; }
+    }
+
+    // DTO cho response khi tạo account thành công
+    public class CreateAccountResponseDto
+    {
+        public string Username { get; set; } = null!;
+        public string Email { get; set; } = null!;
+        public string Role { get; set; } = null!;
+        public string? FullName { get; set; }
+        public string ProfileStatus { get; set; } = null!;
+        public DateTime CreatedDate { get; set; }
+    }
 }
