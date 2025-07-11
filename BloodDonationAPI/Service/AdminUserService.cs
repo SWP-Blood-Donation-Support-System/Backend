@@ -374,5 +374,66 @@ namespace BloodDonationAPI.Service.Impl
                 throw;
             }
         }
+
+        public async Task<CreateAccountResponseDto?> CreateAdminAccountAsync(CreateAdminAccountDto request)
+        {
+            try
+            {
+                // Kiểm tra xem username đã tồn tại chưa
+                var existingUserByUsername = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Username == request.Username);
+
+                if (existingUserByUsername != null)
+                {
+                    throw new InvalidOperationException("Tên đăng nhập đã tồn tại.");
+                }
+
+                // Kiểm tra xem email đã tồn tại chưa
+                var existingUserByEmail = await _context.Users
+                    .FirstOrDefaultAsync(u => u.Email == request.Email);
+
+                if (existingUserByEmail != null)
+                {
+                    throw new InvalidOperationException("Email đã được sử dụng để đăng ký tài khoản khác.");
+                }
+
+                // Tạo user mới
+                var newUser = new User
+                {
+                    Username = request.Username,
+                    Password = request.Password, // Trong thực tế nên hash password
+                    Email = request.Email,
+                    Role = request.Role,
+                    FullName = request.FullName,
+                    DateOfBirth = request.DateOfBirth,
+                    Gender = request.Gender,
+                    Phone = request.Phone,
+                    Address = request.Address,
+                    BloodType = request.BloodType,
+                    ProfileStatus = "Active"
+                };
+
+                _context.Users.Add(newUser);
+                await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"Admin account created successfully: {request.Username} with role {request.Role}");
+
+                // Trả về thông tin account đã tạo
+                return new CreateAccountResponseDto
+                {
+                    Username = newUser.Username,
+                    Email = newUser.Email!,
+                    Role = newUser.Role!,
+                    FullName = newUser.FullName,
+                    ProfileStatus = newUser.ProfileStatus!,
+                    CreatedDate = DateTime.Now
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in CreateAdminAccountAsync: {ex.Message}");
+                throw;
+            }
+        }
     }
 } 

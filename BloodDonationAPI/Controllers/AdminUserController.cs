@@ -417,5 +417,85 @@ namespace BloodDonationAPI.Controllers
                 });
             }
         }
+
+        /// <summary>
+        /// Tạo tài khoản Admin hoặc Staff
+        /// </summary>
+        /// <param name="request">Thông tin tài khoản cần tạo</param>
+        /// <returns>Thông tin tài khoản đã tạo</returns>
+        /// <remarks>
+        /// API này cho phép admin tạo tài khoản cho:
+        /// - Admin: Có tất cả quyền trong hệ thống
+        /// - Staff: Có quyền hạn hỗ trợ quản lý
+        /// 
+        /// Lưu ý:
+        /// - Username và email phải duy nhất
+        /// - Role chỉ có thể là "Admin" hoặc "Staff"
+        /// - Tài khoản được tạo sẽ có trạng thái "Active"
+        /// - Mật khẩu nên được thay đổi sau lần đăng nhập đầu tiên
+        /// 
+        /// Ví dụ request:
+        /// {
+        ///   "username": "admin_staff_01",
+        ///   "password": "TempPassword123",
+        ///   "email": "staff@example.com",
+        ///   "role": "Staff",
+        ///   "fullName": "Nguyễn Văn A",
+        ///   "phone": "0123456789"
+        /// }
+        /// </remarks>
+        [HttpPost("create-account")]
+        public async Task<IActionResult> CreateAdminAccount([FromBody] CreateAdminAccountDto request)
+        {
+            try
+            {
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Dữ liệu không hợp lệ",
+                        errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                    });
+                }
+
+                var result = await _adminUserService.CreateAdminAccountAsync(request);
+                
+                if (result == null)
+                {
+                    return StatusCode(500, new
+                    {
+                        success = false,
+                        message = "Không thể tạo tài khoản"
+                    });
+                }
+
+                return Ok(new
+                {
+                    success = true,
+                    message = $"Tạo tài khoản {request.Role} thành công",
+                    data = result
+                });
+            }
+            catch (InvalidOperationException ex)
+            {
+                // Lỗi business logic (username/email đã tồn tại)
+                return BadRequest(new
+                {
+                    success = false,
+                    message = ex.Message
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in CreateAdminAccount: {ex.Message}");
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Lỗi server khi tạo tài khoản",
+                    error = ex.Message
+                });
+            }
+        }
     }
 } 

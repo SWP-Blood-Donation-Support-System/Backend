@@ -13,5 +13,6 @@ namespace BloodDonationAPI.Service
         Task<UserListResponseDto> GetUsersByStatusAsync(string status, int page = 1, int pageSize = 10);
         Task<int> GetTotalUserCountAsync();
         Task<Dictionary<string, int>> GetUserStatisticsAsync();
+        Task<CreateAccountResponseDto?> CreateAdminAccountAsync(CreateAdminAccountDto request);
     }
 } 
