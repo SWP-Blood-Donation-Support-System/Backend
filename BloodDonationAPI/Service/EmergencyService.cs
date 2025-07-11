@@ -270,8 +270,8 @@ namespace BloodDonationAPI.Service
                 return "You are not authorized to update this emergency.";
             if (emergency.EmergencyStatus == "Từ chối" || emergency.EmergencyStatus == "Đợi xét duyệt")
                 return "Cannot mark as fulfilled when status is 'Từ chối' or 'Đợi xét duyệt'.";
-            if (emergency.EmergencyStatus != "Đã xét duyệt")
-                return "Only emergencies with status 'Đã xét duyệt' can be marked as fulfilled.";
+            if (emergency.EmergencyStatus != "Đã xét duyệt" && emergency.EmergencyStatus != "Lượng máu đang được chuyển đến")
+                return "Only emergencies with status 'Đã xét duyệt' or 'Lượng máu đang được chuyển đến' can be marked as fulfilled.";
             emergency.EmergencyStatus = "Đã được đáp ứng";
             await _context.SaveChangesAsync();
             return "Emergency marked as fulfilled.";

@@ -320,7 +320,7 @@ namespace BloodDonationAPI.Controllers
         }
 
         /// <summary>
-        /// Cho phép người tạo đơn cập nhật trạng thái emergencyStatus thành 'Đã được đáp ứng' nếu trạng thái cũ là 'Đã xét duyệt'
+        /// Cho phép người tạo đơn cập nhật trạng thái emergencyStatus thành 'Đã được đáp ứng' nếu trạng thái cũ là 'Đã xét duyệt' và 
         /// </summary>
         [HttpPut("MarkAsFulfilled/{emergencyId}")]
         [Authorize(Roles = "User,Staff,Admin")]
