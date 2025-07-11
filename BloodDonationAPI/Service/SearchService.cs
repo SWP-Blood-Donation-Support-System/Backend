@@ -690,5 +690,171 @@ namespace BloodDonationAPI.Service
                 return double.MaxValue;
             }
         }
+
+        /// <summary>
+        /// Tìm kiếm tất cả người hiến máu có điều kiện
+        /// </summary>
+        /// <returns>Danh sách tất cả người hiến máu đã hoàn thành hiến máu và có trạng thái Active</returns>
+        public async Task<IEnumerable<object>> FindAllAvailableDonors()
+        {
+            try
+            {
+                // Lấy tất cả người dùng có ProfileStatus = "Active" và có AppointmentRecord với Status = "Đã hiến"
+                var availableDonors = await _context.Users
+                    .Where(u => u.ProfileStatus == "Active" && u.Role == "User")
+                    .Where(u => u.AppointmentRecords.Any(ar => ar.Status == "Đã hiến"))
+                    .Select(u => new {
+                        Username = u.Username,
+                        FullName = u.FullName ?? "Unknown",
+                        Email = u.Email ?? "No email",
+                        DateOfBirth = u.DateOfBirth,
+                        Gender = u.Gender ?? "Unknown",
+                        Phone = u.Phone ?? "No phone",
+                        Address = u.Address ?? "No address",
+                        BloodType = u.BloodType ?? "Unknown",
+                        ProfileStatus = u.ProfileStatus ?? "Unknown",
+                        LastDonationDate = u.AppointmentRecords
+                            .Where(ar => ar.Status == "Đã hiến")
+                            .OrderByDescending(ar => ar.RegistrationDate)
+                            .Select(ar => ar.RegistrationDate)
+                            .FirstOrDefault(),
+                        TotalDonations = u.AppointmentRecords.Count(ar => ar.Status == "Đã hiến")
+                    })
+                    .ToListAsync();
+
+                // Tính toán khoảng cách và sắp xếp
+                var result = availableDonors.Select(donor => {
+                    double distanceInKm = CalculateDistanceFromAddress(donor.Address);
+                    string formattedDistance = FormatDistance(distanceInKm);
+                    
+                    return new {
+                        donor.Username,
+                        donor.FullName,
+                        donor.Email,
+                        donor.DateOfBirth,
+                        donor.Gender,
+                        donor.Phone,
+                        donor.Address,
+                        donor.BloodType,
+                        donor.ProfileStatus,
+                        donor.LastDonationDate,
+                        donor.TotalDonations,
+                        Distance = formattedDistance,
+                        NumericDistance = distanceInKm
+                    };
+                }).OrderBy(d => d.NumericDistance)
+                .Select(d => new {
+                    d.Username,
+                    d.FullName,
+                    d.Email,
+                    d.DateOfBirth,
+                    d.Gender,
+                    d.Phone,
+                    d.Address,
+                    d.BloodType,
+                    d.ProfileStatus,
+                    d.LastDonationDate,
+                    d.TotalDonations,
+                    d.Distance
+                })
+                .ToList<object>();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in FindAllAvailableDonors: {ex.Message}");
+                return new List<object>();
+            }
+        }
+
+        /// <summary>
+        /// Tìm kiếm tất cả người cần máu có điều kiện
+        /// </summary>
+        /// <returns>Danh sách tất cả người cần máu có trạng thái Đã xét duyệt</returns>
+        public async Task<IEnumerable<object>> FindAllApprovedBloodRequests()
+        {
+            try
+            {
+                // Lấy tất cả Emergency với EmergencyStatus = "Đã xét duyệt"
+                var approvedRequests = await _context.Emergencies
+                    .Where(e => e.EmergencyStatus == "Đã xét duyệt")
+                    .Include(e => e.UsernameNavigation)
+                    .Include(e => e.Hospital)
+                    .Select(e => new {
+                        EmergencyId = e.EmergencyId,
+                        Username = e.Username ?? "Unknown",
+                        PatientName = e.UsernameNavigation != null ? e.UsernameNavigation.FullName : "Unknown",
+                        PatientPhone = e.UsernameNavigation != null ? e.UsernameNavigation.Phone : "No phone",
+                        PatientEmail = e.UsernameNavigation != null ? e.UsernameNavigation.Email : "No email",
+                        EmergencyDate = e.EmergencyDate,
+                        BloodType = e.BloodType ?? "Unknown",
+                        EmergencyStatus = e.EmergencyStatus ?? "Unknown",
+                        EmergencyNote = e.EmergencyNote ?? "No note",
+                        RequiredUnits = e.RequiredUnits ?? 0,
+                        EmergencyMedical = e.EmergencyMedical ?? "No medical info",
+                        EndDate = e.EndDate,
+                        HospitalId = e.HospitalId,
+                        HospitalName = e.Hospital != null ? e.Hospital.HospitalName : "Unknown Hospital",
+                        HospitalAddress = e.Hospital != null ? e.Hospital.HospitalAddress : "No address",
+                        HospitalPhone = e.Hospital != null ? e.Hospital.HospitalPhone : "No phone"
+                    })
+                    .ToListAsync();
+
+                // Tính toán khoảng cách dựa trên địa chỉ bệnh viện và sắp xếp
+                var result = approvedRequests.Select(request => {
+                    double distanceInKm = CalculateDistanceFromAddress(request.HospitalAddress);
+                    string formattedDistance = FormatDistance(distanceInKm);
+                    
+                    return new {
+                        request.EmergencyId,
+                        request.Username,
+                        request.PatientName,
+                        request.PatientPhone,
+                        request.PatientEmail,
+                        request.EmergencyDate,
+                        request.BloodType,
+                        request.EmergencyStatus,
+                        request.EmergencyNote,
+                        request.RequiredUnits,
+                        request.EmergencyMedical,
+                        request.EndDate,
+                        request.HospitalId,
+                        request.HospitalName,
+                        request.HospitalAddress,
+                        request.HospitalPhone,
+                        Distance = formattedDistance,
+                        NumericDistance = distanceInKm
+                    };
+                }).OrderBy(r => r.NumericDistance)
+                .Select(r => new {
+                    r.EmergencyId,
+                    r.Username,
+                    r.PatientName,
+                    r.PatientPhone,
+                    r.PatientEmail,
+                    r.EmergencyDate,
+                    r.BloodType,
+                    r.EmergencyStatus,
+                    r.EmergencyNote,
+                    r.RequiredUnits,
+                    r.EmergencyMedical,
+                    r.EndDate,
+                    r.HospitalId,
+                    r.HospitalName,
+                    r.HospitalAddress,
+                    r.HospitalPhone,
+                    r.Distance
+                })
+                .ToList<object>();
+
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in FindAllApprovedBloodRequests: {ex.Message}");
+                return new List<object>();
+            }
+        }
     }
 }

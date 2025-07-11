@@ -135,5 +135,102 @@ namespace BloodDonationAPI.Controllers
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
+
+        /// <summary>
+        /// Tìm kiếm tất cả người hiến máu có điều kiện
+        /// </summary>
+        /// <remarks>
+        /// API này trả về danh sách tất cả người hiến máu đã hoàn thành hiến máu và có trạng thái Active.
+        /// Điều kiện lọc:
+        /// - User.ProfileStatus = "Active"
+        /// - Có ít nhất 1 AppointmentRecord với Status = "Đã hiến"
+        /// - Kết quả được sắp xếp theo khoảng cách từ điểm mốc: 7 Đ. D1, Long Thạnh Mỹ, Thủ Đức
+        /// </remarks>
+        /// <returns>Danh sách tất cả người hiến máu có điều kiện, sắp xếp theo khoảng cách</returns>
+        [HttpGet("donors/all")]
+        [Authorize(Roles = "Admin,Staff,User")]
+        public async Task<IActionResult> GetAllAvailableDonors()
+        {
+            try
+            {
+                // Lấy thông tin người dùng hiện tại từ token
+                var currentUser = User.Identity?.Name ?? string.Empty;
+                var role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+                // Gọi service để lấy tất cả người hiến máu có điều kiện
+                var donors = await _searchService.FindAllAvailableDonors();
+                var donorsList = donors.ToList();
+                
+                // Log số lượng để kiểm tra
+                Console.WriteLine($"Found {donorsList.Count} available donors");
+                
+                return Ok(new { 
+                    donors = donorsList,
+                    message = "Available donors search successful. Results are sorted by distance from reference point.",
+                    currentUser = currentUser,
+                    role = role,
+                    searchCriteria = new {
+                        profileStatusFilter = "Active",
+                        appointmentStatusFilter = "Đã hiến",
+                        referencePoint = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh"
+                    },
+                    totalCount = donorsList.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetAllAvailableDonors: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// Tìm kiếm tất cả người cần máu có điều kiện
+        /// </summary>
+        /// <remarks>
+        /// API này trả về danh sách tất cả người cần máu có trạng thái "Đã xét duyệt".
+        /// Điều kiện lọc:
+        /// - Emergency.EmergencyStatus = "Đã xét duyệt"
+        /// - Kết quả được sắp xếp theo khoảng cách từ điểm mốc: 7 Đ. D1, Long Thạnh Mỹ, Thủ Đức
+        /// - Bao gồm thông tin bệnh viện và thông tin bệnh nhân
+        /// </remarks>
+        /// <returns>Danh sách tất cả người cần máu có điều kiện, sắp xếp theo khoảng cách</returns>
+        [HttpGet("requests/all")]
+        [Authorize(Roles = "Admin,Staff,User")]
+        public async Task<IActionResult> GetAllApprovedBloodRequests()
+        {
+            try
+            {
+                // Lấy thông tin người dùng hiện tại từ token
+                var currentUser = User.Identity?.Name ?? string.Empty;
+                var role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+                // Gọi service để lấy tất cả người cần máu có điều kiện
+                var bloodRequests = await _searchService.FindAllApprovedBloodRequests();
+                var requestsList = bloodRequests.ToList();
+                
+                // Log số lượng để kiểm tra
+                Console.WriteLine($"Found {requestsList.Count} approved blood requests");
+                
+                return Ok(new { 
+                    bloodRequests = requestsList,
+                    message = "Approved blood requests search successful. Results are sorted by distance from reference point.",
+                    currentUser = currentUser,
+                    role = role,
+                    searchCriteria = new {
+                        emergencyStatusFilter = "Đã xét duyệt",
+                        referencePoint = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh"
+                    },
+                    totalCount = requestsList.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in GetAllApprovedBloodRequests: {ex.Message}");
+                Console.WriteLine($"StackTrace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
     }
 }
