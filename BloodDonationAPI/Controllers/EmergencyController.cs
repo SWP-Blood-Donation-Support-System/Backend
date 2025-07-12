@@ -345,24 +345,16 @@ namespace BloodDonationAPI.Controllers
         }
 
         /// <summary>
-        /// Đổi trạng thái đơn khẩn cấp thành 'Lượng máu đang được chuyển đến' (chỉ cần emergencyId)
+        /// Đặt trạng thái đơn khẩn cấp thành 'Lượng máu đang được chuyển đến' (chỉ cần emergencyId)
         /// </summary>
-        [HttpPut("MarkAsTransferring/{emergencyId}")]
+        [HttpPut("SetStatusTransferring/{emergencyId}")]
         [Authorize(Roles = "Staff,Admin")]
-        public async Task<IActionResult> MarkAsTransferring(int emergencyId)
+        public async Task<IActionResult> SetStatusTransferring(int emergencyId)
         {
-            try
-            {
-                var result = await _emergencyService.UpdateEmergencyStatus(emergencyId, "Lượng máu đang được chuyển đến");
-                if (result == "Emergency status updated successfully.")
-                    return Ok(new { message = result });
-                return BadRequest(new { message = result });
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error marking emergency as transferring");
-                return StatusCode(500, new { message = "An error occurred while processing your request.", error = ex.Message });
-            }
+            var result = await _emergencyService.SetEmergencyStatusToTransferring(emergencyId);
+            if (result.Contains("set to"))
+                return Ok(new { message = result });
+            return BadRequest(new { message = result });
         }
     }
 } 
