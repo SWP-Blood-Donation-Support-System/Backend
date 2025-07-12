@@ -13,5 +13,6 @@ namespace BloodDonationAPI.Service
         Task<string> DeleteEmergency(int emergencyId, string username, string role);
         Task<List<Emergency>> GetEmergenciesByUsername(string username);
         Task<string> MarkEmergencyAsFulfilled(int emergencyId, string username);
+        Task<string> SetEmergencyStatusToTransferring(int emergencyId);
     }
 }

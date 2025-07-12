@@ -260,6 +260,16 @@ namespace BloodDonationAPI.Service
             return "Emergency marked as fulfilled.";
         }
 
+        public async Task<string> SetEmergencyStatusToTransferring(int emergencyId)
+        {
+            var emergency = await _context.Emergencies.FindAsync(emergencyId);
+            if (emergency == null)
+                return "Emergency not found.";
+            emergency.EmergencyStatus = "Lượng máu đang được chuyển đến";
+            await _context.SaveChangesAsync();
+            return "Emergency status set to 'Lượng máu đang được chuyển đến'.";
+        }
+
         private bool IsValidBloodType(string bloodType)
         {
             var validTypes = new[] { "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-" };
