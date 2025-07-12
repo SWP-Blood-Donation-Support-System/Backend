@@ -282,23 +282,6 @@ public class BloodInventoryService : IBloodInventoryService
 
             await _context.SaveChangesAsync();
 
-            // Sau khi chuyển máu, cập nhật trạng thái Emergency nếu có liên quan
-            if (request.HospitalId.HasValue && request.RequiredUnits > 0)
-            {
-                var emergency = await _context.Emergencies
-                    .Where(e => e.HospitalId == request.HospitalId
-                        && e.BloodType == request.BloodType
-                        && e.RequiredUnits == request.RequiredUnits
-                        && e.EmergencyStatus == "Đã xét duyệt")
-                    .OrderByDescending(e => e.EmergencyDate)
-                    .FirstOrDefaultAsync();
-                if (emergency != null)
-                {
-                    emergency.EmergencyStatus = "Lượng máu đang được chuyển đến";
-                    await _context.SaveChangesAsync();
-                }
-            }
-
             return response;
         }
         catch (Exception ex)
