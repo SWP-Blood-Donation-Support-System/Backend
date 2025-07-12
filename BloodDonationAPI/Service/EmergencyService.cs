@@ -127,25 +127,8 @@ namespace BloodDonationAPI.Service
                 if (status != "Đã xét duyệt" && status != "Từ chối")
                     return "Invalid status. Status must be either 'Đã xét duyệt' or 'Từ chối'.";
 
-                if (status == "Đã xét duyệt")
-                {
-                    // Lấy tổng lượng máu trong kho theo nhóm máu
-                    var bloodBank = await _context.BloodBanks.FirstOrDefaultAsync(b => b.BloodType == emergency.BloodType);
-                    int available = bloodBank?.BloodVolumeTotal ?? 0;
-                    int required = emergency.RequiredUnits ?? 0;
-                    if (required > 0 && available >= required)
-                    {
-                        emergency.EmergencyStatus = "Lượng máu đang được chuyển đến";
-                    }
-                    else
-                    {
-                        emergency.EmergencyStatus = "Đã xét duyệt";
-                    }
-                }
-                else
-                {
-                    emergency.EmergencyStatus = status;
-                }
+                
+                emergency.EmergencyStatus = status;
                 await _context.SaveChangesAsync();
 
                 return "Emergency status updated successfully.";
