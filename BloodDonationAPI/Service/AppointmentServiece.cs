@@ -46,7 +46,7 @@ namespace BloodDonationAPI.Service
                     AppointmentId = null
                 };
             //kiem tra người dùng có đủ điều kiện đăng ký không
-            if (user.ProfileStatus != "Active")
+            if (user.ProfileStatus != "Sẵn sàng hiến máu")
             {
                 return new RegisterAppointmentResultDto
                 {
@@ -273,7 +273,7 @@ namespace BloodDonationAPI.Service
                     AppointmentId = null
                 };
             // kiem tra người dùng có đủ điều kiện đăng ký không
-            if (user.ProfileStatus != "Active")
+            if (user.ProfileStatus != "Sẵn sàng hiến máu")
             {
                 return new RegisterAppointmentResultDto
                 {
@@ -456,7 +456,7 @@ namespace BloodDonationAPI.Service
                     AppointmentId = null
                 };
             // kiem tra người dùng có đủ điều kiện đăng ký không
-            if (user.ProfileStatus != "Active")
+            if (user.ProfileStatus != "Sẵn sàng hiến máu")
             {
                 return new RegisterAppointmentResultDto
                 {
