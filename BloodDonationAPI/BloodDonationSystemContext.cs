@@ -1,7 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using Microsoft.EntityFrameworkCore;
 using BloodDonationAPI.Entities;
+using Microsoft.EntityFrameworkCore;
+
 namespace BloodDonationAPI;
 
 public partial class BloodDonationSystemContext : DbContext
@@ -49,7 +50,7 @@ public partial class BloodDonationSystemContext : DbContext
 
     public virtual DbSet<UserSurveyAnswer> UserSurveyAnswers { get; set; }
 
-   
+  
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -294,6 +295,7 @@ public partial class BloodDonationSystemContext : DbContext
             entity.Property(e => e.Phone).HasMaxLength(20);
             entity.Property(e => e.ProfileStatus).HasMaxLength(50);
             entity.Property(e => e.Role).HasMaxLength(50);
+            entity.Property(e => e.UserStatus).HasMaxLength(50);
         });
 
         modelBuilder.Entity<UserSurveyAnswer>(entity =>

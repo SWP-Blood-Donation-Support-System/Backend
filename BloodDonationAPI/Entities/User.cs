@@ -27,6 +27,8 @@ public partial class User
 
     public string? BloodType { get; set; }
 
+    public string? UserStatus { get; set; }
+
     public virtual ICollection<AppointmentRecord> AppointmentRecords { get; set; } = new List<AppointmentRecord>();
 
     public virtual ICollection<Blog> Blogs { get; set; } = new List<Blog>();
