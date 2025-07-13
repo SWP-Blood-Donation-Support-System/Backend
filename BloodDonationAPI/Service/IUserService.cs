@@ -30,7 +30,8 @@ namespace BloodDonationAPI.Service
 
         public User? Login(string username, string password)
         {
-            return _context.Users.FirstOrDefault(u => u.Username == username && u.Password == password);
+            // Thêm check UserStatus != "Inactive"
+            return _context.Users.FirstOrDefault(u => u.Username == username && u.Password == password && u.UserStatus != "Inactive");
         }
 
         public string Register(RegisterDto registerDto)
@@ -50,7 +51,8 @@ namespace BloodDonationAPI.Service
                 Phone = registerDto.Phone,
                 Address = registerDto.Address,
                 BloodType = registerDto.BloodTypeId,
-                ProfileStatus = "Active",
+                ProfileStatus = "Sẵn sàng hiến máu", // 🆕 Sửa từ "Active" thành "Sẵn sàng hiến máu"
+                UserStatus = "Active",
                 Role = "User"
             };
             _context.Users.Add(user);
@@ -127,7 +129,8 @@ namespace BloodDonationAPI.Service
                 Phone = storedRegisterDto.Phone,
                 Address = storedRegisterDto.Address,
                 BloodType = storedRegisterDto.BloodTypeId,
-                ProfileStatus = "Active",
+                ProfileStatus = "Sẵn sàng hiến máu", // 🆕 Sửa từ "Active" thành "Sẵn sàng hiến máu"
+                UserStatus = "Active",
                 Role = "User"
             };
 

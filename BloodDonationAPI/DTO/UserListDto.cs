@@ -20,7 +20,11 @@ namespace BloodDonationAPI.DTO
         
         public string? Address { get; set; }
         
-        public string? ProfileStatus { get; set; }
+        [RegularExpression("^(Sẵn sàng hiến máu|Đang nghỉ ngơi)$", ErrorMessage = "ProfileStatus chỉ có thể là 'Sẵn sàng hiến máu' hoặc 'Đang nghỉ ngơi'.")]
+        public string? ProfileStatus { get; set; } // Chỉ 2 trạng thái
+        
+        [RegularExpression("^(Active|Inactive)$", ErrorMessage = "UserStatus chỉ có thể là Active hoặc Inactive.")]
+        public string? UserStatus { get; set; } // Chỉ Active và Inactive
         
         public string? BloodType { get; set; }
         
@@ -47,14 +51,16 @@ namespace BloodDonationAPI.DTO
         
         public string? BloodType { get; set; }
         
-        public string? ProfileStatus { get; set; }
+        public string? ProfileStatus { get; set; } // Giữ nguyên
+        
+        public string? UserStatus { get; set; } // Thêm mới
         
         public int Page { get; set; } = 1;
         
         public int PageSize { get; set; } = 10;
     }
 
-    // DTO cho response danh sách người dùng có phân trang
+    // 🆕 DTO cho response danh sách người dùng có phân trang
     public class UserListResponseDto
     {
         public List<UserListDto> Users { get; set; } = new List<UserListDto>();
@@ -89,18 +95,36 @@ namespace BloodDonationAPI.DTO
         
         public string? Address { get; set; }
         
-        public string? ProfileStatus { get; set; }
+        [RegularExpression("^(Sẵn sàng hiến máu|Đang nghỉ ngơi)$", ErrorMessage = "ProfileStatus chỉ có thể là 'Sẵn sàng hiến máu' hoặc 'Đang nghỉ ngơi'.")]
+        public string? ProfileStatus { get; set; } // Chỉ 2 trạng thái
+        
+        [RegularExpression("^(Active|Inactive)$", ErrorMessage = "UserStatus chỉ có thể là Active hoặc Inactive.")]
+        public string? UserStatus { get; set; } // Thêm mới
         
         public string? BloodType { get; set; }
     }
 
-    // DTO cho việc thay đổi trạng thái người dùng
+    // DTO cho việc thay đổi UserStatus (mới)
     public class ChangeUserStatusDto
     {
         [Required(ErrorMessage = "Vui lòng nhập tên đăng nhập.")]
         public string Username { get; set; } = null!;
         
-        [Required(ErrorMessage = "Vui lòng chọn trạng thái mới.")]
+        [Required(ErrorMessage = "Vui lòng chọn UserStatus mới.")]
+        [RegularExpression("^(Active|Inactive)$", ErrorMessage = "UserStatus chỉ có thể là Active hoặc Inactive.")]
+        public string NewStatus { get; set; } = null!;
+        
+        public string? Reason { get; set; }
+    }
+
+    // 🆕 DTO cho việc thay đổi ProfileStatus (giữ nguyên)
+    public class ChangeProfileStatusDto
+    {
+        [Required(ErrorMessage = "Vui lòng nhập tên đăng nhập.")]
+        public string Username { get; set; } = null!;
+        
+        [Required(ErrorMessage = "Vui lòng chọn ProfileStatus mới.")]
+        [RegularExpression("^(Sẵn sàng hiến máu|Đang nghỉ ngơi)$", ErrorMessage = "ProfileStatus chỉ có thể là 'Sẵn sàng hiến máu' hoặc 'Đang nghỉ ngơi'.")]
         public string NewStatus { get; set; } = null!;
         
         public string? Reason { get; set; }
@@ -150,7 +174,8 @@ namespace BloodDonationAPI.DTO
         public string Email { get; set; } = null!;
         public string Role { get; set; } = null!;
         public string? FullName { get; set; }
-        public string ProfileStatus { get; set; } = null!;
+        public string ProfileStatus { get; set; } = null!; // Giữ nguyên
+        public string UserStatus { get; set; } = null!; // Thêm mới
         public DateTime CreatedDate { get; set; }
     }
 }

@@ -48,9 +48,16 @@ namespace BloodDonationAPI.Service.Impl
                     query = query.Where(u => u.BloodType == request.BloodType);
                 }
 
+                // 🆕 Filter theo ProfileStatus (giữ nguyên)
                 if (!string.IsNullOrEmpty(request.ProfileStatus))
                 {
                     query = query.Where(u => u.ProfileStatus == request.ProfileStatus);
+                }
+
+                // 🆕 Filter theo UserStatus (thêm mới)
+                if (!string.IsNullOrEmpty(request.UserStatus))
+                {
+                    query = query.Where(u => u.UserStatus == request.UserStatus);
                 }
 
                 // Đếm tổng số bản ghi
@@ -70,12 +77,13 @@ namespace BloodDonationAPI.Service.Impl
                         Gender = u.Gender,
                         Phone = u.Phone,
                         Address = u.Address,
-                        ProfileStatus = u.ProfileStatus,
+                        ProfileStatus = u.ProfileStatus, // Giữ nguyên
+                        UserStatus = u.UserStatus, // Thêm mới
                         BloodType = u.BloodType,
                         TotalAppointments = u.AppointmentRecords.Count,
                         TotalDonations = u.AppointmentRecords.Count(a => a.Status == "Completed"),
-                        CreatedDate = DateTime.Now, // Có thể thêm trường CreatedDate vào User entity
-                        LastLoginDate = DateTime.Now // Có thể thêm trường LastLoginDate vào User entity
+                        CreatedDate = DateTime.Now,
+                        LastLoginDate = DateTime.Now
                     })
                     .OrderBy(u => u.Username)
                     .ToListAsync();
@@ -112,7 +120,8 @@ namespace BloodDonationAPI.Service.Impl
                         Gender = u.Gender,
                         Phone = u.Phone,
                         Address = u.Address,
-                        ProfileStatus = u.ProfileStatus,
+                        ProfileStatus = u.ProfileStatus, // Giữ nguyên
+                        UserStatus = u.UserStatus, // Thêm mới
                         BloodType = u.BloodType,
                         TotalAppointments = u.AppointmentRecords.Count,
                         TotalDonations = u.AppointmentRecords.Count(a => a.Status == "Completed"),
@@ -150,7 +159,8 @@ namespace BloodDonationAPI.Service.Impl
                 user.Gender = request.Gender;
                 user.Phone = request.Phone;
                 user.Address = request.Address;
-                user.ProfileStatus = request.ProfileStatus;
+                user.ProfileStatus = request.ProfileStatus; // Giữ nguyên
+                user.UserStatus = request.UserStatus; // Thêm mới
                 user.BloodType = request.BloodType;
 
                 await _context.SaveChangesAsync();
@@ -175,11 +185,11 @@ namespace BloodDonationAPI.Service.Impl
                     return false;
                 }
 
-                user.ProfileStatus = request.NewStatus;
+                // 🆕 Cập nhật UserStatus mới (cho workflow admin)
+                user.UserStatus = request.NewStatus;
                 await _context.SaveChangesAsync();
 
-                // Có thể thêm log hoặc notification về việc thay đổi trạng thái
-                _logger.LogInformation($"User {request.Username} status changed to {request.NewStatus}. Reason: {request.Reason}");
+                _logger.LogInformation($"User {request.Username} UserStatus changed to {request.NewStatus}. Reason: {request.Reason}");
 
                 return true;
             }
@@ -190,45 +200,29 @@ namespace BloodDonationAPI.Service.Impl
             }
         }
 
-        public async Task<bool> DeleteUserAsync(string username)
+        // 🆕 Thêm method mới để thay đổi ProfileStatus
+        public async Task<bool> ChangeProfileStatusAsync(ChangeProfileStatusDto request)
         {
             try
             {
                 var user = await _context.Users
-                    .FirstOrDefaultAsync(u => u.Username == username);
+                    .FirstOrDefaultAsync(u => u.Username == request.Username);
 
                 if (user == null)
                 {
                     return false;
                 }
 
-                // Kiểm tra xem user có dữ liệu liên quan không
-                var hasAppointments = await _context.AppointmentRecords
-                    .AnyAsync(a => a.Username == username);
-
-                var hasBlogs = await _context.Blogs
-                    .AnyAsync(b => b.Username == username);
-
-                var hasEmergencies = await _context.Emergencies
-                    .AnyAsync(e => e.Username == username);
-
-                if (hasAppointments || hasBlogs || hasEmergencies)
-                {
-                    // Nếu có dữ liệu liên quan, chỉ thay đổi trạng thái thành "Deleted"
-                    user.ProfileStatus = "Deleted";
-                }
-                else
-                {
-                    // Nếu không có dữ liệu liên quan, xóa hoàn toàn
-                    _context.Users.Remove(user);
-                }
-
+                user.ProfileStatus = request.NewStatus;
                 await _context.SaveChangesAsync();
+
+                _logger.LogInformation($"User {request.Username} ProfileStatus changed to {request.NewStatus}. Reason: {request.Reason}");
+
                 return true;
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error in DeleteUserAsync: {ex.Message}");
+                _logger.LogError($"Error in ChangeProfileStatusAsync: {ex.Message}");
                 throw;
             }
         }
@@ -254,7 +248,8 @@ namespace BloodDonationAPI.Service.Impl
                         Gender = u.Gender,
                         Phone = u.Phone,
                         Address = u.Address,
-                        ProfileStatus = u.ProfileStatus,
+                        ProfileStatus = u.ProfileStatus, // Giữ nguyên
+                        UserStatus = u.UserStatus, // Thêm mới
                         BloodType = u.BloodType,
                         TotalAppointments = u.AppointmentRecords.Count,
                         TotalDonations = u.AppointmentRecords.Count(a => a.Status == "Completed"),
@@ -280,7 +275,8 @@ namespace BloodDonationAPI.Service.Impl
             }
         }
 
-        public async Task<UserListResponseDto> GetUsersByStatusAsync(string status, int page = 1, int pageSize = 10)
+        // 🆕 Method cho ProfileStatus (giữ nguyên)
+        public async Task<UserListResponseDto> GetUsersByProfileStatusAsync(string status, int page = 1, int pageSize = 10)
         {
             try
             {
@@ -302,6 +298,7 @@ namespace BloodDonationAPI.Service.Impl
                         Phone = u.Phone,
                         Address = u.Address,
                         ProfileStatus = u.ProfileStatus,
+                        UserStatus = u.UserStatus,
                         BloodType = u.BloodType,
                         TotalAppointments = u.AppointmentRecords.Count,
                         TotalDonations = u.AppointmentRecords.Count(a => a.Status == "Completed"),
@@ -322,7 +319,56 @@ namespace BloodDonationAPI.Service.Impl
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error in GetUsersByStatusAsync: {ex.Message}");
+                _logger.LogError($"Error in GetUsersByProfileStatusAsync: {ex.Message}");
+                throw;
+            }
+        }
+
+        // 🆕 Method cho UserStatus (mới)
+        public async Task<UserListResponseDto> GetUsersByUserStatusAsync(string status, int page = 1, int pageSize = 10)
+        {
+            try
+            {
+                var query = _context.Users.Where(u => u.UserStatus == status);
+
+                var totalCount = await query.CountAsync();
+
+                var users = await query
+                    .Skip((page - 1) * pageSize)
+                    .Take(pageSize)
+                    .Select(u => new UserListDto
+                    {
+                        Username = u.Username,
+                        Email = u.Email,
+                        Role = u.Role,
+                        FullName = u.FullName,
+                        DateOfBirth = u.DateOfBirth,
+                        Gender = u.Gender,
+                        Phone = u.Phone,
+                        Address = u.Address,
+                        ProfileStatus = u.ProfileStatus,
+                        UserStatus = u.UserStatus,
+                        BloodType = u.BloodType,
+                        TotalAppointments = u.AppointmentRecords.Count,
+                        TotalDonations = u.AppointmentRecords.Count(a => a.Status == "Completed"),
+                        CreatedDate = DateTime.Now,
+                        LastLoginDate = DateTime.Now
+                    })
+                    .OrderBy(u => u.Username)
+                    .ToListAsync();
+
+                return new UserListResponseDto
+                {
+                    Users = users,
+                    TotalCount = totalCount,
+                    Page = page,
+                    PageSize = pageSize,
+                    TotalPages = (int)Math.Ceiling((double)totalCount / pageSize)
+                };
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in GetUsersByUserStatusAsync: {ex.Message}");
                 throw;
             }
         }
@@ -331,6 +377,7 @@ namespace BloodDonationAPI.Service.Impl
         {
             try
             {
+                // Đếm tổng số user trong hệ thống
                 return await _context.Users.CountAsync();
             }
             catch (Exception ex)
@@ -351,12 +398,16 @@ namespace BloodDonationAPI.Service.Impl
 
                 // Số user theo role
                 statistics["AdminUsers"] = await _context.Users.CountAsync(u => u.Role == "Admin");
+                statistics["StaffUsers"] = await _context.Users.CountAsync(u => u.Role == "Staff");
                 statistics["RegularUsers"] = await _context.Users.CountAsync(u => u.Role == "User");
 
-                // Số user theo trạng thái
-                statistics["ActiveUsers"] = await _context.Users.CountAsync(u => u.ProfileStatus == "Active");
-                statistics["InactiveUsers"] = await _context.Users.CountAsync(u => u.ProfileStatus == "Inactive");
-                statistics["DeletedUsers"] = await _context.Users.CountAsync(u => u.ProfileStatus == "Deleted");
+                // 🆕 Thống kê theo ProfileStatus (chỉ 2 trạng thái)
+                statistics["ReadyToDonate"] = await _context.Users.CountAsync(u => u.ProfileStatus == "Sẵn sàng hiến máu");
+                statistics["Resting"] = await _context.Users.CountAsync(u => u.ProfileStatus == "Đang nghỉ ngơi");
+
+                // 🆕 Thống kê theo UserStatus (chỉ Active và Inactive)
+                statistics["ActiveUsers"] = await _context.Users.CountAsync(u => u.UserStatus == "Active");
+                statistics["InactiveUsers"] = await _context.Users.CountAsync(u => u.UserStatus == "Inactive");
 
                 // Số user có đặt lịch hiến máu
                 statistics["UsersWithAppointments"] = await _context.Users
@@ -401,7 +452,7 @@ namespace BloodDonationAPI.Service.Impl
                 var newUser = new User
                 {
                     Username = request.Username,
-                    Password = request.Password, // Trong thực tế nên hash password
+                    Password = request.Password,
                     Email = request.Email,
                     Role = request.Role,
                     FullName = request.FullName,
@@ -410,7 +461,8 @@ namespace BloodDonationAPI.Service.Impl
                     Phone = request.Phone,
                     Address = request.Address,
                     BloodType = request.BloodType,
-                    ProfileStatus = "Active"
+                    ProfileStatus = "Sẵn sàng hiến máu", // 🆕 Sửa từ "Active" thành "Sẵn sàng hiến máu"
+                    UserStatus = "Active"
                 };
 
                 _context.Users.Add(newUser);
@@ -426,6 +478,7 @@ namespace BloodDonationAPI.Service.Impl
                     Role = newUser.Role!,
                     FullName = newUser.FullName,
                     ProfileStatus = newUser.ProfileStatus!,
+                    UserStatus = newUser.UserStatus!,
                     CreatedDate = DateTime.Now
                 };
             }

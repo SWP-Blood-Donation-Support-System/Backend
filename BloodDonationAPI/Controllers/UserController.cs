@@ -44,6 +44,12 @@ namespace BloodDonationAPI.Controllers
                     return Unauthorized(new { message = "Invalid username or password" });
                 }
 
+                // 🆕 Kiểm tra UserStatus - không cho đăng nhập nếu Inactive
+                if (user.UserStatus == "Inactive")
+                {
+                    return Unauthorized(new { message = "Tài khoản của bạn đã bị vô hiệu hóa. Vui lòng liên hệ admin để được hỗ trợ." });
+                }
+
                 var token = _jwtService.GenerateToken(user);
 
                 return Ok(new
@@ -60,7 +66,8 @@ namespace BloodDonationAPI.Controllers
                         phone = user.Phone,
                         address = user.Address,
                         bloodType = user.BloodType,
-
+                        profileStatus = user.ProfileStatus,
+                        userStatus = user.UserStatus
                     }
                 });
             }
