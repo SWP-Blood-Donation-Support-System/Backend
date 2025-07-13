@@ -722,9 +722,9 @@ namespace BloodDonationAPI.Service
                     })
                     .ToListAsync();
 
-                // Tính toán khoảng cách và sắp xếp
+                // Tính toán khoảng cách ổn định và sắp xếp
                 var result = availableDonors.Select(donor => {
-                    double distanceInKm = CalculateDistanceFromAddress(donor.Address);
+                    double distanceInKm = CalculateStableDistanceFromAddress(donor.Address, donor.Username);
                     string formattedDistance = FormatDistance(distanceInKm);
                     
                     return new {
@@ -801,9 +801,9 @@ namespace BloodDonationAPI.Service
                     })
                     .ToListAsync();
 
-                // Tính toán khoảng cách dựa trên địa chỉ bệnh viện và sắp xếp
+                // Tính toán khoảng cách ổn định dựa trên địa chỉ bệnh viện và sắp xếp
                 var result = approvedRequests.Select(request => {
-                    double distanceInKm = CalculateDistanceFromAddress(request.HospitalAddress);
+                    double distanceInKm = CalculateStableDistanceFromAddress(request.HospitalAddress, request.EmergencyId.ToString());
                     string formattedDistance = FormatDistance(distanceInKm);
                     
                     return new {
@@ -855,6 +855,115 @@ namespace BloodDonationAPI.Service
                 Console.WriteLine($"Error in FindAllApprovedBloodRequests: {ex.Message}");
                 return new List<object>();
             }
+        }
+
+        /// <summary>
+        /// Tính khoảng cách ổn định dựa trên địa chỉ và ID để đảm bảo kết quả không thay đổi khi gọi lại API
+        /// </summary>
+        /// <param name="address">Địa chỉ cần tính khoảng cách</param>
+        /// <param name="uniqueId">ID duy nhất để tạo seed cho việc tính toán</param>
+        /// <returns>Khoảng cách tính bằng km</returns>
+        private double CalculateStableDistanceFromAddress(string address, string uniqueId)
+        {
+            // Đảm bảo address không null
+            address = address ?? string.Empty;
+            
+            if (string.IsNullOrEmpty(address))
+                return double.MaxValue; // Địa chỉ trống sẽ hiển thị cuối cùng
+            
+            // Tạo seed ổn định từ địa chỉ và ID
+            int seed = (address + uniqueId).GetHashCode();
+            if (seed < 0) seed = -seed; // Đảm bảo seed dương
+            var stableRandom = new Random(seed);
+            
+            // Thủ Đức (nơi có điểm mốc - 7 Đ. D1, Long Thạnh Mỹ)
+            if (address.Contains("Long Thạnh Mỹ") || 
+                (address.Contains("Thủ Đức") && address.Contains("D1")))
+            {
+                return 0.3 + stableRandom.NextDouble() * 0.4; // 0.3-0.7km
+            }
+            
+            // Khu vực Thủ Đức
+            if (address.Contains("Thủ Đức") ||
+                address.Contains("Linh Trung") ||
+                address.Contains("Linh Tây") ||
+                address.Contains("Linh Đông") ||
+                address.Contains("Hiệp Phú"))
+            {
+                return 2 + stableRandom.NextDouble() * 2; // 2-4km
+            }
+            
+            // Các quận lân cận Thủ Đức
+            if (address.Contains("Quận 9") || address.Contains("Q9") ||
+                address.Contains("Quận 2") || address.Contains("Q2") ||
+                address.Contains("Bình Thạnh"))
+            {
+                return 5 + stableRandom.NextDouble() * 3; // 5-8km
+            }
+            
+            // Các quận trung tâm TP.HCM
+            if (address.Contains("Quận 1") || address.Contains("Q1") ||
+                address.Contains("Quận 3") || address.Contains("Q3") ||
+                address.Contains("Quận 4") || address.Contains("Q4") ||
+                address.Contains("Quận 5") || address.Contains("Q5") ||
+                address.Contains("Quận 10") || address.Contains("Q10"))
+            {
+                return 8 + stableRandom.NextDouble() * 4; // 8-12km
+            }
+            
+            // Các quận khác trong TP.HCM
+            if (address.Contains("TP.HCM") || address.Contains("TP. HCM") || 
+                address.Contains("HCM") || address.Contains("Hồ Chí Minh") ||
+                address.Contains("Tân Bình") || address.Contains("Gò Vấp") ||
+                address.Contains("Tân Phú") || address.Contains("Bình Tân"))
+            {
+                return 10 + stableRandom.NextDouble() * 8; // 10-18km
+            }
+            
+            // Các tỉnh lân cận
+            if (address.Contains("Bình Dương") ||
+                address.Contains("Đồng Nai") ||
+                address.Contains("Long An") ||
+                address.Contains("Vũng Tàu") ||
+                address.Contains("Bà Rịa"))
+            {
+                return 20 + stableRandom.NextDouble() * 20; // 20-40km
+            }
+            
+            // Các tỉnh miền Nam
+            if (address.Contains("Tiền Giang") ||
+                address.Contains("Bến Tre") ||
+                address.Contains("Cần Thơ") ||
+                address.Contains("An Giang") ||
+                address.Contains("Vĩnh Long") ||
+                address.Contains("Đồng Tháp"))
+            {
+                return 50 + stableRandom.NextDouble() * 50; // 50-100km
+            }
+            
+            // Các tỉnh miền Trung
+            if (address.Contains("Đà Nẵng") ||
+                address.Contains("Huế") ||
+                address.Contains("Quảng Nam") ||
+                address.Contains("Quảng Ngãi") ||
+                address.Contains("Nha Trang") ||
+                address.Contains("Khánh Hòa"))
+            {
+                return 500 + stableRandom.NextDouble() * 200; // 500-700km
+            }
+            
+            // Các tỉnh miền Bắc
+            if (address.Contains("Hà Nội") ||
+                address.Contains("Hải Phòng") ||
+                address.Contains("Quảng Ninh") ||
+                address.Contains("Bắc Ninh") ||
+                address.Contains("Hải Dương"))
+            {
+                return 1000 + stableRandom.NextDouble() * 200; // 1000-1200km
+            }
+            
+            // Địa chỉ khác
+            return 100 + stableRandom.NextDouble() * 500; // 100-600km
         }
     }
 }

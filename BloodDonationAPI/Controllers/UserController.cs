@@ -212,8 +212,8 @@ namespace BloodDonationAPI.Controllers
 
         /// <summary>
         /// Cập nhật thông tin profile người dùng
-        /// Dùng cho user mới từ Google login cần hoàn thiện thông tin,
-        /// hoặc user hiện có muốn cập nhật profile.
+        /// Dùng cho user tạo tài khoản thủ công và user đăng nhập bằng Google.
+        /// Chỉ update các field: username, fullName, dateOfBirth, gender, phone, address, bloodType
         /// </summary>
         /// <param name="updateProfileDto">Thông tin cập nhật</param>
         /// <returns>Thông tin người dùng đã cập nhật</returns>
@@ -229,32 +229,56 @@ namespace BloodDonationAPI.Controllers
                 }
 
                 // Lấy username từ token
-                var username = User.Identity?.Name;
-                if (string.IsNullOrEmpty(username))
+                var currentUsername = User.Identity?.Name;
+                if (string.IsNullOrEmpty(currentUsername))
                 {
                     return Unauthorized(new { message = "Invalid token" });
                 }
 
                 // Tìm user trong database
-                var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == username);
+                var user = await _context.Users.FirstOrDefaultAsync(u => u.Username == currentUsername);
                 if (user == null)
                 {
                     return NotFound(new { message = "User not found" });
                 }
 
-                // Cập nhật thông tin
+                // Kiểm tra nếu có cập nhật username và username mới khác username hiện tại
+                if (!string.IsNullOrWhiteSpace(updateProfileDto.Username) && 
+                    updateProfileDto.Username != currentUsername)
+                {
+                    // Kiểm tra username mới đã tồn tại chưa
+                    var existingUser = await _context.Users
+                        .FirstOrDefaultAsync(u => u.Username == updateProfileDto.Username);
+                    if (existingUser != null)
+                    {
+                        return BadRequest(new { message = "Username already exists" });
+                    }
+                    
+                    // Cập nhật username
+                    user.Username = updateProfileDto.Username;
+                }
+
+                // Cập nhật fullName
+                if (!string.IsNullOrWhiteSpace(updateProfileDto.FullName))
+                    user.FullName = updateProfileDto.FullName;
+
+                // Cập nhật dateOfBirth
                 if (updateProfileDto.DateOfBirth.HasValue)
                     user.DateOfBirth = updateProfileDto.DateOfBirth;
                 
+                // Cập nhật gender
                 if (!string.IsNullOrWhiteSpace(updateProfileDto.Gender))
                     user.Gender = updateProfileDto.Gender;
                 
+                // Cập nhật phone
                 if (!string.IsNullOrWhiteSpace(updateProfileDto.Phone))
                     user.Phone = updateProfileDto.Phone;
                 
+                // Cập nhật address
                 if (!string.IsNullOrWhiteSpace(updateProfileDto.Address))
                     user.Address = updateProfileDto.Address;
                 
+                // Cập nhật bloodType
                 if (!string.IsNullOrWhiteSpace(updateProfileDto.BloodType))
                 {
                     // Validate blood type
@@ -268,24 +292,27 @@ namespace BloodDonationAPI.Controllers
                         return BadRequest(new { message = "Invalid blood type. Must be A+, A-, B+, B-, AB+, AB-, O+, or O-" });
                     }
                 }
-                
-                if (!string.IsNullOrWhiteSpace(updateProfileDto.ProfileStatus))
-                    user.ProfileStatus = updateProfileDto.ProfileStatus;
-                
-                if (!string.IsNullOrWhiteSpace(updateProfileDto.FullName))
-                    user.FullName = updateProfileDto.FullName;
 
-                // Kiểm tra nếu profile đã hoàn thành
+                // Tự động cập nhật ProfileStatus dựa trên độ hoàn thiện của profile
                 if (IsProfileComplete(user))
                 {
-                    user.ProfileStatus = "Sẵn sàng hiến máu";
+                    user.ProfileStatus = "Active";
+                }
+                else
+                {
+                    user.ProfileStatus = "Incomplete";
                 }
 
-                await _context.SaveChangesAsync();
+                // Lưu thay đổi vào database
+                var changesSaved = await _context.SaveChangesAsync();
+                
+                // Log để kiểm tra
+                Console.WriteLine($"Number of changes saved to database: {changesSaved}");
 
                 return Ok(new
                 {
                     message = "Profile updated successfully",
+                    changesSaved = changesSaved,
                     user = new
                     {
                         username = user.Username,

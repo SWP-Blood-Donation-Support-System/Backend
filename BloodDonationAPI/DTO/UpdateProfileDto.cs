@@ -4,6 +4,12 @@ namespace BloodDonationAPI.DTO
 {
     public class UpdateProfileDto
     {
+        [StringLength(50)]
+        public string? Username { get; set; }
+        
+        [StringLength(100)]
+        public string? FullName { get; set; }
+        
         public DateOnly? DateOfBirth { get; set; }
         
         [StringLength(10)]
@@ -21,8 +27,5 @@ namespace BloodDonationAPI.DTO
         
         [StringLength(50)]
         public string? ProfileStatus { get; set; }
-        
-        [StringLength(100)]
-        public string? FullName { get; set; }
     }
 }

@@ -197,7 +197,7 @@ namespace BloodDonationAPI.Service
 
                 if (today >= nextEligibleDate)
                 {
-                    item.User.ProfileStatus = "Active"; // Cập nhật trạng thái người dùng thành "Active"
+                    item.User.ProfileStatus = "Sẵn sàng hiến máu"; // Cập nhật trạng thái người dùng thành "Sẵn sàng hiến máu"
                     Console.WriteLine($"✅ {item.User.Username} đã nghỉ đủ {waitDate} ngày.");
                 }
 

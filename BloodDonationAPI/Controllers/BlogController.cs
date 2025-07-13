@@ -59,6 +59,18 @@ namespace BloodDonationAPI.Controllers
         }
 
         /// <summary>
+        /// Lấy nội dung BlogDetail theo BlogId
+        /// </summary>
+        [HttpGet("GetBlogDetail/{blogId}")]
+        public async Task<IActionResult> GetBlogDetail(int blogId)
+        {
+            var detail = await _blogService.GetBlogDetailById(blogId);
+            if (detail == null)
+                return NotFound(new { message = "Blog detail not found." });
+            return Ok(new { blogId, blogDetail = detail });
+        }
+
+        /// <summary>
         /// Tạo blog mới
         /// </summary>
         [HttpPost("CreateBlog")]
