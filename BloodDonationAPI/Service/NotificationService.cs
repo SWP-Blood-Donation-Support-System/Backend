@@ -80,9 +80,9 @@ namespace BloodDonationAPI.Service
 
                 // Lấy tỉnh thành từ địa chỉ bệnh viện
                 var hospitalProvince = emergency.Hospital.HospitalAddress?.Split(',').LastOrDefault()?.Trim();
-                // Lấy user phù hợp nhóm máu, có địa chỉ và ProfileStatus là "Active"
+                // Lấy user phù hợp nhóm máu, có địa chỉ và ProfileStatus là "Sẵn sàng hiến máu"
                 var users = await _context.Users
-                    .Where(u => u.BloodType == emergency.BloodType && u.Address != null && u.ProfileStatus == "Active")
+                    .Where(u => u.BloodType == emergency.BloodType && u.Address != null && u.ProfileStatus == "Sẵn sàng hiến máu")
                     .ToListAsync();
                 // Lọc lại bằng LINQ to Objects
                 var matchingUsers = users

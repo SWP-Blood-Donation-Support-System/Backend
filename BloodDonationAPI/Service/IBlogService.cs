@@ -10,5 +10,6 @@ namespace BloodDonationAPI.Service
         Task<string> CreateBlog(string username, CreateBlogDto dto);
         Task<string> UpdateBlog(int id, string username, string role, UpdateBlogDto dto);
         Task<string> DeleteBlog(int id, string username, string role);
+        Task<string?> GetBlogDetailById(int blogId);
     }
 } 
