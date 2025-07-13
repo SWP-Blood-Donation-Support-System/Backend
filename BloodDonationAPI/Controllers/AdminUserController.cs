@@ -170,17 +170,13 @@ namespace BloodDonationAPI.Controllers
         }
 
         /// <summary>
-        /// Thay đổi trạng thái người dùng (khóa/mở khóa tài khoản)
+        /// Thay đổi trạng thái người dùng (Active/Inactive)
         /// </summary>
         /// <param name="request">Thông tin thay đổi trạng thái</param>
-        /// <returns>Kết quả thay đổi trạng thái</returns>
+        /// <returns>Kết quả thay đổi</returns>
         /// <remarks>
-        /// API này cho phép admin:
-        /// - Khóa tài khoản người dùng (status: "Inactive")
-        /// - Mở khóa tài khoản (status: "Active")
-        /// - Xóa tài khoản (status: "Deleted")
-        /// 
-        /// Các trạng thái có thể: "Active", "Inactive", "Deleted"
+        /// API này cho phép thay đổi UserStatus của người dùng.
+        /// Các trạng thái có thể: "Active", "Inactive"
         /// </remarks>
         [HttpPut("status")]
         public async Task<IActionResult> ChangeUserStatus([FromBody] ChangeUserStatusDto request)
@@ -210,7 +206,7 @@ namespace BloodDonationAPI.Controllers
                 return Ok(new
                 {
                     success = true,
-                    message = $"Thay đổi trạng thái người dùng {request.Username} thành công thành {request.NewStatus}"
+                    message = $"Thay đổi trạng thái người dùng {request.Username} thành {request.NewStatus} thành công"
                 });
             }
             catch (Exception ex)
@@ -226,45 +222,48 @@ namespace BloodDonationAPI.Controllers
         }
 
         /// <summary>
-        /// Xóa người dùng
+        /// Thay đổi ProfileStatus của người dùng
         /// </summary>
-        /// <param name="username">Tên đăng nhập của người dùng cần xóa</param>
-        /// <returns>Kết quả xóa</returns>
-        /// <remarks>
-        /// API này thực hiện soft delete:
-        /// - Nếu người dùng có dữ liệu liên quan (appointments, blogs, emergencies): chỉ đổi status thành "Deleted"
-        /// - Nếu không có dữ liệu liên quan: xóa hoàn toàn khỏi database
-        /// 
-        /// Lưu ý: Chỉ nên sử dụng khi thực sự cần thiết
-        /// </remarks>
-        [HttpDelete("{username}")]
-        public async Task<IActionResult> DeleteUser(string username)
+        /// <param name="request">Thông tin thay đổi ProfileStatus</param>
+        /// <returns>Kết quả thay đổi ProfileStatus</returns>
+        [HttpPut("profile-status")]
+        public async Task<IActionResult> ChangeProfileStatus([FromBody] ChangeProfileStatusDto request)
         {
             try
             {
-                var result = await _adminUserService.DeleteUserAsync(username);
+                if (!ModelState.IsValid)
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "Dữ liệu không hợp lệ",
+                        errors = ModelState.Values.SelectMany(v => v.Errors.Select(e => e.ErrorMessage))
+                    });
+                }
+
+                var result = await _adminUserService.ChangeProfileStatusAsync(request);
                 if (!result)
                 {
                     return NotFound(new
                     {
                         success = false,
-                        message = $"Không tìm thấy người dùng với username: {username}"
+                        message = $"Không tìm thấy người dùng với username: {request.Username}"
                     });
                 }
 
                 return Ok(new
                 {
                     success = true,
-                    message = $"Xóa người dùng {username} thành công"
+                    message = $"Thay đổi ProfileStatus của {request.Username} thành {request.NewStatus} thành công"
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error in DeleteUser: {ex.Message}");
+                _logger.LogError($"Error in ChangeProfileStatus: {ex.Message}");
                 return StatusCode(500, new
                 {
                     success = false,
-                    message = "Lỗi server khi xóa người dùng",
+                    message = "Lỗi server khi thay đổi ProfileStatus",
                     error = ex.Message
                 });
             }
@@ -310,38 +309,86 @@ namespace BloodDonationAPI.Controllers
         }
 
         /// <summary>
-        /// Lấy danh sách người dùng theo trạng thái
+        /// Lấy danh sách người dùng theo ProfileStatus
         /// </summary>
-        /// <param name="status">Trạng thái cần lọc (Active, Inactive, Deleted)</param>
-        /// <param name="page">Số trang</param>
-        /// <param name="pageSize">Kích thước trang</param>
-        /// <returns>Danh sách người dùng theo trạng thái</returns>
-        /// <remarks>
-        /// API này lấy danh sách người dùng theo trạng thái:
-        /// - status = "Active": Người dùng đang hoạt động
-        /// - status = "Inactive": Người dùng bị khóa
-        /// - status = "Deleted": Người dùng đã bị xóa
-        /// </remarks>
-        [HttpGet("status/{status}")]
-        public async Task<IActionResult> GetUsersByStatus(string status, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        /// <param name="status">ProfileStatus cần lọc (Sẵn sàng hiến máu, Đang nghỉ ngơi)</param>
+        /// <param name="page">Trang hiện tại (mặc định: 1)</param>
+        /// <param name="pageSize">Số lượng mỗi trang (mặc định: 10)</param>
+        /// <returns>Danh sách người dùng theo ProfileStatus</returns>
+        [HttpGet("profile-status/{status}")]
+        public async Task<IActionResult> GetUsersByProfileStatus(string status, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
         {
             try
             {
-                var result = await _adminUserService.GetUsersByStatusAsync(status, page, pageSize);
+                // Validate trạng thái hợp lệ cho ProfileStatus
+                var validStatuses = new[] { "Sẵn sàng hiến máu", "Đang nghỉ ngơi" };
+                if (!validStatuses.Contains(status))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "ProfileStatus không hợp lệ. Chỉ chấp nhận: 'Sẵn sàng hiến máu', 'Đang nghỉ ngơi'"
+                    });
+                }
+
+                var result = await _adminUserService.GetUsersByProfileStatusAsync(status, page, pageSize);
                 return Ok(new
                 {
                     success = true,
-                    message = $"Lấy danh sách người dùng theo trạng thái {status} thành công",
+                    message = $"Lấy danh sách người dùng theo ProfileStatus {status} thành công",
                     data = result
                 });
             }
             catch (Exception ex)
             {
-                _logger.LogError($"Error in GetUsersByStatus: {ex.Message}");
+                _logger.LogError($"Error in GetUsersByProfileStatus: {ex.Message}");
                 return StatusCode(500, new
                 {
                     success = false,
-                    message = "Lỗi server khi lấy danh sách người dùng theo trạng thái",
+                    message = "Lỗi server khi lấy danh sách người dùng theo ProfileStatus",
+                    error = ex.Message
+                });
+            }
+        }
+
+        /// <summary>
+        /// Lấy danh sách người dùng theo UserStatus
+        /// </summary>
+        /// <param name="status">UserStatus cần lọc (Active, Inactive)</param>
+        /// <param name="page">Trang hiện tại (mặc định: 1)</param>
+        /// <param name="pageSize">Số lượng mỗi trang (mặc định: 10)</param>
+        /// <returns>Danh sách người dùng theo UserStatus</returns>
+        [HttpGet("user-status/{status}")]
+        public async Task<IActionResult> GetUsersByUserStatus(string status, [FromQuery] int page = 1, [FromQuery] int pageSize = 10)
+        {
+            try
+            {
+                // Validate trạng thái hợp lệ cho UserStatus
+                var validStatuses = new[] { "Active", "Inactive" };
+                if (!validStatuses.Contains(status))
+                {
+                    return BadRequest(new
+                    {
+                        success = false,
+                        message = "UserStatus không hợp lệ. Chỉ chấp nhận: Active, Inactive"
+                    });
+                }
+
+                var result = await _adminUserService.GetUsersByUserStatusAsync(status, page, pageSize);
+                return Ok(new
+                {
+                    success = true,
+                    message = $"Lấy danh sách người dùng theo UserStatus {status} thành công",
+                    data = result
+                });
+            }
+            catch (Exception ex)
+            {
+                _logger.LogError($"Error in GetUsersByUserStatus: {ex.Message}");
+                return StatusCode(500, new
+                {
+                    success = false,
+                    message = "Lỗi server khi lấy danh sách người dùng theo UserStatus",
                     error = ex.Message
                 });
             }
@@ -382,16 +429,13 @@ namespace BloodDonationAPI.Controllers
         /// <summary>
         /// Lấy thống kê tổng quan về người dùng
         /// </summary>
-        /// <returns>Thống kê chi tiết về người dùng</returns>
+        /// <returns>Thống kê chi tiết</returns>
         /// <remarks>
-        /// API này trả về thống kê chi tiết bao gồm:
+        /// Bao gồm:
         /// - Tổng số người dùng
-        /// - Số admin và user thường
-        /// - Số người dùng theo trạng thái (Active, Inactive, Deleted)
-        /// - Số người dùng có đặt lịch hiến máu
-        /// - Số người dùng đã hiến máu thành công
-        /// 
-        /// Dùng để hiển thị dashboard cho admin
+        /// - Số người dùng theo vai trò (Admin, Staff, User)
+        /// - Số người dùng theo trạng thái (Active, Inactive)
+        /// - Số người dùng có lịch hẹn và đã hiến máu
         /// </remarks>
         [HttpGet("statistics")]
         public async Task<IActionResult> GetUserStatistics()
