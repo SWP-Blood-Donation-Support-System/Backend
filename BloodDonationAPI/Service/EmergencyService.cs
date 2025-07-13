@@ -128,7 +128,7 @@ namespace BloodDonationAPI.Service
                     return "Invalid status. Status must be either 'Đã xét duyệt' or 'Từ chối'.";
 
                 
-                emergency.EmergencyStatus = status;
+                    emergency.EmergencyStatus = status;
                 await _context.SaveChangesAsync();
 
                 return "Emergency status updated successfully.";

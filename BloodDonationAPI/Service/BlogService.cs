@@ -152,5 +152,11 @@ namespace BloodDonationAPI.Service
                 throw;
             }
         }
+
+        public async Task<string?> GetBlogDetailById(int blogId)
+        {
+            var blog = await _context.Blogs.FindAsync(blogId);
+            return blog?.BlogDetail;
+        }
     }
 } 
