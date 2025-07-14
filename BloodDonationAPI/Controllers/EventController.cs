@@ -2,6 +2,7 @@
 using BloodDonationAPI.Service;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.EntityFrameworkCore;
 
 namespace BloodDonationAPI.Controllers
 {
@@ -119,8 +120,25 @@ namespace BloodDonationAPI.Controllers
         [HttpDelete("DeleteEvent/{id}")]
         public async Task<IActionResult> DeleteEvent(int id)
         {
-            await _eventService.DeleteEventAsync(id);
-            return NoContent();
+            try
+            {
+                var result = await _eventService.DeleteEventAsync(id);
+
+                if (!result)
+                {
+                    return NotFound(new { message = $"Không tìm thấy sự kiện với ID = {id}." });
+                }
+
+                return Ok(new { message = "Xóa sự kiện thành công." });
+            }
+            catch (DbUpdateException ex)
+            {
+                return BadRequest(new { message = "Không thể xóa sự kiện do ràng buộc dữ liệu.", details = ex.Message });
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { message = "Lỗi hệ thống khi xóa sự kiện.", details = ex.Message });
+            }
         }
     }
 }

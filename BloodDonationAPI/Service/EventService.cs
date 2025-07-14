@@ -43,14 +43,15 @@ namespace BloodDonationAPI.Service
                 await _eventRepository.SaveChangesAsync();
             }
         }
-        public async Task DeleteEventAsync(int id)
+        public async Task<bool> DeleteEventAsync(int id)    
         {
             var existingEvent = await _eventRepository.GetByIdAsync(id);
-            if (existingEvent == null) throw new Exception($"Event with ID {id} not found.");
+            if (existingEvent == null) return false;
 
             _eventRepository.Delete(existingEvent);
-                await _eventRepository.SaveChangesAsync();
-            
+            await _eventRepository.SaveChangesAsync();
+            return true;
+
         }
     }
 }
