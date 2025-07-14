@@ -701,7 +701,7 @@ namespace BloodDonationAPI.Service
             {
                 // Lấy tất cả người dùng có ProfileStatus = "Active" và có AppointmentRecord với Status = "Đã hiến"
                 var availableDonors = await _context.Users
-                    .Where(u => u.ProfileStatus == "Active" && u.Role == "User")
+                    .Where(u => u.ProfileStatus == "Sẵn sàng hiến máu" && u.Role == "User")
                     .Where(u => u.AppointmentRecords.Any(ar => ar.Status == "Đã hiến"))
                     .Select(u => new {
                         Username = u.Username,
