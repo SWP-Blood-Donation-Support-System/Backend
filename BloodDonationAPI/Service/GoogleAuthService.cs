@@ -145,7 +145,8 @@ namespace BloodDonationAPI.Service
                 Email = googleUser.Email,
                 FullName = googleUser.Name,
                 Role = "User", // Default role for Google users
-                ProfileStatus = "Chưa hoàn thành", // User needs to complete profile
+                ProfileStatus = "Sẵn sàng hiến máu", // 🆕 Thay đổi từ "Chưa hoàn thành" thành "Sẵn sàng hiến máu"
+                UserStatus = "Active", // 🆕 Thêm UserStatus mặc định
                 Password = GenerateRandomPassword(), // Generate random password for Google users
                 Gender = null, // Will be filled later by user
                 DateOfBirth = null, // Will be filled later by user
