@@ -38,7 +38,7 @@ namespace BloodDonationAPI.Service
                 existingEvent.EventTime = updatedEvent.EventTime;
                 existingEvent.Location = updatedEvent.Location;
                 existingEvent.MaxParticipants = updatedEvent.MaxParticipants;
-
+                existingEvent.BloodTypeRequired = updatedEvent.BloodTypeRequired;
                 _eventRepository.Update(existingEvent);
                 await _eventRepository.SaveChangesAsync();
             }
