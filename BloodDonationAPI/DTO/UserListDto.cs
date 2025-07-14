@@ -20,8 +20,8 @@ namespace BloodDonationAPI.DTO
         
         public string? Address { get; set; }
         
-        [RegularExpression("^(Sẵn sàng hiến máu|Đang nghỉ ngơi)$", ErrorMessage = "ProfileStatus chỉ có thể là 'Sẵn sàng hiến máu' hoặc 'Đang nghỉ ngơi'.")]
-        public string? ProfileStatus { get; set; } // Chỉ 2 trạng thái
+        [RegularExpression("^(Sẵn sàng hiến máu|Đang nghỉ ngơi|Không sẵn sàng)$", ErrorMessage = "ProfileStatus chỉ có thể là 'Sẵn sàng hiến máu', 'Đang nghỉ ngơi', hoặc 'Không sẵn sàng'.")]
+        public string? ProfileStatus { get; set; } // Chỉ 3 trạng thái
         
         [RegularExpression("^(Active|Inactive)$", ErrorMessage = "UserStatus chỉ có thể là Active hoặc Inactive.")]
         public string? UserStatus { get; set; } // Chỉ Active và Inactive
@@ -95,8 +95,8 @@ namespace BloodDonationAPI.DTO
         
         public string? Address { get; set; }
         
-        [RegularExpression("^(Sẵn sàng hiến máu|Đang nghỉ ngơi)$", ErrorMessage = "ProfileStatus chỉ có thể là 'Sẵn sàng hiến máu' hoặc 'Đang nghỉ ngơi'.")]
-        public string? ProfileStatus { get; set; } // Chỉ 2 trạng thái
+        [RegularExpression("^(Sẵn sàng hiến máu|Đang nghỉ ngơi|Không sẵn sàng)$", ErrorMessage = "ProfileStatus chỉ có thể là 'Sẵn sàng hiến máu', 'Đang nghỉ ngơi', hoặc 'Không sẵn sàng'.")]
+        public string? ProfileStatus { get; set; } // Chỉ 3 trạng thái
         
         [RegularExpression("^(Active|Inactive)$", ErrorMessage = "UserStatus chỉ có thể là Active hoặc Inactive.")]
         public string? UserStatus { get; set; } // Thêm mới
@@ -124,7 +124,7 @@ namespace BloodDonationAPI.DTO
         public string Username { get; set; } = null!;
         
         [Required(ErrorMessage = "Vui lòng chọn ProfileStatus mới.")]
-        [RegularExpression("^(Sẵn sàng hiến máu|Đang nghỉ ngơi)$", ErrorMessage = "ProfileStatus chỉ có thể là 'Sẵn sàng hiến máu' hoặc 'Đang nghỉ ngơi'.")]
+        [RegularExpression("^(Sẵn sàng hiến máu|Đang nghỉ ngơi|Không sẵn sàng)$", ErrorMessage = "ProfileStatus chỉ có thể là 'Sẵn sàng hiến máu', 'Đang nghỉ ngơi', hoặc 'Không sẵn sàng'.")]
         public string NewStatus { get; set; } = null!;
         
         public string? Reason { get; set; }
