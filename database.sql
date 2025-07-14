@@ -35,7 +35,8 @@ CREATE TABLE [User] (
   Phone NVARCHAR(20),
   [Address] NVARCHAR(200),
   ProfileStatus NVARCHAR(50), -- Trạng thái hồ sơ
-  BloodType NVARCHAR(5)
+  BloodType NVARCHAR(5),
+  [UserStatus] NVARCHAR(50) -- Trạng thái tài khoản
 );
 
 ----------------------------------------------------------
@@ -178,51 +179,51 @@ CREATE TABLE NotificationRecipient (
 
 
 --1
-INSERT INTO [User] (Username, Password, Email, Role, FullName,DateOfBirth, Gender, Phone, Address, ProfileStatus, BloodType) VALUES
+INSERT INTO [User] (Username, Password, Email, Role, FullName,DateOfBirth, Gender, Phone, Address, ProfileStatus, BloodType, UserStatus) VALUES
 (N'admin1', N'admin1', N'admin@example.com', N'Admin', N'Quản trị viên',
- '1990-01-01', N'Nam', N'0909090909', N'Đà Nẵng', NULL, NULL),
+ '1990-01-01', N'Nam', N'0909090909', N'Đà Nẵng', NULL, NULL, N'Active'),
  
 (N'staff1', N'staff1', N'user1@example.com', N'Staff', N'Nguyễn Văn A',
- '1995-05-10', N'Nam', N'0912345678', N'TP.Hồ Chí Minh', NULL, NULL),
+ '1995-05-10', N'Nam', N'0912345678', N'TP.Hồ Chí Minh', NULL, NULL, N'Active'),
 
 (N'string', N'string', 'Nuser4@email.com', N'Staff', N'Phạm Thị D', 
-  N'1992-11-25', N'Nữ', '0978123456', N'321 Đường Lý Tự Trọng, Q1, TP.Hồ Chí Minh', NULL, NULL),
+  N'1992-11-25', N'Nữ', '0978123456', N'321 Đường Lý Tự Trọng, Q1, TP.Hồ Chí Minh', NULL, NULL, N'Active'),
 
 (N'user1', N'pass1', N'user2@example.com', N'User', N'Trần Thị B',
- '1998-07-20', N'Nữ', N'0987654321', N'Hà Nội', N'Active', 'B-'),
+ '1998-07-20', N'Nữ', N'0987654321', N'Hà Nội', N'Sẵn sàng hiến máu', 'B-', N'Active'),
 
 (N'user2', N'pass2', N'user1@email.com', N'User', N'Nguyễn Văn A', 
- N'1990-05-15', N'Nam', N'0912345678', N'103 Đ. 30 Tháng 4, Phường Thống Nhất, Vũng Tàu, Bà Rịa - Vũng Tàu',N'Active', N'A+'),
+  N'1990-05-15', N'Nam', N'0912345678', N'103 Đ. 30 Tháng 4, Phường Thống Nhất, Vũng Tàu, Bà Rịa - Vũng Tàu',N'Sẵn sàng hiến máu', N'A+', N'Active'),
 
 (N'user3', N'pass3', N'user2@email.com', N'User', N'Trần Thị B', 
-  N'1995-08-20', N'Nữ', N'0987654321', N'456 Đường Nguyễn Huệ, Q1, TP.Hồ Chí Minh', N'Active', N'B+'),
+  N'1995-08-20', N'Nữ', N'0987654321', N'456 Đường Nguyễn Huệ, Q1, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'B+', N'Active'),
 
 (N'user4', N'pass4', N'user3@email.com', N'User', N'Lê Văn C', 
-  N'1985-03-10', 'Nam', N'0909123456', N'789 Đường CMT8, Q3, TP.Hồ Chí Minh', N'Active', N'O+'),
+  N'1985-03-10', 'Nam', N'0909123456', N'789 Đường CMT8, Q3, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'O+', N'Active'),
 
 (N'user5', N'pass5', N'user5@email.com', N'User', N'Hoàng Thị E', 
- '1993-04-12', N'Nữ', N'0911223344', N'101 Đường Hai Bà Trưng, Q1, TP.Hồ Chí Minh', N'Active', N'AB+'),
+ '1993-04-12', N'Nữ', N'0911223344', N'101 Đường Hai Bà Trưng, Q1, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'AB+', N'Active'),
 
 (N'user6', N'pass6', N'user6@email.com', N'User', N'Vũ Văn F', 
- '1988-09-05', N'Nam', N'0988776655', N'202 Đường Lê Duẩn, Q1, TP.Hồ Chí Minh', N'Active', N'AB-'),
+ '1988-09-05', N'Nam', N'0988776655', N'202 Đường Lê Duẩn, Q1, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'AB-', N'Active'),
 
 (N'user7', N'pass7', N'user7@email.com', N'User', N'Đặng Thị G', 
- '1997-12-30', N'Nữ', N'0901122334', N'303 Đường Pasteur, Q3, TP.Hồ Chí Minh', N'Active', N'O-'),
+ '1997-12-30', N'Nữ', N'0901122334', N'303 Đường Pasteur, Q3, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'O-', N'Active'),
 
 (N'user8', N'pass8', N'user8@email.com', N'User', N'Bùi Văn H', 
- '1991-07-18', N'Nam', N'0912345000', N'404 Đường Nguyễn Đình Chiểu, Q1, TP.Hồ Chí Minh', N'Active', N'A-'),
+ '1991-07-18', N'Nam', N'0912345000', N'404 Đường Nguyễn Đình Chiểu, Q1, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'A-', N'Active'),
 
 (N'user9', N'pass9', N'user9@email.com', N'User', N'Lý Thị I', 
- '1994-02-22', N'Nữ', N'0987650001', N'505 Đường Trần Hưng Đạo, Q5, TP.Hồ Chí Minh', N'Active', N'B-'),
+ '1994-02-22', N'Nữ', N'0987650001', N'505 Đường Trần Hưng Đạo, Q5, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'B-',N'Active'),
 
 (N'user10', N'pass10', N'user10@email.com', N'User', N'Phan Văn K', 
- '1989-06-15', N'Nam', N'0909111222', N'606 Đường Cách Mạng Tháng 8, Q10, TP.Hồ Chí Minh', N'Active', N'A+'),
+ '1989-06-15', N'Nam', N'0909111222', N'606 Đường Cách Mạng Tháng 8, Q10, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'A+', N'Active'),
 
 (N'user11', N'pass11', N'user11@email.com', N'User', N'Mai Thị L', 
- '1996-10-08', N'Nữ', N'0912121212', N'707 Đường 3 Tháng 2, Q10, TP.Hồ Chí Minh', N'Active', N'B+'),
+ '1996-10-08', N'Nữ', N'0912121212', N'707 Đường 3 Tháng 2, Q10, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'B+', N'Active'),
 
 (N'user12', N'pass12', N'user12@email.com', N'User', N'Trịnh Văn M', 
- '1990-11-11', N'Nam', N'0988989898', N'808 Đường Lý Thường Kiệt, Q10, TP.Hồ Chí Minh', N'Active', N'O+');
+ '1990-11-11', N'Nam', N'0988989898', N'808 Đường Lý Thường Kiệt, Q10, TP.Hồ Chí Minh', N'Sẵn sàng hiến máu', N'O+', N'Active');
 
 --2
 INSERT INTO Hospital (HospitalName, HospitalAddress, HospitalImage, HospitalPhone)
