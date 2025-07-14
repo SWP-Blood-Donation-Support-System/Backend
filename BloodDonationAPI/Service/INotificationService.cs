@@ -10,5 +10,7 @@ namespace BloodDonationAPI.Service
         Task<List<NotificationDto>> GetNotificationsByBloodType(string bloodType);
         Task<List<NotificationDto>> GetUserNotifications(string username);
         Task<string> UpdateNotificationResponse(int notificationId, string username, string dtoResponseStatus, DateOnly? dtoResponseGo, TimeOnly? dtoResponseTime);
+        Task<string> CreateAdminNotificationForNewEmergency(int emergencyId, string createdBy);
+        Task<string> CreateUserNotificationBloodTransferring(int emergencyId);
     }
 } 

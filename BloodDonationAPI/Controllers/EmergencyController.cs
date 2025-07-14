@@ -91,7 +91,23 @@ namespace BloodDonationAPI.Controllers
                             });
                         }
                     }
-                    
+                    // Nếu là User, tạo notification cho staff/admin biết có đơn mới
+                    else if (role == "User")
+                    {
+                        try
+                        {
+                            var adminNotificationResult = await _notificationService.CreateAdminNotificationForNewEmergency(result.EmergencyId.Value, username);
+                            // Không cần kiểm tra kết quả, chỉ log nếu lỗi
+                            if (adminNotificationResult != "Emergency notification for new emergency created successfully.")
+                            {
+                                _logger.LogWarning("Failed to create Emergency notification: {Result}", adminNotificationResult);
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            _logger.LogError(ex, "Error creating Emergency notification for new emergency");
+                        }
+                    }
                     return Ok(new { 
                         message = result.Message, 
                         emergencyId = result.EmergencyId 
