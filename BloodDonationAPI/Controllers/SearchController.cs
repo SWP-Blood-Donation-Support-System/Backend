@@ -170,7 +170,7 @@ namespace BloodDonationAPI.Controllers
                     currentUser = currentUser,
                     role = role,
                     searchCriteria = new {
-                        profileStatusFilter = "Active",
+                        profileStatusFilter = "Sẵn sàng hiến máu",
                         appointmentStatusFilter = "Đã hiến",
                         referencePoint = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh"
                     },
