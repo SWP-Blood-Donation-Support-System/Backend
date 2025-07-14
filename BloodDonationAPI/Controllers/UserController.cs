@@ -213,7 +213,9 @@ namespace BloodDonationAPI.Controllers
         /// <summary>
         /// Cập nhật thông tin profile người dùng
         /// Dùng cho user tạo tài khoản thủ công và user đăng nhập bằng Google.
-        /// Chỉ update các field: username, fullName, dateOfBirth, gender, phone, address, bloodType
+        /// Chỉ update các field: fullName, dateOfBirth, gender, phone, address, bloodType, profileStatus
+        /// User tạo tài khoản mới sẽ có ProfileStatus mặc định là "Sẵn sàng hiến máu"
+        /// User có thể thay đổi ProfileStatus thành "Không sẵn sàng hiến máu" nếu muốn
         /// </summary>
         /// <param name="updateProfileDto">Thông tin cập nhật</param>
         /// <returns>Thông tin người dùng đã cập nhật</returns>
@@ -240,22 +242,6 @@ namespace BloodDonationAPI.Controllers
                 if (user == null)
                 {
                     return NotFound(new { message = "User not found" });
-                }
-
-                // Kiểm tra nếu có cập nhật username và username mới khác username hiện tại
-                if (!string.IsNullOrWhiteSpace(updateProfileDto.Username) && 
-                    updateProfileDto.Username != currentUsername)
-                {
-                    // Kiểm tra username mới đã tồn tại chưa
-                    var existingUser = await _context.Users
-                        .FirstOrDefaultAsync(u => u.Username == updateProfileDto.Username);
-                    if (existingUser != null)
-                    {
-                        return BadRequest(new { message = "Username already exists" });
-                    }
-                    
-                    // Cập nhật username
-                    user.Username = updateProfileDto.Username;
                 }
 
                 // Cập nhật fullName
@@ -293,15 +279,25 @@ namespace BloodDonationAPI.Controllers
                     }
                 }
 
-                // Tự động cập nhật ProfileStatus dựa trên độ hoàn thiện của profile
-                if (IsProfileComplete(user))
+                // Xử lý ProfileStatus
+                if (!string.IsNullOrWhiteSpace(updateProfileDto.ProfileStatus))
                 {
-                    user.ProfileStatus = "Sẵn sàng hiến máu";
+                    // Kiểm tra nếu user muốn đổi từ "Sẵn sàng hiến máu" thành "Không sẵn sàng hiến máu"
+                    if (user.ProfileStatus == "Sẵn sàng hiến máu" && 
+                        updateProfileDto.ProfileStatus == "Không sẵn sàng hiến máu")
+                    {
+                        user.ProfileStatus = "Không sẵn sàng hiến máu";
+                    }
+                    else if (updateProfileDto.ProfileStatus == "Sẵn sàng hiến máu")
+                    {
+                        user.ProfileStatus = "Sẵn sàng hiến máu";
+                    }
+                    else
+                    {
+                        return BadRequest(new { message = "ProfileStatus chỉ có thể là 'Sẵn sàng hiến máu' hoặc 'Không sẵn sàng hiến máu'" });
+                    }
                 }
-                else
-                {
-                    user.ProfileStatus = "Không sẵn sàng";
-                }
+                // Không còn tự động cập nhật ProfileStatus nữa
 
                 // Lưu thay đổi vào database
                 var changesSaved = await _context.SaveChangesAsync();
