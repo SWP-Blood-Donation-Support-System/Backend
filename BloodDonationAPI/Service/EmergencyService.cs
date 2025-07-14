@@ -9,11 +9,16 @@ namespace BloodDonationAPI.Service
     {
         private readonly BloodDonationSystemContext _context;
         private readonly ILogger<EmergencyService> _logger;
+        private readonly INotificationService _notificationService;
 
-        public EmergencyService(BloodDonationSystemContext context, ILogger<EmergencyService> logger)
+        public EmergencyService(
+            BloodDonationSystemContext context,
+            ILogger<EmergencyService> logger,
+            INotificationService notificationService)
         {
             _context = context;
             _logger = logger;
+            _notificationService = notificationService;
         }
 
         public async Task<RegisterEmergencyResponseDto> RegisterEmergency(string username, string role, RegisterEmergencyDto dto)
@@ -267,6 +272,13 @@ namespace BloodDonationAPI.Service
                 return "Emergency not found.";
             emergency.EmergencyStatus = "Lượng máu đang được chuyển đến";
             await _context.SaveChangesAsync();
+
+            // Gửi thông báo cho user tạo đơn
+            if (_notificationService != null)
+            {
+                await _notificationService.CreateUserNotificationBloodTransferring(emergencyId);
+            }
+
             return "Emergency status set to 'Lượng máu đang được chuyển đến'.";
         }
 

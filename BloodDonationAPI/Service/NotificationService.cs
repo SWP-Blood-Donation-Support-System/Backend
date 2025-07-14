@@ -234,5 +234,81 @@ namespace BloodDonationAPI.Service
                 throw;
             }
         }
+
+        public async Task<string> CreateAdminNotificationForNewEmergency(int emergencyId, string createdBy)
+        {
+            var emergency = await _context.Emergencies
+                .Include(e => e.Hospital)
+                .FirstOrDefaultAsync(e => e.EmergencyId == emergencyId);
+            if (emergency == null)
+                return "Emergency not found.";
+
+            // Tạo notification cho staff và admin
+            var notification = new Notification
+            {
+                EmergencyId = emergencyId,
+                NotificationStatus = "Đã gửi",
+                NotificationTitle = $"Đơn khẩn cấp mới từ người dùng {createdBy}",
+                NotificationContent = $"Người dùng {createdBy} vừa tạo đơn khẩn cấp cần {emergency.RequiredUnits} đơn vị nhóm máu {emergency.BloodType} tại {emergency.Hospital?.HospitalName}",
+                NotificationDate = DateOnly.FromDateTime(DateTime.Now)
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            // Lấy tất cả staff và admin
+            var staffAndAdmins = await _context.Users
+                .Where(u => u.Role == "Staff" || u.Role == "Admin")
+                .ToListAsync();
+            foreach (var user in staffAndAdmins)
+            {
+                var recipient = new NotificationRecipient
+                {
+                    NotificationId = notification.NotificationId,
+                    Username = user.Username,
+                    ResponseStatus = null,
+                    ResponseDate = null,
+                    ResponseGo = null,
+                    ResponseTime = null
+                };
+                _context.NotificationRecipients.Add(recipient);
+            }
+            await _context.SaveChangesAsync();
+            return "Admin notification for new emergency created successfully.";
+        }
+
+        public async Task<string> CreateUserNotificationBloodTransferring(int emergencyId)
+        {
+            var emergency = await _context.Emergencies
+                .Include(e => e.Hospital)
+                .FirstOrDefaultAsync(e => e.EmergencyId == emergencyId);
+            if (emergency == null)
+                return "Emergency not found.";
+            if (string.IsNullOrEmpty(emergency.Username))
+                return "Emergency creator not found.";
+
+            var notification = new Notification
+            {
+                EmergencyId = emergencyId,
+                NotificationStatus = "Đã gửi",
+                NotificationTitle = $"Đơn khẩn cấp của bạn đã được xử lý",
+                NotificationContent = $"Đơn khẩn cấp của bạn đã được chấp thuận và lượng máu đang được chuyển đến tại {emergency.Hospital?.HospitalName}",
+                NotificationDate = DateOnly.FromDateTime(DateTime.Now)
+            };
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            var recipient = new NotificationRecipient
+            {
+                NotificationId = notification.NotificationId,
+                Username = emergency.Username,
+                ResponseStatus = null,
+                ResponseDate = null,
+                ResponseGo = null,
+                ResponseTime = null
+            };
+            _context.NotificationRecipients.Add(recipient);
+            await _context.SaveChangesAsync();
+            return "User notification for blood transferring created successfully.";
+        }
     }
 } 
