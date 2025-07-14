@@ -296,11 +296,11 @@ namespace BloodDonationAPI.Controllers
                 // Tự động cập nhật ProfileStatus dựa trên độ hoàn thiện của profile
                 if (IsProfileComplete(user))
                 {
-                    user.ProfileStatus = "Active";
+                    user.ProfileStatus = "Sẵn sàng hiến máu";
                 }
                 else
                 {
-                    user.ProfileStatus = "Incomplete";
+                    user.ProfileStatus = "Không sẵn sàng";
                 }
 
                 // Lưu thay đổi vào database

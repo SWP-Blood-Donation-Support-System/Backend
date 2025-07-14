@@ -401,9 +401,10 @@ namespace BloodDonationAPI.Service.Impl
                 statistics["StaffUsers"] = await _context.Users.CountAsync(u => u.Role == "Staff");
                 statistics["RegularUsers"] = await _context.Users.CountAsync(u => u.Role == "User");
 
-                // 🆕 Thống kê theo ProfileStatus (chỉ 2 trạng thái)
+                // 🆕 Thống kê theo ProfileStatus (3 trạng thái)
                 statistics["ReadyToDonate"] = await _context.Users.CountAsync(u => u.ProfileStatus == "Sẵn sàng hiến máu");
                 statistics["Resting"] = await _context.Users.CountAsync(u => u.ProfileStatus == "Đang nghỉ ngơi");
+                statistics["NotReady"] = await _context.Users.CountAsync(u => u.ProfileStatus == "Không sẵn sàng");
 
                 // 🆕 Thống kê theo UserStatus (chỉ Active và Inactive)
                 statistics["ActiveUsers"] = await _context.Users.CountAsync(u => u.UserStatus == "Active");

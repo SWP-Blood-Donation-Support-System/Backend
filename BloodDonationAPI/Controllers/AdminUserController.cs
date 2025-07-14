@@ -321,13 +321,13 @@ namespace BloodDonationAPI.Controllers
             try
             {
                 // Validate trạng thái hợp lệ cho ProfileStatus
-                var validStatuses = new[] { "Sẵn sàng hiến máu", "Đang nghỉ ngơi" };
+                var validStatuses = new[] { "Sẵn sàng hiến máu", "Đang nghỉ ngơi", "Không sẵn sàng" };
                 if (!validStatuses.Contains(status))
                 {
                     return BadRequest(new
                     {
                         success = false,
-                        message = "ProfileStatus không hợp lệ. Chỉ chấp nhận: 'Sẵn sàng hiến máu', 'Đang nghỉ ngơi'"
+                        message = "ProfileStatus không hợp lệ. Chỉ chấp nhận: 'Sẵn sàng hiến máu', 'Đang nghỉ ngơi', 'Không sẵn sàng'"
                     });
                 }
 
