@@ -50,7 +50,7 @@ public partial class BloodDonationSystemContext : DbContext
 
     public virtual DbSet<UserSurveyAnswer> UserSurveyAnswers { get; set; }
 
-  
+   
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -195,6 +195,7 @@ public partial class BloodDonationSystemContext : DbContext
 
             entity.Property(e => e.BloodTypeRequired).HasMaxLength(10);
             entity.Property(e => e.CurrentParticipants).HasDefaultValue(0);
+            entity.Property(e => e.EventStatus).HasMaxLength(100);
             entity.Property(e => e.EventTitle).HasMaxLength(100);
             entity.Property(e => e.Location).HasMaxLength(255);
         });

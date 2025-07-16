@@ -23,5 +23,7 @@ public partial class Event
 
     public int? CurrentParticipants { get; set; }
 
+    public string? EventStatus { get; set; }
+
     public virtual ICollection<AppointmentRecord> AppointmentRecords { get; set; } = new List<AppointmentRecord>();
 }
