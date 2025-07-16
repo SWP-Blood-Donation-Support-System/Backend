@@ -18,7 +18,7 @@ namespace BloodDonationAPI.Service
             var today = DateOnly.FromDateTime(DateTime.Now);
 
             return await _context.Events
-                .Where(a => a.EventDate >= today)
+                .Where(a => a.EventDate >= today && a.EventStatus.ToLower()=="public")
                 .Select(a => new EventDto
                 {
                     EventId = a.EventId,

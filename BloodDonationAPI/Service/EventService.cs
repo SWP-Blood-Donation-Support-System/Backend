@@ -23,6 +23,7 @@ namespace BloodDonationAPI.Service
        
         public async Task AddEventAsync(Event newEvent)
         {
+            newEvent.EventStatus = "Public"; // Default status for new events
             await _eventRepository.AddAsync(newEvent);
             await _eventRepository.SaveChangesAsync();
         }
@@ -39,6 +40,7 @@ namespace BloodDonationAPI.Service
                 existingEvent.Location = updatedEvent.Location;
                 existingEvent.MaxParticipants = updatedEvent.MaxParticipants;
                 existingEvent.BloodTypeRequired = updatedEvent.BloodTypeRequired;
+                existingEvent.EventStatus = updatedEvent.EventStatus;
                 _eventRepository.Update(existingEvent);
                 await _eventRepository.SaveChangesAsync();
             }
