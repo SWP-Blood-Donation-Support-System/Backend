@@ -15,8 +15,10 @@
                 using (var scope = _scopeFactory.CreateScope())
                 {
                     var bloodDonationProcessServiece = scope.ServiceProvider.GetRequiredService<IBloodDonationProcessService>();
+                    var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
 
                     await bloodDonationProcessServiece.UpdateEligibleUsersAsync();
+                    await eventService.CancelPastEventsAsync();
                 }
                 // tu dongj chay moi 24h de cap nhat stus cho user
                 await Task.Delay(TimeSpan.FromHours(24), stoppingToken); // Check every 24 hours

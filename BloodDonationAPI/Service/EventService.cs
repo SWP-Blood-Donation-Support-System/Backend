@@ -23,7 +23,7 @@ namespace BloodDonationAPI.Service
        
         public async Task AddEventAsync(Event newEvent)
         {
-            newEvent.EventStatus = "Public"; // Default status for new events
+            newEvent.EventStatus = "Private"; // Default status for new events
             await _eventRepository.AddAsync(newEvent);
             await _eventRepository.SaveChangesAsync();
         }
@@ -54,6 +54,26 @@ namespace BloodDonationAPI.Service
             await _eventRepository.SaveChangesAsync();
             return true;
 
+        }
+
+        public async Task CancelPastEventsAsync()
+        {
+            var today = DateOnly.FromDateTime(DateTime.Now);
+
+            var pastEvents = (await _eventRepository.GetAllAsync())
+                .Where(e => e.EventDate.HasValue && e.EventDate.Value < today && e.EventStatus != "Cancelled")
+                .ToList();
+
+            foreach (var pastEvent in pastEvents)
+            {
+                pastEvent.EventStatus = "Cancelled";
+                _eventRepository.Update(pastEvent);
+            }
+
+            if (pastEvents.Any())
+            {
+                await _eventRepository.SaveChangesAsync();
+            }
         }
     }
 }

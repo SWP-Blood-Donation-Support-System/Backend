@@ -9,5 +9,7 @@ namespace BloodDonationAPI.Service
         Task AddEventAsync(Event newEvent);
         Task UpdateEventAsync(int id ,Event updatedEvent);
         Task<bool> DeleteEventAsync(int id);
+        
+        Task CancelPastEventsAsync();
     }
 }
