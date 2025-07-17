@@ -50,7 +50,7 @@ public partial class BloodDonationSystemContext : DbContext
 
     public virtual DbSet<UserSurveyAnswer> UserSurveyAnswers { get; set; }
 
-   
+    
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -156,7 +156,9 @@ public partial class BloodDonationSystemContext : DbContext
 
             entity.ToTable("DonorDeferral");
 
+            entity.Property(e => e.EndDate).HasColumnType("datetime");
             entity.Property(e => e.ReasonCode).HasMaxLength(50);
+            entity.Property(e => e.StartDate).HasColumnType("datetime");
             entity.Property(e => e.Username).HasMaxLength(50);
 
             entity.HasOne(d => d.ReasonCodeNavigation).WithMany(p => p.DonorDeferrals)

@@ -90,6 +90,7 @@ namespace BloodDonationAPI
             builder.Services.AddScoped<IEventService, EventService>();
             builder.Services.AddScoped<ICertificateService, CertificateService>();
             builder.Services.AddScoped<IHospitalService, HospitalService>();
+            builder.Services.AddScoped<IDeferralReasonService, DeferralReasonService>();
             // them cai generic repository
             builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 

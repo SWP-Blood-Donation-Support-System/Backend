@@ -57,10 +57,10 @@ namespace BloodDonationAPI.Service
             }
             //kiểm tra người dùng có đang bị hoãn hiến máu không
             var today = DateOnly.FromDateTime(DateTime.Today);
-
+            DateTime now = DateTime.Now; 
             var activeDeferrals = await _context.DonorDeferrals
                 .Where(d => d.Username == userName &&
-                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= today)))
+                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= now)))
                 .Include(d => d.ReasonCodeNavigation)
                 .ToListAsync();
 
@@ -192,7 +192,7 @@ namespace BloodDonationAPI.Service
                     .Include(d => d.ReasonCodeNavigation)
                     .FirstOrDefaultAsync(d =>
                         d.Username == h.Username &&
-                        d.StartDate == DateOnly.FromDateTime(h.RegistrationDate ?? DateTime.MinValue));
+                        d.StartDate == (h.RegistrationDate ?? DateTime.MinValue));
 
                 result.Add(new AppointmentHistoryDto
                 {
@@ -284,10 +284,10 @@ namespace BloodDonationAPI.Service
             }
             //kiểm tra người dùng có đang bị hoãn hiến máu không
             var today = DateOnly.FromDateTime(DateTime.Today);
-
+            DateTime now = DateTime.Now;
             var activeDeferrals = await _context.DonorDeferrals
                 .Where(d => d.Username == userName &&
-                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= today)))
+                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= now)))
                 .Include(d => d.ReasonCodeNavigation)
                 .ToListAsync();
 
@@ -467,10 +467,10 @@ namespace BloodDonationAPI.Service
             }
             //kiểm tra người dùng có đang bị hoãn hiến máu không
             var today = DateOnly.FromDateTime(DateTime.Today);
-
+            DateTime now = DateTime.Now;
             var activeDeferrals = await _context.DonorDeferrals
                 .Where(d => d.Username == userName &&
-                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= today)))
+                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= now)))
                 .Include(d => d.ReasonCodeNavigation)
                 .ToListAsync();
 

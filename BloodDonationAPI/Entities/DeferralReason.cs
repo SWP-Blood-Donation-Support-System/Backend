@@ -15,5 +15,9 @@ public partial class DeferralReason
 
     public string? Note { get; set; }
 
+    public int? MinHours { get; set; }
+
+    public int? MinMinutes { get; set; }
+
     public virtual ICollection<DonorDeferral> DonorDeferrals { get; set; } = new List<DonorDeferral>();
 }
