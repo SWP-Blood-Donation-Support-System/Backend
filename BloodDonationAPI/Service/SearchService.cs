@@ -415,41 +415,8 @@ namespace BloodDonationAPI.Service
         /// <returns>List of sample donor data</returns>
         private List<object> GenerateSampleDonors(string bloodType)
         {
-            Console.WriteLine("Generating sample donors for demonstration");
-            var sampleDonors = new List<object>();
-            var random = new Random();
-            var vietnameseNames = new[] { 
-                "Nguyễn Văn An", "Trần Thị Bình", "Lê Minh Cường", "Phạm Hồng Dung", 
-                "Hoàng Văn Ét", "Vũ Thị Giang", "Đặng Minh Hải", "Bùi Thu Hiền" 
-            };
-            
-            var districts = new[] { 
-                "Thủ Đức", "Quận 1", "Quận 2", "Quận 3", "Quận 5", 
-                "Quận 7", "Quận 9", "Bình Thạnh", "Gò Vấp" 
-            };
-            
-            for (int i = 0; i < 5; i++)
-            {
-                string name = vietnameseNames[random.Next(vietnameseNames.Length)];
-                string district = districts[random.Next(districts.Length)];
-                double distance = random.Next(1, 25) + Math.Round(random.NextDouble(), 2);
-                
-                sampleDonors.Add(new {
-                    FullName = name,
-                    Email = name.Replace(" ", ".").ToLower() + "@gmail.com",
-                    DateOfBirth = DateTime.Now.AddYears(-20 - random.Next(20)),
-                    Gender = random.Next(2) == 0 ? "Nam" : "Nữ",
-                    Phone = $"09{random.Next(10000000, 99999999)}",
-                    Address = $"{random.Next(1, 200)} Đường {random.Next(1, 20)}, {district}, TP.HCM",
-                    BloodType = bloodType,
-                    ProfileStatus = i % 3 == 0 ? "Sẵn sàng hiến máu" : "Không sẵn sàng hiến máu",
-                    Distance = distance,
-                    DistanceFormatted = FormatDistance(distance),
-                    Note = "Dữ liệu mẫu cho mục đích demo"
-                });
-            }
-            
-            return sampleDonors.OrderBy(d => ((dynamic)d).Distance).ToList();
+            Console.WriteLine("No real donors found in database - returning empty list");
+            return new List<object>();
         }
 
         /// <summary>
@@ -610,52 +577,8 @@ namespace BloodDonationAPI.Service
         /// </summary>
         private List<object> GenerateSampleBloodRequests(string bloodType)
         {
-            Console.WriteLine("Generating sample blood requests for demonstration");
-            var sampleRequests = new List<object>();
-            var random = new Random();
-            
-            var hospitals = new[]
-            {
-                new { Name = "Bệnh viện Đại học Y Dược TP.HCM", Address = "215 Hồng Bàng, Quận 5, TP.HCM", Phone = "028-38552229" },
-                new { Name = "Bệnh viện Chợ Rẫy", Address = "201B Nguyễn Chí Thanh, Quận 5, TP.HCM", Phone = "028-38557506" },
-                new { Name = "Bệnh viện Thống Nhất", Address = "1 Lý Thường Kiệt, Quận 10, TP.HCM", Phone = "028-38650377" },
-                new { Name = "Bệnh viện Nguyễn Tri Phuong", Address = "468 Nguyễn Tri Phuong, Quận 10, TP.HCM", Phone = "028-38650146" },
-                new { Name = "Bệnh viện Thủ Đức", Address = "10 Võ Văn Ngân, Thủ Đức, TP.HCM", Phone = "028-37221506" }
-            };
-            
-            for (int i = 0; i < 5; i++)
-            {
-                var hospital = hospitals[i];
-                double distance = CalculateDistanceFromHospitalAddress(hospital.Address);
-                
-                sampleRequests.Add(new
-                {
-                    Id = i + 1,
-                    Distance = FormatDistance(distance),
-                    BloodType = bloodType,
-                    Status = "Đã xét duyệt", // Chỉ hiển thị trạng thái đã xét duyệt
-                    Description = $"Yêu cầu máu khẩn cấp cho bệnh nhân {i + 1}",
-                    EmergencyDate = DateOnly.FromDateTime(DateTime.Now.AddDays(-random.Next(1, 7))),
-                    EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(random.Next(1, 3))),
-                    RequiredUnits = random.Next(1, 5),
-                    EmergencyMedical = $"Bệnh lý {i + 1}",
-                    Hospital = new
-                    {
-                        Id = i + 1,
-                        Name = hospital.Name,
-                        Address = hospital.Address,
-                        Phone = hospital.Phone
-                    },
-                    Requester = new
-                    {
-                        Name = $"Bác sĩ {(char)('A' + i)}",
-                        Phone = $"090{random.Next(1000000, 9999999)}",
-                        Email = $"doctor{i + 1}@hospital.com"
-                    }
-                });
-            }
-            
-            return sampleRequests.OrderBy(r => ExtractNumericDistance(((dynamic)r).Distance)).ToList();
+            Console.WriteLine("No real blood requests found in database - returning empty list");
+            return new List<object>();
         }
 
         /// <summary>
@@ -692,53 +615,46 @@ namespace BloodDonationAPI.Service
         }
 
         /// <summary>
-        /// Tìm kiếm tất cả người hiến máu có điều kiện
+        /// Tìm kiếm tất cả người hiến máu có điều kiện - CHỈ LẤY DỮ LIỆU THỰC TỪ DATABASE
         /// </summary>
-        /// <returns>Danh sách tất cả người hiến máu đã hoàn thành hiến máu và có trạng thái Active</returns>
+        /// <returns>Danh sách tất cả người hiến máu có trạng thái "Sẵn sàng hiến máu" và role "User"</returns>
         public async Task<IEnumerable<object>> FindAllAvailableDonors()
         {
             try
             {
-                // Lấy tất cả người dùng có ProfileStatus = "Active" và có AppointmentRecord với Status = "Đã hiến"
+                Console.WriteLine("Finding all available donors from database...");
+                
+                // Lấy tất cả người dùng có ProfileStatus = "Sẵn sàng hiến máu" và Role = "User"
                 var availableDonors = await _context.Users
-                    .Where(u => u.ProfileStatus == "Sẵn sàng hiến máu" && u.Role == "User")
-                    .Where(u => u.AppointmentRecords.Any(ar => ar.Status == "Đã hiến"))
-                    .Select(u => new {
-                        Username = u.Username,
-                        FullName = u.FullName ?? "Unknown",
-                        Email = u.Email ?? "No email",
-                        DateOfBirth = u.DateOfBirth,
-                        Gender = u.Gender ?? "Unknown",
-                        Phone = u.Phone ?? "No phone",
-                        Address = u.Address ?? "No address",
-                        BloodType = u.BloodType ?? "Unknown",
-                        ProfileStatus = u.ProfileStatus ?? "Unknown",
-                        LastDonationDate = u.AppointmentRecords
-                            .Where(ar => ar.Status == "Đã hiến")
-                            .OrderByDescending(ar => ar.RegistrationDate)
-                            .Select(ar => ar.RegistrationDate)
-                            .FirstOrDefault(),
-                        TotalDonations = u.AppointmentRecords.Count(ar => ar.Status == "Đã hiến")
-                    })
+                    .Where(u => u.ProfileStatus == "Sẵn sàng hiến máu" && 
+                               u.Role == "User" && 
+                               u.UserStatus == "Active")
                     .ToListAsync();
+
+                Console.WriteLine($"Found {availableDonors.Count} available donors in database");
+
+                if (!availableDonors.Any())
+                {
+                    Console.WriteLine("No available donors found in database");
+                    return new List<object>();
+                }
 
                 // Tính toán khoảng cách ổn định và sắp xếp
                 var result = availableDonors.Select(donor => {
-                    double distanceInKm = CalculateStableDistanceFromAddress(donor.Address, donor.Username);
+                    double distanceInKm = CalculateStableDistanceFromAddress(donor.Address ?? "", donor.Username ?? "");
                     string formattedDistance = FormatDistance(distanceInKm);
                     
                     return new {
-                        donor.Username,
-                        donor.FullName,
-                        donor.Email,
-                        donor.DateOfBirth,
-                        donor.Gender,
-                        donor.Phone,
-                        donor.Address,
-                        donor.BloodType,
-                        donor.ProfileStatus,
-                        donor.LastDonationDate,
-                        donor.TotalDonations,
+                        Username = donor.Username ?? "Unknown",
+                        FullName = donor.FullName ?? "Unknown",
+                        Email = donor.Email ?? "No email",
+                        DateOfBirth = donor.DateOfBirth,
+                        Gender = donor.Gender ?? "Unknown",
+                        Phone = donor.Phone ?? "No phone",
+                        Address = donor.Address ?? "No address",
+                        BloodType = donor.BloodType ?? "Unknown",
+                        ProfileStatus = donor.ProfileStatus ?? "Unknown",
+                        UserStatus = donor.UserStatus ?? "Unknown",
                         Distance = formattedDistance,
                         NumericDistance = distanceInKm
                     };
@@ -753,106 +669,89 @@ namespace BloodDonationAPI.Service
                     d.Address,
                     d.BloodType,
                     d.ProfileStatus,
-                    d.LastDonationDate,
-                    d.TotalDonations,
+                    d.UserStatus,
                     d.Distance
                 })
                 .ToList<object>();
 
+                Console.WriteLine($"Returning {result.Count} available donors sorted by distance");
                 return result;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in FindAllAvailableDonors: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return new List<object>();
             }
         }
 
         /// <summary>
-        /// Tìm kiếm tất cả người cần máu có điều kiện
+        /// Tìm kiếm tất cả yêu cầu máu đã được phê duyệt - CHỈ LẤY DỮ LIỆU THỰC TỪ DATABASE
         /// </summary>
-        /// <returns>Danh sách tất cả người cần máu có trạng thái Đã xét duyệt</returns>
+        /// <returns>Danh sách tất cả yêu cầu máu từ bảng BloodRequests có Status = "Đang chờ"</returns>
         public async Task<IEnumerable<object>> FindAllApprovedBloodRequests()
         {
             try
             {
-                // Lấy tất cả Emergency với EmergencyStatus = "Đã xét duyệt"
-                var approvedRequests = await _context.Emergencies
-                    .Where(e => e.EmergencyStatus == "Đã xét duyệt")
-                    .Include(e => e.UsernameNavigation)
-                    .Include(e => e.Hospital)
-                    .Select(e => new {
-                        EmergencyId = e.EmergencyId,
-                        Username = e.Username ?? "Unknown",
-                        PatientName = e.UsernameNavigation != null ? e.UsernameNavigation.FullName : "Unknown",
-                        PatientPhone = e.UsernameNavigation != null ? e.UsernameNavigation.Phone : "No phone",
-                        PatientEmail = e.UsernameNavigation != null ? e.UsernameNavigation.Email : "No email",
-                        EmergencyDate = e.EmergencyDate,
-                        BloodType = e.BloodType ?? "Unknown",
-                        EmergencyStatus = e.EmergencyStatus ?? "Unknown",
-                        EmergencyNote = e.EmergencyNote ?? "No note",
-                        RequiredUnits = e.RequiredUnits ?? 0,
-                        EmergencyMedical = e.EmergencyMedical ?? "No medical info",
-                        EndDate = e.EndDate,
-                        HospitalId = e.HospitalId,
-                        HospitalName = e.Hospital != null ? e.Hospital.HospitalName : "Unknown Hospital",
-                        HospitalAddress = e.Hospital != null ? e.Hospital.HospitalAddress : "No address",
-                        HospitalPhone = e.Hospital != null ? e.Hospital.HospitalPhone : "No phone"
-                    })
+                Console.WriteLine("Finding all approved blood requests from database...");
+                
+                // Lấy tất cả BloodRequests với Status = "Đang chờ"
+                var approvedRequests = await _context.BloodRequests
+                    .Where(br => br.Status == "Đang chờ")
                     .ToListAsync();
+
+                Console.WriteLine($"Found {approvedRequests.Count} approved blood requests in database");
+
+                if (!approvedRequests.Any())
+                {
+                    Console.WriteLine("No approved blood requests found in database");
+                    return new List<object>();
+                }
 
                 // Tính toán khoảng cách ổn định dựa trên địa chỉ bệnh viện và sắp xếp
                 var result = approvedRequests.Select(request => {
-                    double distanceInKm = CalculateStableDistanceFromAddress(request.HospitalAddress, request.EmergencyId.ToString());
+                    double distanceInKm = CalculateStableDistanceFromAddress(request.HospitalAddress ?? "", request.RequestId.ToString());
                     string formattedDistance = FormatDistance(distanceInKm);
                     
                     return new {
-                        request.EmergencyId,
-                        request.Username,
-                        request.PatientName,
-                        request.PatientPhone,
-                        request.PatientEmail,
-                        request.EmergencyDate,
-                        request.BloodType,
-                        request.EmergencyStatus,
-                        request.EmergencyNote,
-                        request.RequiredUnits,
-                        request.EmergencyMedical,
-                        request.EndDate,
-                        request.HospitalId,
-                        request.HospitalName,
-                        request.HospitalAddress,
-                        request.HospitalPhone,
+                        RequestId = request.RequestId,
+                        HospitalName = request.HospitalName ?? "Unknown Hospital",
+                        HospitalAddress = request.HospitalAddress ?? "No address",
+                        HospitalPhone = request.HospitalPhone ?? "No phone",
+                        BloodType = request.BloodType ?? "Unknown",
+                        Quantity = request.Quantity,
+                        Priority = request.Priority ?? "Unknown",
+                        Status = request.Status ?? "Unknown",
+                        RequestDate = request.RequestDate,
+                        RequiredDate = request.RequiredDate,
+                        Description = request.Description ?? "No description",
                         Distance = formattedDistance,
                         NumericDistance = distanceInKm
                     };
                 }).OrderBy(r => r.NumericDistance)
                 .Select(r => new {
-                    r.EmergencyId,
-                    r.Username,
-                    r.PatientName,
-                    r.PatientPhone,
-                    r.PatientEmail,
-                    r.EmergencyDate,
-                    r.BloodType,
-                    r.EmergencyStatus,
-                    r.EmergencyNote,
-                    r.RequiredUnits,
-                    r.EmergencyMedical,
-                    r.EndDate,
-                    r.HospitalId,
+                    r.RequestId,
                     r.HospitalName,
                     r.HospitalAddress,
                     r.HospitalPhone,
+                    r.BloodType,
+                    r.Quantity,
+                    r.Priority,
+                    r.Status,
+                    r.RequestDate,
+                    r.RequiredDate,
+                    r.Description,
                     r.Distance
                 })
                 .ToList<object>();
 
+                Console.WriteLine($"Returning {result.Count} approved blood requests sorted by distance");
                 return result;
             }
             catch (Exception ex)
             {
                 Console.WriteLine($"Error in FindAllApprovedBloodRequests: {ex.Message}");
+                Console.WriteLine($"Stack trace: {ex.StackTrace}");
                 return new List<object>();
             }
         }
