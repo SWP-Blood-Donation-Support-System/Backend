@@ -10,13 +10,12 @@ namespace BloodDonationAPI.Service
     public class SearchService : ISearchService
     {
         private readonly BloodDonationSystemContext _context;
-        // Reference point: 7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Vietnam
-        private readonly double _referenceLatitude = 10.841962;  // Approximate latitude for the reference point
-        private readonly double _referenceLongitude = 106.810627; // Approximate longitude for the reference point
+        private readonly IGeoapifyService _geoapifyService;
 
-        public SearchService(BloodDonationSystemContext context)
+        public SearchService(BloodDonationSystemContext context, IGeoapifyService geoapifyService)
         {
             _context = context;
+            _geoapifyService = geoapifyService;
         }        /// <summary>
         /// Tìm kiếm người hiến máu theo nhóm máu
         /// </summary>
@@ -695,9 +694,9 @@ namespace BloodDonationAPI.Service
             {
                 Console.WriteLine("Finding all approved blood requests from database...");
                 
-                // Lấy tất cả BloodRequests với Status = "Đang chờ"
-                var approvedRequests = await _context.BloodRequests
-                    .Where(br => br.Status == "Đang chờ")
+                // Lấy tất cả Emergencies với EmergencyStatus = "Đã xét duyệt"
+                var approvedRequests = await _context.Emergencies
+                    .Where(e => e.EmergencyStatus == "Đã xét duyệt")
                     .ToListAsync();
 
                 Console.WriteLine($"Found {approvedRequests.Count} approved blood requests in database");
@@ -708,39 +707,44 @@ namespace BloodDonationAPI.Service
                     return new List<object>();
                 }
 
+                // Lấy thông tin hospital cho từng emergency
+                var hospitalIds = approvedRequests.Select(e => e.HospitalId).Distinct().ToList();
+                var hospitals = await _context.Hospitals
+                    .Where(h => hospitalIds.Contains(h.HospitalId))
+                    .ToListAsync();
+
                 // Tính toán khoảng cách ổn định dựa trên địa chỉ bệnh viện và sắp xếp
-                var result = approvedRequests.Select(request => {
-                    double distanceInKm = CalculateStableDistanceFromAddress(request.HospitalAddress ?? "", request.RequestId.ToString());
+                var result = approvedRequests.Select(emergency => {
+                    var hospital = hospitals.FirstOrDefault(h => h.HospitalId == emergency.HospitalId);
+                    double distanceInKm = CalculateStableDistanceFromAddress(hospital?.HospitalAddress ?? "", emergency.EmergencyId.ToString());
                     string formattedDistance = FormatDistance(distanceInKm);
                     
                     return new {
-                        RequestId = request.RequestId,
-                        HospitalName = request.HospitalName ?? "Unknown Hospital",
-                        HospitalAddress = request.HospitalAddress ?? "No address",
-                        HospitalPhone = request.HospitalPhone ?? "No phone",
-                        BloodType = request.BloodType ?? "Unknown",
-                        Quantity = request.Quantity,
-                        Priority = request.Priority ?? "Unknown",
-                        Status = request.Status ?? "Unknown",
-                        RequestDate = request.RequestDate,
-                        RequiredDate = request.RequiredDate,
-                        Description = request.Description ?? "No description",
+                        Username = emergency.Username ?? "",
+                        EmergencyDate = emergency.EmergencyDate,
+                        BloodType = emergency.BloodType ?? "",
+                        EmergencyStatus = emergency.EmergencyStatus ?? "",
+                        EmergencyNote = emergency.EmergencyNote ?? "",
+                        RequiredUnits = emergency.RequiredUnits,
+                        HospitalId = emergency.HospitalId,
+                        HospitalName = hospital?.HospitalName ?? "Unknown Hospital",
+                        HospitalAddress = hospital?.HospitalAddress ?? "No address",
+                        HospitalPhone = hospital?.HospitalPhone ?? "No phone",
                         Distance = formattedDistance,
                         NumericDistance = distanceInKm
                     };
                 }).OrderBy(r => r.NumericDistance)
                 .Select(r => new {
-                    r.RequestId,
+                    r.Username,
+                    r.EmergencyDate,
+                    r.BloodType,
+                    r.EmergencyStatus,
+                    r.EmergencyNote,
+                    r.RequiredUnits,
+                    r.HospitalId,
                     r.HospitalName,
                     r.HospitalAddress,
                     r.HospitalPhone,
-                    r.BloodType,
-                    r.Quantity,
-                    r.Priority,
-                    r.Status,
-                    r.RequestDate,
-                    r.RequiredDate,
-                    r.Description,
                     r.Distance
                 })
                 .ToList<object>();
@@ -863,6 +867,210 @@ namespace BloodDonationAPI.Service
             
             // Địa chỉ khác
             return 100 + stableRandom.NextDouble() * 500; // 100-600km
+        }
+
+        /// <summary>
+        /// Tìm kiếm người hiến máu theo nhóm máu (V2) với Geoapify - có thể không truyền bloodType
+        /// </summary>
+        /// <param name="bloodType">Nhóm máu cần tìm (có thể null)</param>
+        /// <returns>Danh sách người hiến máu phù hợp với khoảng cách thực tế</returns>
+        public async Task<IEnumerable<object>> FindDonorsByBloodTypeV2(string? bloodType)
+        {
+            try
+            {
+                // Lấy tất cả users có trạng thái Active với điều kiện đã hiến máu thành công
+                var activeUsers = await _context.Users
+                    .Where(u => u.UserStatus == "Active")
+                    .ToListAsync();
+
+                // Lấy các appointment records có status "Đã hiến"
+                var completedAppointments = await _context.AppointmentRecords
+                    .Where(ar => ar.Status == "Đã hiến")
+                    .Select(ar => ar.Username)
+                    .Distinct()
+                    .ToListAsync();
+
+                // Lọc users đã hoàn thành hiến máu
+                var eligibleUsers = activeUsers
+                    .Where(u => completedAppointments.Contains(u.Username))
+                    .ToList();
+
+                // Nếu có bloodType, lọc theo nhóm máu tương thích
+                if (!string.IsNullOrEmpty(bloodType))
+                {
+                    var normalizedBloodType = bloodType.ToUpper().Trim();
+                    var compatibilityMap = GetCompatibleDonorTypes();
+                    
+                    if (compatibilityMap.TryGetValue(normalizedBloodType, out var compatibleTypes))
+                    {
+                        eligibleUsers = eligibleUsers
+                            .Where(u => compatibleTypes.Contains(u.BloodType ?? ""))
+                            .ToList();
+                    }
+                    else
+                    {
+                        // Fallback nếu không tìm thấy trong compatibility map
+                        eligibleUsers = eligibleUsers
+                            .Where(u => u.BloodType == normalizedBloodType)
+                            .ToList();
+                    }
+                }
+
+                Console.WriteLine($"Found {eligibleUsers.Count} eligible donors");
+
+                if (!eligibleUsers.Any())
+                {
+                    return new List<object>();
+                }
+
+                // Địa chỉ tham chiếu (Staff location)
+                const string referenceAddress = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Vietnam";
+
+                // Lấy địa chỉ của tất cả users
+                var addresses = eligibleUsers.Select(u => u.Address ?? "").ToList();
+
+                // Tính khoảng cách thực tế bằng Geoapify
+                var distanceResults = await _geoapifyService.CalculateMultipleDistancesAsync(referenceAddress, addresses);
+
+                // Kết hợp thông tin user với khoảng cách
+                var userDistances = eligibleUsers.Select((user, index) => new
+                {
+                    User = user,
+                    Distance = distanceResults.Count > index ? distanceResults[index] : new GeoapifyDistanceResult
+                    {
+                        DistanceInKm = double.MaxValue,
+                        DistanceText = "N/A",
+                        DurationText = "N/A",
+                        IsSuccess = false
+                    }
+                }).ToList();
+
+                // Sắp xếp theo khoảng cách và tạo kết quả
+                var result = userDistances
+                    .OrderBy(ud => ud.Distance.DistanceInKm)
+                    .Select(ud => new
+                    {
+                        Username = ud.User.Username ?? "",
+                        FullName = ud.User.FullName ?? "",
+                        Gender = ud.User.Gender ?? "",
+                        DateOfBirth = ud.User.DateOfBirth,
+                        Phone = ud.User.Phone ?? "",
+                        Address = ud.User.Address ?? "",
+                        BloodType = ud.User.BloodType ?? "",
+                        ProfileStatus = ud.User.ProfileStatus ?? "",
+                        Status = ud.User.UserStatus ?? "",
+                        DistanceText = ud.Distance.DistanceText,
+                        DurationText = ud.Distance.DurationText
+                    })
+                    .ToList<object>();
+
+                Console.WriteLine($"Returning {result.Count} donors sorted by distance");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in FindDonorsByBloodTypeV2: {ex.Message}");
+                return new List<object>();
+            }
+        }
+
+        /// <summary>
+        /// Tìm kiếm yêu cầu máu theo nhóm máu (V2) với Geoapify - có thể không truyền bloodType
+        /// </summary>
+        /// <param name="bloodType">Nhóm máu cần tìm (có thể null)</param>
+        /// <returns>Danh sách yêu cầu máu phù hợp với khoảng cách thực tế</returns>
+        public async Task<IEnumerable<object>> FindBloodRequestsByBloodTypeV2(string? bloodType)
+        {
+            try
+            {
+                // Lấy tất cả emergencies có status "Đã xét duyệt"
+                var approvedEmergencies = await _context.Emergencies
+                    .Where(e => e.EmergencyStatus == "Đã xét duyệt")
+                    .ToListAsync();
+
+                // Nếu có bloodType, lọc theo nhóm máu
+                if (!string.IsNullOrEmpty(bloodType))
+                {
+                    var normalizedBloodType = bloodType.ToUpper().Trim();
+                    approvedEmergencies = approvedEmergencies
+                        .Where(e => e.BloodType == normalizedBloodType)
+                        .ToList();
+                }
+
+                Console.WriteLine($"Found {approvedEmergencies.Count} approved emergencies");
+
+                if (!approvedEmergencies.Any())
+                {
+                    return new List<object>();
+                }
+
+                // Lấy thông tin hospital cho từng emergency
+                var hospitalIds = approvedEmergencies.Select(e => e.HospitalId).Distinct().ToList();
+                var hospitals = await _context.Hospitals
+                    .Where(h => hospitalIds.Contains(h.HospitalId))
+                    .ToListAsync();
+
+                // Địa chỉ tham chiếu (Staff location)
+                const string referenceAddress = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Vietnam";
+
+                // Lấy địa chỉ của tất cả hospitals
+                var hospitalAddresses = approvedEmergencies.Select(e =>
+                {
+                    var hospital = hospitals.FirstOrDefault(h => h.HospitalId == e.HospitalId);
+                    return hospital?.HospitalAddress ?? "";
+                }).ToList();
+
+                // Tính khoảng cách thực tế bằng Geoapify
+                var distanceResults = await _geoapifyService.CalculateMultipleDistancesAsync(referenceAddress, hospitalAddresses);
+
+                // Kết hợp thông tin emergency với hospital và khoảng cách
+                var emergencyDistances = approvedEmergencies.Select((emergency, index) =>
+                {
+                    var hospital = hospitals.FirstOrDefault(h => h.HospitalId == emergency.HospitalId);
+                    var distance = distanceResults.Count > index ? distanceResults[index] : new GeoapifyDistanceResult
+                    {
+                        DistanceInKm = double.MaxValue,
+                        DistanceText = "N/A",
+                        DurationText = "N/A",
+                        IsSuccess = false
+                    };
+
+                    return new
+                    {
+                        Emergency = emergency,
+                        Hospital = hospital,
+                        Distance = distance
+                    };
+                }).ToList();
+
+                // Sắp xếp theo khoảng cách và tạo kết quả
+                var result = emergencyDistances
+                    .OrderBy(ed => ed.Distance.DistanceInKm)
+                    .Select(ed => new
+                    {
+                        Username = ed.Emergency.Username ?? "",
+                        EmergencyDate = ed.Emergency.EmergencyDate,
+                        BloodType = ed.Emergency.BloodType ?? "",
+                        EmergencyStatus = ed.Emergency.EmergencyStatus ?? "",
+                        EmergencyNote = ed.Emergency.EmergencyNote ?? "",
+                        RequiredUnits = ed.Emergency.RequiredUnits,
+                        HospitalId = ed.Emergency.HospitalId,
+                        HospitalName = ed.Hospital?.HospitalName ?? "",
+                        HospitalAddress = ed.Hospital?.HospitalAddress ?? "",
+                        HospitalPhone = ed.Hospital?.HospitalPhone ?? "",
+                        DistanceText = ed.Distance.DistanceText,
+                        DurationText = ed.Distance.DurationText
+                    })
+                    .ToList<object>();
+
+                Console.WriteLine($"Returning {result.Count} blood requests sorted by distance");
+                return result;
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"Error in FindBloodRequestsByBloodTypeV2: {ex.Message}");
+                return new List<object>();
+            }
         }
     }
 }

@@ -232,5 +232,114 @@ namespace BloodDonationAPI.Controllers
                 return StatusCode(500, new { message = "Internal server error", error = ex.Message });
             }
         }
+
+        /// <summary>
+        /// [V2] Tìm kiếm người hiến máu - SỬ DỤNG GEOAPIFY API (Chỉ cần Execute)
+        /// </summary>
+        /// <remarks>
+        /// API V2 sử dụng Geoapify để tính khoảng cách và thời gian thực tế.
+        /// Điều kiện lọc:
+        /// - User có AppointmentRecord với Status = "Đã hiến"
+        /// - User.ProfileStatus = "Sẵn sàng hiến máu"
+        /// - Tính khoảng cách từ cơ sở Staff (7 Đ. D1, Long Thạnh Mỹ, Thủ Đức) đến User.Address
+        /// - Chỉ cần ấn Execute để lấy tất cả dữ liệu
+        /// </remarks>
+        /// <returns>Danh sách người hiến máu với khoảng cách (km) và thời gian (giờ phút) thực tế</returns>
+        [HttpGet("donors/v2")]
+        [Authorize(Roles = "Staff,Admin")]
+        public async Task<IActionResult> GetDonorsV2()
+        {
+            try
+            {
+                // Lấy thông tin người dùng hiện tại từ token
+                var currentUser = User.Identity?.Name ?? string.Empty;
+                var role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+                // Gọi service V2 để lấy tất cả người hiến máu đủ điều kiện
+                var donors = await _searchService.FindDonorsByBloodTypeV2(null);
+                var donorsList = donors.ToList();
+                
+                // Log số lượng để kiểm tra
+                Console.WriteLine($"V2: Found {donorsList.Count} eligible donors");
+                
+                return Ok(new { 
+                    donors = donorsList,
+                    message = "V2: Donors search completed successfully using Geoapify API",
+                    version = "V2",
+                    api = "Geoapify",
+                    currentUser = currentUser,
+                    role = role,
+                    searchCriteria = new {
+                        referencePoint = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Vietnam",
+                        distanceCalculation = "From Staff office to User.Address",
+                        constraints = new {
+                            appointmentStatus = "Đã hiến",
+                            profileStatus = "Sẵn sàng hiến máu",
+                            userStatus = "Active"
+                        }
+                    },
+                    totalCount = donorsList.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"V2: Error in GetDonorsV2: {ex.Message}");
+                Console.WriteLine($"V2: StackTrace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
+
+        /// <summary>
+        /// [V2] Tìm kiếm yêu cầu máu - SỬ DỤNG GEOAPIFY API (Chỉ cần Execute)
+        /// </summary>
+        /// <remarks>
+        /// API V2 sử dụng Geoapify để tính khoảng cách và thời gian thực tế.
+        /// Điều kiện lọc:
+        /// - Emergency.EmergencyStatus = "Đã xét duyệt"
+        /// - Tính khoảng cách từ cơ sở Staff (7 Đ. D1, Long Thạnh Mỹ, Thủ Đức) đến Hospital.HospitalAddress
+        /// - Chỉ cần ấn Execute để lấy tất cả dữ liệu
+        /// </remarks>
+        /// <returns>Danh sách yêu cầu máu với khoảng cách (km) và thời gian (giờ phút) thực tế</returns>
+        [HttpGet("requests/v2")]
+        [Authorize(Roles = "Admin,Staff,User")]
+        public async Task<IActionResult> GetBloodRequestsV2()
+        {
+            try
+            {
+                // Lấy thông tin người dùng hiện tại từ token
+                var currentUser = User.Identity?.Name ?? string.Empty;
+                var role = User.Claims.FirstOrDefault(c => c.Type == System.Security.Claims.ClaimTypes.Role)?.Value ?? string.Empty;
+
+                // Gọi service V2 để lấy tất cả yêu cầu máu đã được phê duyệt
+                var bloodRequests = await _searchService.FindBloodRequestsByBloodTypeV2(null);
+                var requestsList = bloodRequests.ToList();
+                
+                // Log số lượng để kiểm tra
+                Console.WriteLine($"V2: Found {requestsList.Count} approved blood requests");
+                
+                return Ok(new { 
+                    bloodRequests = requestsList,
+                    message = "V2: Blood requests search completed successfully using Geoapify API",
+                    version = "V2",
+                    api = "Geoapify",
+                    currentUser = currentUser,
+                    role = role,
+                    searchCriteria = new {
+                        referencePoint = "7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Vietnam",
+                        distanceCalculation = "From Staff office to Hospital.HospitalAddress",
+                        constraints = new {
+                            emergencyStatus = "Đã xét duyệt"
+                        }
+                    },
+                    totalCount = requestsList.Count
+                });
+            }
+            catch (Exception ex)
+            {
+                Console.WriteLine($"V2: Error in GetBloodRequestsV2: {ex.Message}");
+                Console.WriteLine($"V2: StackTrace: {ex.StackTrace}");
+                return StatusCode(500, new { message = "Internal server error", error = ex.Message });
+            }
+        }
     }
 }
