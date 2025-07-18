@@ -30,7 +30,7 @@
         public string? DeferralUserNote { get; set; }
 
         // Ngày có thể hiến lại (nếu không bị hoãn vĩnh viễn)
-        public DateOnly? CanDonateAgainDate { get; set; }
+        public DateTime? CanDonateAgainDate { get; set; }
 
 
     }

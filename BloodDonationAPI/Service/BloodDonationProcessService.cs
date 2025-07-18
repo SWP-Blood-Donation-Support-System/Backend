@@ -217,17 +217,25 @@ namespace BloodDonationAPI.Service
             if (reasonCode == null) throw new Exception("ReasonCode khong hop le.");
             appointment.StaffNote = reasonCode.ReasonText;
 
+            var start = DateTime.Now;
+
             var deferral = new DonorDeferral
             {
                 Username = appointment.Username,
                 ReasonCode = reasonCode.ReasonCode,
-                StartDate = DateOnly.FromDateTime(DateTime.Now),
+                StartDate = start,
                 IsPermanent = reasonCode.IsPermanent,
                 Note = appointmentNoteDto.CustomNote,
             };
-            if (!reasonCode.IsPermanent && reasonCode.MinDays.HasValue)
+            if (!reasonCode.IsPermanent)
             {
-               deferral.EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(reasonCode.MinDays.Value));
+                int minDays = reasonCode.MinDays ?? 0; // Lấy giá trị MinDays, nếu không có thì mặc định là 0
+                int minHours = reasonCode.MinHours ?? 0; // Lấy giá trị MinHours, nếu không có thì mặc định là 0
+                int minMinutes = reasonCode.MinMinutes ?? 0; // Lấy giá trị MinMinutes, nếu không có thì mặc định là 0
+
+                deferral.EndDate = start.AddDays(minDays)
+                    .AddHours(minHours)
+                    .AddMinutes(minMinutes); // Tính toán ngày kết thúc dựa trên MinDays, MinHours và MinMinutes
             }
             else
             {
@@ -267,17 +275,24 @@ namespace BloodDonationAPI.Service
                                        d.IsPermanent == true);
                     if (!alreadyExists)
                     {
+                        var start = DateTime.Now;
+
                         var deferral = new DonorDeferral
                         {
                             Username = bloodDetail.Appointment.Username,
                             ReasonCode = reasonCode.ReasonCode,
-                            StartDate = DateOnly.FromDateTime(DateTime.Now),
+                            StartDate = start,
                             IsPermanent = reasonCode.IsPermanent,
                             Note = dto.CustomNote,
                         };
-                        if (!reasonCode.IsPermanent && reasonCode.MinDays.HasValue)
+                        if (!reasonCode.IsPermanent)
                         {
-                            deferral.EndDate = DateOnly.FromDateTime(DateTime.Now.AddDays(reasonCode.MinDays.Value));
+                            int minDays = reasonCode.MinDays ?? 0; // Lấy giá trị MinDays, nếu không có thì mặc định là 0
+                            int minHours = reasonCode.MinHours ?? 0; // Lấy giá trị MinHours, nếu không có thì mặc định là 0
+                            int minMinutes = reasonCode.MinMinutes ?? 0; // Lấy giá trị MinMinutes, nếu không có thì mặc định là 0
+                            deferral.EndDate = start.AddDays(minDays)
+                                .AddHours(minHours)
+                                .AddMinutes(minMinutes); // Tính toán ngày kết thúc dựa trên MinDays, MinHours và MinMinutes
                         }
                         else
                         {
