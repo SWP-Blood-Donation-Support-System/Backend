@@ -12,9 +12,6 @@ namespace BloodDonationAPI.Service
     public class BloodRequestSearchService : IBloodRequestSearchService
     {
         private readonly BloodDonationSystemContext _context;
-        // Reference point: 7 Đ. D1, Long Thạnh Mỹ, Thủ Đức, Hồ Chí Minh 700000, Vietnam
-        private readonly double _referenceLatitude = 10.841962;  // Approximate latitude for the reference point
-        private readonly double _referenceLongitude = 106.810627; // Approximate longitude for the reference point
 
         public BloodRequestSearchService(BloodDonationSystemContext context)
         {

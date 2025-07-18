@@ -47,5 +47,19 @@ namespace BloodDonationAPI.Service
         /// </summary>
         /// <returns>Danh sách tất cả người cần máu có trạng thái Đã xét duyệt</returns>
         Task<IEnumerable<object>> FindAllApprovedBloodRequests();
+
+        /// <summary>
+        /// Tìm kiếm người hiến máu theo nhóm máu (V2) với Geoapify
+        /// </summary>
+        /// <param name="bloodType">Nhóm máu cần tìm (có thể null)</param>
+        /// <returns>Danh sách người hiến máu phù hợp với khoảng cách thực tế</returns>
+        Task<IEnumerable<object>> FindDonorsByBloodTypeV2(string? bloodType);
+
+        /// <summary>
+        /// Tìm kiếm yêu cầu máu theo nhóm máu (V2) với Geoapify
+        /// </summary>
+        /// <param name="bloodType">Nhóm máu cần tìm (có thể null)</param>
+        /// <returns>Danh sách yêu cầu máu phù hợp với khoảng cách thực tế</returns>
+        Task<IEnumerable<object>> FindBloodRequestsByBloodTypeV2(string? bloodType);
     }
 }
