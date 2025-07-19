@@ -57,18 +57,37 @@ namespace BloodDonationAPI.Service
             }
             //kiểm tra người dùng có đang bị hoãn hiến máu không
             var today = DateOnly.FromDateTime(DateTime.Today);
-
+            DateTime now = DateTime.Now; 
             var activeDeferrals = await _context.DonorDeferrals
                 .Where(d => d.Username == userName &&
-                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= today)))
+                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= now)))
                 .Include(d => d.ReasonCodeNavigation)
                 .ToListAsync();
 
             if (activeDeferrals.Any())
             {
-                var reasons = string.Join("; ", activeDeferrals.Select(d =>
-                    $"{d.ReasonCodeNavigation.ReasonText} - {(d.Note ?? "Không rõ lý do")}"
-                ));
+                var reasons = string.Join("\n", activeDeferrals.Select(d =>
+                {
+                    var reasonText = d.ReasonCodeNavigation.ReasonText?? "Không rõ lý do";
+                    var note = d.Note ?? "Không có ghi chú";
+                    string delayInfor;
+
+                    if (d.IsPermanent == true)
+                    {
+                        delayInfor = "Bạn bị hoãn hiến máu vĩnh viễn.";
+                    }
+                    else if(d.EndDate.HasValue)
+                    {
+                        TimeSpan remaining = d.EndDate.Value - now;
+                        delayInfor = $"bạn chỉ có thể đăng kí hiến máu mới sau: {Math.Max(0, remaining.Days)} ngày,{Math.Max(0, remaining.Hours)} giờ, {Math.Max(0, remaining.Minutes)} phút";  
+                    }
+                    else
+                    {
+                        delayInfor = "Không có thông tin về thời gian hoãn.";
+                    }
+                    return $"{reasonText} - {note}.\n{delayInfor}";
+                }));
+
 
                 return new RegisterAppointmentResultDto
                 {
@@ -192,7 +211,7 @@ namespace BloodDonationAPI.Service
                     .Include(d => d.ReasonCodeNavigation)
                     .FirstOrDefaultAsync(d =>
                         d.Username == h.Username &&
-                        d.StartDate == DateOnly.FromDateTime(h.RegistrationDate ?? DateTime.MinValue));
+                        d.StartDate == (h.RegistrationDate ?? DateTime.MinValue));
 
                 result.Add(new AppointmentHistoryDto
                 {
@@ -284,10 +303,10 @@ namespace BloodDonationAPI.Service
             }
             //kiểm tra người dùng có đang bị hoãn hiến máu không
             var today = DateOnly.FromDateTime(DateTime.Today);
-
+            DateTime now = DateTime.Now;
             var activeDeferrals = await _context.DonorDeferrals
                 .Where(d => d.Username == userName &&
-                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= today)))
+                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= now)))
                 .Include(d => d.ReasonCodeNavigation)
                 .ToListAsync();
 
@@ -467,18 +486,36 @@ namespace BloodDonationAPI.Service
             }
             //kiểm tra người dùng có đang bị hoãn hiến máu không
             var today = DateOnly.FromDateTime(DateTime.Today);
-
+            DateTime now = DateTime.Now;
             var activeDeferrals = await _context.DonorDeferrals
                 .Where(d => d.Username == userName &&
-                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= today)))
+                    (d.IsPermanent == true || (d.EndDate.HasValue && d.EndDate.Value >= now)))
                 .Include(d => d.ReasonCodeNavigation)
                 .ToListAsync();
 
             if (activeDeferrals.Any())
             {
-                var reasons = string.Join("; ", activeDeferrals.Select(d =>
-                    $"{d.ReasonCodeNavigation.ReasonText} - {(d.Note ?? "Không rõ lý do")}"
-                ));
+                var reasons = string.Join("\n", activeDeferrals.Select(d =>
+                {
+                    var reasonText = d.ReasonCodeNavigation.ReasonText ?? "Không rõ lý do";
+                    var note = d.Note ?? "Không có ghi chú";
+                    string delayInfor;
+
+                    if (d.IsPermanent == true)
+                    {
+                        delayInfor = "Bạn bị hoãn hiến máu vĩnh viễn.";
+                    }
+                    else if (d.EndDate.HasValue)
+                    {
+                        TimeSpan remaining = d.EndDate.Value - now;
+                        delayInfor = $"bạn chỉ có thể đăng kí hiến máu mới sau: {Math.Max(0, remaining.Days)} ngày,{Math.Max(0, remaining.Hours)} giờ, {Math.Max(0, remaining.Minutes)} phút";
+                    }
+                    else
+                    {
+                        delayInfor = "Không có thông tin về thời gian hoãn.";
+                    }
+                    return $"{reasonText} - {note}.\n{delayInfor}";
+                }));
 
                 return new RegisterAppointmentResultDto
                 {

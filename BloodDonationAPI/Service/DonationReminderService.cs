@@ -35,7 +35,7 @@ namespace BloodDonationAPI.Service
                 await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
                 
                 // 👉 Đổi thành TimeSpan.FromSeconds(30) nếu bạn đang test
-                // await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                 //await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
             }
         }
 
