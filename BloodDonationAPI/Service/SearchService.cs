@@ -878,9 +878,9 @@ namespace BloodDonationAPI.Service
         {
             try
             {
-                // Lấy tất cả users có trạng thái Active với điều kiện đã hiến máu thành công
+                // Lấy tất cả users có điều kiện: UserStatus = "Active" VÀ ProfileStatus = "Sẵn sàng hiến máu"
                 var activeUsers = await _context.Users
-                    .Where(u => u.UserStatus == "Active")
+                    .Where(u => u.UserStatus == "Active" && u.ProfileStatus == "Sẵn sàng hiến máu")
                     .ToListAsync();
 
                 // Lấy các appointment records có status "Đã hiến"
