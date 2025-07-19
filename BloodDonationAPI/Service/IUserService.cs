@@ -40,6 +40,13 @@ namespace BloodDonationAPI.Service
             {
                 return "Username already exists.";
             }
+            
+            // Thêm validation cho số điện thoại unique
+            if (_context.Users.Any(u => u.Phone == registerDto.Phone))
+            {
+                return "Số điện thoại đã được sử dụng để đăng ký tài khoản khác.";
+            }
+            
             var user = new User
             {
                 Username = registerDto.Username,
@@ -72,6 +79,12 @@ namespace BloodDonationAPI.Service
             if (_context.Users.Any(u => u.Username == registerDto.Username))
             {
                 return "Tên đăng nhập đã tồn tại.";
+            }
+
+            // Thêm validation cho số điện thoại unique
+            if (_context.Users.Any(u => u.Phone == registerDto.Phone))
+            {
+                return "Số điện thoại đã được sử dụng để đăng ký tài khoản khác.";
             }
 
             // Generate OTP
@@ -115,6 +128,13 @@ namespace BloodDonationAPI.Service
             {
                 _otpService.RemoveOtpByCode(verifyOtpDto.Otp);
                 return "Tên đăng nhập đã tồn tại.";
+            }
+
+            // Thêm double check cho số điện thoại unique
+            if (_context.Users.Any(u => u.Phone == storedRegisterDto.Phone))
+            {
+                _otpService.RemoveOtpByCode(verifyOtpDto.Otp);
+                return "Số điện thoại đã được sử dụng để đăng ký tài khoản khác.";
             }
 
             // Create user account
