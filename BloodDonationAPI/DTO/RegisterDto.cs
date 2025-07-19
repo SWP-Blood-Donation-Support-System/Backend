@@ -20,6 +20,9 @@ namespace BloodDonationAPI.DTO
 
         public string? Gender { get; set; }
         
+        // Thêm validation cho Phone
+        [Required(ErrorMessage = "Vui lòng nhập số điện thoại.")]
+        [Phone(ErrorMessage = "Số điện thoại không hợp lệ.")]
         public string? Phone { get; set; }
 
         public string? Address { get; set; }
