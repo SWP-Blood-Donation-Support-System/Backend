@@ -948,19 +948,27 @@ namespace BloodDonationAPI.Service
                 var addresses = eligibleUsers.Select(u => u.Address ?? "").ToList();
 
                 // Tính khoảng cách thực tế bằng Geoapify
+                Console.WriteLine($"V2: Calculating distances from '{referenceAddress}' to {addresses.Count} addresses");
                 var distanceResults = await _geoapifyService.CalculateMultipleDistancesAsync(referenceAddress, addresses);
+                Console.WriteLine($"V2: Received {distanceResults.Count} distance results");
 
                 // Kết hợp thông tin user với khoảng cách
-                var userDistances = eligibleUsers.Select((user, index) => new
-                {
-                    User = user,
-                    Distance = distanceResults.Count > index ? distanceResults[index] : new GeoapifyDistanceResult
+                var userDistances = eligibleUsers.Select((user, index) => {
+                    var distance = distanceResults.Count > index ? distanceResults[index] : new GeoapifyDistanceResult
                     {
                         DistanceInKm = double.MaxValue,
                         DistanceText = "N/A",
                         DurationText = "N/A",
                         IsSuccess = false
-                    }
+                    };
+                    
+                    Console.WriteLine($"V2: User {user.FullName} at {user.Address} - Distance: {distance.DistanceText}, Success: {distance.IsSuccess}");
+                    
+                    return new
+                    {
+                        User = user,
+                        Distance = distance
+                    };
                 }).ToList();
 
                 // Sắp xếp theo khoảng cách và tạo kết quả
@@ -1039,7 +1047,9 @@ namespace BloodDonationAPI.Service
                 }).ToList();
 
                 // Tính khoảng cách thực tế bằng Geoapify
+                Console.WriteLine($"V2: Calculating distances from '{referenceAddress}' to {hospitalAddresses.Count} hospital addresses");
                 var distanceResults = await _geoapifyService.CalculateMultipleDistancesAsync(referenceAddress, hospitalAddresses);
+                Console.WriteLine($"V2: Received {distanceResults.Count} distance results for hospitals");
 
                 // Kết hợp thông tin emergency với hospital và khoảng cách
                 var emergencyDistances = approvedEmergencies.Select((emergency, index) =>
