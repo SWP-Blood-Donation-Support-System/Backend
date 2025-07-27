@@ -71,8 +71,7 @@ namespace BloodDonationAPI.Service
                     // User doesn't exist, create new user
                     var newUser = await CreateGoogleUserAsync(googleUser);
                     var token = _jwtService.GenerateToken(newUser);
-                    
-                    return new GoogleLoginResponseDto
+return new GoogleLoginResponseDto
                     {
                         Token = token,
                         IsNewUser = true,
@@ -105,10 +104,16 @@ namespace BloodDonationAPI.Service
             {
                 // Get Google Client ID from configuration
                 var googleClientId = _configuration["GoogleAuth:ClientId"];
+                var googleClientSecret = _configuration["GoogleAuth:ClientSecret"];
                 
                 if (string.IsNullOrEmpty(googleClientId))
                 {
                     throw new Exception("Google Client ID not configured");
+                }
+
+                if (string.IsNullOrEmpty(googleClientSecret))
+                {
+                    throw new Exception("Google Client Secret not configured");
                 }
 
                 var payload = await GoogleJsonWebSignature.ValidateAsync(token, new GoogleJsonWebSignature.ValidationSettings
@@ -141,7 +146,7 @@ namespace BloodDonationAPI.Service
             
             var newUser = new User
             {
-                Username = username,
+Username = username,
                 Email = googleUser.Email,
                 FullName = googleUser.Name,
                 Role = "User", // Default role for Google users
