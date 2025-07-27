@@ -22,7 +22,7 @@ namespace BloodDonationAPI.DTO
         
         // Thêm validation cho Phone
         [Required(ErrorMessage = "Vui lòng nhập số điện thoại.")]
-        [Phone(ErrorMessage = "Số điện thoại không hợp lệ.")]
+        [RegularExpression(@"^0[0-9]{9}$", ErrorMessage = "Số điện thoại phải bắt đầu bằng 0 và có đúng 10 chữ số.")]
         public string? Phone { get; set; }
 
         public string? Address { get; set; }
