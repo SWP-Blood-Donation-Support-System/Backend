@@ -6,10 +6,12 @@ namespace BloodDonationAPI.Service
     public class DonationReminderService : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ReminderSettings _reminderSettings;
 
-        public DonationReminderService(IServiceScopeFactory scopeFactory)
+        public DonationReminderService(IServiceScopeFactory scopeFactory, ReminderSettings settings)
         {
             _scopeFactory = scopeFactory;
+            _reminderSettings = settings;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -31,11 +33,15 @@ namespace BloodDonationAPI.Service
                     await SendEventReminderEmailsAsync(context, emailService);
                 }
 
+                ////thay đổi thời gian thông qua API
+                await Task.Delay(_reminderSettings.ReminderInterval, stoppingToken);
+
+
                 // Chạy mỗi 24 giờ
-                await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
-                
+                //await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
+
                 // 👉 Đổi thành TimeSpan.FromSeconds(30) nếu bạn đang test
-                 //await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+                //await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
             }
         }
 
