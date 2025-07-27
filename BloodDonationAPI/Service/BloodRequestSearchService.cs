@@ -107,8 +107,6 @@ namespace BloodDonationAPI.Service
             if (string.IsNullOrEmpty(hospitalAddress))
                 return double.MaxValue;
             
-            var random = new Random();
-            
             // Thủ Đức (nơi có điểm mốc - 7 Đ. D1, Long Thạnh Mỹ)
             if (hospitalAddress.Contains("Long Thạnh Mỹ") || 
                 (hospitalAddress.Contains("Thủ Đức") && hospitalAddress.Contains("D1")))
@@ -123,7 +121,7 @@ namespace BloodDonationAPI.Service
                 hospitalAddress.Contains("Linh Đông") ||
                 hospitalAddress.Contains("Hiệp Phú"))
             {
-                return random.NextDouble() * 2 + 2; // 2-4km
+                return GetStableRandomDistance(hospitalAddress, 2, 4); // 2-4km
             }
             
             // Các quận lân cận Thủ Đức
@@ -131,7 +129,7 @@ namespace BloodDonationAPI.Service
                 hospitalAddress.Contains("Quận 2") || hospitalAddress.Contains("Q2") ||
                 hospitalAddress.Contains("Bình Thạnh"))
             {
-                return random.NextDouble() * 3 + 5; // 5-8km
+                return GetStableRandomDistance(hospitalAddress, 5, 8); // 5-8km
             }
             
             // Các quận nội thành TP.HCM
@@ -143,7 +141,7 @@ namespace BloodDonationAPI.Service
                 hospitalAddress.Contains("Tân Bình") ||
                 hospitalAddress.Contains("Phú Nhuận"))
             {
-                return random.NextDouble() * 5 + 8; // 8-13km
+                return GetStableRandomDistance(hospitalAddress, 8, 13); // 8-13km
             }
             
             // Các quận khác trong TP.HCM
@@ -155,7 +153,7 @@ namespace BloodDonationAPI.Service
                 hospitalAddress.Contains("Quận 11") || hospitalAddress.Contains("Q11") ||
                 hospitalAddress.Contains("Quận 12") || hospitalAddress.Contains("Q12"))
             {
-                return random.NextDouble() * 8 + 10; // 10-18km
+                return GetStableRandomDistance(hospitalAddress, 10, 18); // 10-18km
             }
             
             // Các tỉnh lân cận TP.HCM
@@ -165,7 +163,7 @@ namespace BloodDonationAPI.Service
                 hospitalAddress.Contains("Tây Ninh") ||
                 hospitalAddress.Contains("Vũng Tàu"))
             {
-                return random.NextDouble() * 30 + 20; // 20-50km
+                return GetStableRandomDistance(hospitalAddress, 20, 50); // 20-50km
             }
             
             // Các tỉnh miền Tây Nam Bộ
@@ -179,7 +177,7 @@ namespace BloodDonationAPI.Service
                 hospitalAddress.Contains("Đồng Tháp") ||
                 hospitalAddress.Contains("Cà Mau"))
             {
-                return random.NextDouble() * 100 + 50; // 50-150km
+                return GetStableRandomDistance(hospitalAddress, 50, 150); // 50-150km
             }
             
             // Các tỉnh miền Trung
@@ -192,7 +190,7 @@ namespace BloodDonationAPI.Service
                 hospitalAddress.Contains("Nghệ An") ||
                 hospitalAddress.Contains("Hà Tĩnh"))
             {
-                return random.NextDouble() * 200 + 500; // 500-700km
+                return GetStableRandomDistance(hospitalAddress, 500, 700); // 500-700km
             }
             
             // Các tỉnh miền Bắc
@@ -204,11 +202,11 @@ namespace BloodDonationAPI.Service
                 hospitalAddress.Contains("Hải Dương") ||
                 hospitalAddress.Contains("Nam Định"))
             {
-                return random.NextDouble() * 200 + 1000; // 1000-1200km
+                return GetStableRandomDistance(hospitalAddress, 1000, 1200); // 1000-1200km
             }
             
             // Các tỉnh khác
-            return random.NextDouble() * 500 + 100; // 100-600km
+            return GetStableRandomDistance(hospitalAddress, 100, 600); // 100-600km
         }
 
         // Haversine formula to calculate distance between two points on Earth
@@ -317,6 +315,24 @@ namespace BloodDonationAPI.Service
             {
                 return double.MaxValue;
             }
+        }
+
+        /// <summary>
+        /// Tạo khoảng cách ổn định dựa trên địa chỉ để tránh kết quả thay đổi liên tục
+        /// </summary>
+        /// <param name="address">Địa chỉ làm seed</param>
+        /// <param name="minDistance">Khoảng cách tối thiểu</param>
+        /// <param name="maxDistance">Khoảng cách tối đa</param>
+        /// <returns>Khoảng cách ổn định trong khoảng min-max</returns>
+        private double GetStableRandomDistance(string address, double minDistance, double maxDistance)
+        {
+            // Tạo seed từ địa chỉ để đảm bảo kết quả ổn định
+            int seed = string.IsNullOrEmpty(address) ? 0 : address.GetHashCode();
+            var random = new Random(Math.Abs(seed)); // Math.Abs để tránh seed âm
+            
+            // Tính khoảng cách trong khoảng min-max
+            double range = maxDistance - minDistance;
+            return minDistance + (random.NextDouble() * range);
         }
     }
 }

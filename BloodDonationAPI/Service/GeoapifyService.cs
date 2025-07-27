@@ -41,7 +41,9 @@ namespace BloodDonationAPI.Service
                 { 
                     IsSuccess = false, 
                     ErrorMessage = "No result returned",
-                    DistanceInKm = double.MaxValue
+                    DistanceInKm = double.MaxValue,
+                    DistanceText = "N/A",
+                    DurationText = "N/A"
                 };
             }
             catch (Exception ex)
@@ -51,7 +53,9 @@ namespace BloodDonationAPI.Service
                 { 
                     IsSuccess = false, 
                     ErrorMessage = ex.Message,
-                    DistanceInKm = double.MaxValue
+                    DistanceInKm = double.MaxValue,
+                    DistanceText = "N/A",
+                    DurationText = "N/A"
                 };
             }
         }
@@ -65,7 +69,7 @@ namespace BloodDonationAPI.Service
                 if (string.IsNullOrEmpty(_apiKey))
                 {
                     // Fallback to mock data when no API key
-                    return destinations.Select(d => CreateMockDistanceResult()).ToList();
+                    return destinations.Select(d => CreateMockDistanceResult(d)).ToList();
                 }
 
                 // Get coordinates for origin
@@ -107,7 +111,7 @@ namespace BloodDonationAPI.Service
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error calculating multiple distances from {Origin}", origin);
-                return destinations.Select(d => CreateMockDistanceResult()).ToList();
+                return destinations.Select(d => CreateMockDistanceResult(d)).ToList();
             }
         }
 
@@ -117,8 +121,10 @@ namespace BloodDonationAPI.Service
             {
                 if (string.IsNullOrEmpty(_apiKey))
                 {
-                    // Return mock coordinates for TP.HCM area
-                    return (10.7769 + new Random().NextDouble() * 0.1, 106.7009 + new Random().NextDouble() * 0.1);
+                    // Return mock coordinates for TP.HCM area with stable results
+                    int seed = string.IsNullOrEmpty(address) ? 0 : address.GetHashCode();
+                    var random = new Random(Math.Abs(seed));
+                    return (10.7769 + random.NextDouble() * 0.1, 106.7009 + random.NextDouble() * 0.1);
                 }
 
                 var url = $"https://api.geoapify.com/v1/geocode/search?text={Uri.EscapeDataString(address)}&format=json&apiKey={_apiKey}";
@@ -178,18 +184,21 @@ namespace BloodDonationAPI.Service
                     };
                 }
                 
-                return CreateMockDistanceResult();
+                return CreateMockDistanceResult("fallback");
             }
             catch (Exception ex)
             {
                 _logger.LogError(ex, "Error getting routing data");
-                return CreateMockDistanceResult();
+                return CreateMockDistanceResult("fallback");
             }
         }
 
-        private GeoapifyDistanceResult CreateMockDistanceResult()
+        private GeoapifyDistanceResult CreateMockDistanceResult(string address = "")
         {
-            var random = new Random();
+            // Tạo seed từ địa chỉ để đảm bảo kết quả ổn định
+            int seed = string.IsNullOrEmpty(address) ? 0 : address.GetHashCode();
+            var random = new Random(Math.Abs(seed));
+            
             var distanceKm = Math.Round(random.NextDouble() * 20 + 1, 1); // 1-21 km
             var durationMinutes = (int)(distanceKm * 3 + random.Next(5, 15)); // Roughly 3 min per km + traffic
 
