@@ -57,6 +57,15 @@ namespace BloodDonationAPI.Service
             }
         }
 
+        private string NormalizeProvinceName(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+            var s = input.Trim().ToLower();
+            if (s.Contains("hồ chí minh") || s.Contains("sài gòn") || s.Contains("tp.hcm") || s.Contains("tp. hcm") || s.Contains("tp. hồ chí minh") || s.Contains("thành phố hồ chí minh"))
+                return "TP. HCM";
+            return s;
+        }
+
         public async Task<string> CreateNotificationForEmergency(int emergencyId)
         {
             try
@@ -71,22 +80,28 @@ namespace BloodDonationAPI.Service
                 if (emergency.EmergencyStatus != "Đã xét duyệt")
                     return "Emergency must be approved first.";
 
-                // Check if notification already exists
-                var existingNotification = await _context.Notifications
-                    .FirstOrDefaultAsync(n => n.EmergencyId == emergencyId);
+                // Kiểm tra kho máu có đủ không
+                var availableBlood = await _context.BloodDetails
+                    .Where(b => b.BloodType == emergency.BloodType && 
+                               b.BloodDetailStatus == "Còn hạn" && 
+                               b.Volume > 0)
+                    .SumAsync(b => b.Volume);
 
-                if (existingNotification != null)
-                    return "Notification already exists for this emergency.";
+                // Nếu đủ máu trong kho thì không gửi thông báo
+                if (availableBlood >= emergency.RequiredUnits)
+                {
+                    return "Sufficient blood available in inventory. No notification needed.";
+                }
 
-                // Lấy tỉnh thành từ địa chỉ bệnh viện
-                var hospitalProvince = emergency.Hospital.HospitalAddress?.Split(',').LastOrDefault()?.Trim();
+                // Lấy tỉnh thành từ địa chỉ bệnh viện và chuẩn hóa
+                var hospitalProvince = NormalizeProvinceName(emergency.Hospital.HospitalAddress?.Split(',').LastOrDefault());
                 // Lấy user phù hợp nhóm máu, có địa chỉ và ProfileStatus là "Sẵn sàng hiến máu"
                 var users = await _context.Users
                     .Where(u => u.BloodType == emergency.BloodType && u.Address != null && u.ProfileStatus == "Sẵn sàng hiến máu")
                     .ToListAsync();
-                // Lọc lại bằng LINQ to Objects
+                // Lọc lại bằng LINQ to Objects với chuẩn hóa địa chỉ
                 var matchingUsers = users
-                    .Where(u => u.Address.Split(',').LastOrDefault()?.Trim() == hospitalProvince)
+                    .Where(u => NormalizeProvinceName(u.Address.Split(',').LastOrDefault()) == hospitalProvince)
                     .ToList();
 
                 var notification = new Notification
