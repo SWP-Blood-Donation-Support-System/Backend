@@ -306,9 +306,10 @@ namespace BloodDonationAPI.Service
                 EmergencyId = emergencyId,
                 NotificationStatus = "Đã gửi",
                 NotificationTitle = $"Đơn khẩn cấp của bạn đã được xử lý",
-                NotificationContent = $"Đơn khẩn cấp của bạn đã được chấp thuận và lượng máu đang được chuyển đến tại {emergency.Hospital?.HospitalName}",
+                NotificationContent = $"Đơn khẩn cấp của bạn đã được chấp thuận và lượng máu đang được chuyển đến tại {emergency.Hospital.HospitalName}",
                 NotificationDate = DateOnly.FromDateTime(DateTime.Now)
             };
+
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
 
@@ -316,14 +317,52 @@ namespace BloodDonationAPI.Service
             {
                 NotificationId = notification.NotificationId,
                 Username = emergency.Username,
-                ResponseStatus = null,
+                ResponseStatus = "Chưa phản hồi",
                 ResponseDate = null,
                 ResponseGo = null,
                 ResponseTime = null
             };
             _context.NotificationRecipients.Add(recipient);
             await _context.SaveChangesAsync();
-            return "User notification for blood transferring created successfully.";
+
+            return "User notification created successfully.";
+        }
+
+        public async Task<string> CreateUserNotificationApprovedButInsufficientBlood(int emergencyId)
+        {
+            var emergency = await _context.Emergencies
+                .Include(e => e.Hospital)
+                .FirstOrDefaultAsync(e => e.EmergencyId == emergencyId);
+            if (emergency == null)
+                return "Emergency not found.";
+            if (string.IsNullOrEmpty(emergency.Username))
+                return "Emergency creator not found.";
+
+            var notification = new Notification
+            {
+                EmergencyId = emergencyId,
+                NotificationStatus = "Đã gửi",
+                NotificationTitle = "Đơn khẩn cấp đã được xét duyệt",
+                NotificationContent = "Đơn khẩn cấp của bạn đã được xét duyệt nhưng vì lượng máu bạn yêu cầu không đủ hoặc khoảng cách vận chuyển máu xa nên chúng tôi đã gửi thông báo đến các người hiến tặng có cùng nhóm máu mà bạn yêu cầu và cùng tỉnh thành nơi bạn đang cư trú.",
+                NotificationDate = DateOnly.FromDateTime(DateTime.Now)
+            };
+
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            var recipient = new NotificationRecipient
+            {
+                NotificationId = notification.NotificationId,
+                Username = emergency.Username,
+                ResponseStatus = "Chưa phản hồi",
+                ResponseDate = null,
+                ResponseGo = null,
+                ResponseTime = null
+            };
+            _context.NotificationRecipients.Add(recipient);
+            await _context.SaveChangesAsync();
+
+            return "User notification for approved but insufficient blood created successfully.";
         }
     }
 } 

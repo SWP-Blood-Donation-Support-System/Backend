@@ -12,5 +12,6 @@ namespace BloodDonationAPI.Service
         Task<string> UpdateNotificationResponse(int notificationId, string username, string dtoResponseStatus, DateOnly? dtoResponseGo, TimeOnly? dtoResponseTime);
         Task<string> CreateAdminNotificationForNewEmergency(int emergencyId, string createdBy);
         Task<string> CreateUserNotificationBloodTransferring(int emergencyId);
+        Task<string> CreateUserNotificationApprovedButInsufficientBlood(int emergencyId);
     }
 } 
