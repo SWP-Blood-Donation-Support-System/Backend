@@ -129,18 +129,37 @@ namespace BloodDonationAPI.Service
                 if (emergency == null)
                     return "Emergency not found.";
 
-                if (status != "Đã xét duyệt" && status != "Từ chối")
-                    return "Invalid status. Status must be either 'Đã xét duyệt' or 'Từ chối'.";
+                if (status != "Đã xét duyệt" && status != "Từ chối" && status != "Lượng máu đang được chuyển đến")
+                    return "Invalid status. Status must be either 'Đã xét duyệt', 'Từ chối' hoặc 'Lượng máu đang được chuyển đến'.";
 
-                
-                    emergency.EmergencyStatus = status;
+                emergency.EmergencyStatus = status;
                 await _context.SaveChangesAsync();
+
+                // Nếu chuyển sang "Đã xét duyệt", kiểm tra kho máu và gửi thông báo phù hợp
+                if (status == "Đã xét duyệt")
+                {
+                    // Kiểm tra kho máu có đủ không
+                    var availableBlood = await _context.BloodDetails
+                        .Where(b => b.BloodType == emergency.BloodType && 
+                                   b.BloodDetailStatus == "Còn hạn" && 
+                                   b.Volume > 0)
+                        .SumAsync(b => b.Volume);
+
+                    if (availableBlood < emergency.RequiredUnits)
+                    {
+                        // Nếu không đủ máu, gửi thông báo cho user tạo đơn
+                        if (_notificationService != null)
+                        {
+                            await _notificationService.CreateUserNotificationApprovedButInsufficientBlood(emergencyId);
+                        }
+                    }
+                }
 
                 return "Emergency status updated successfully.";
             }
             catch (Exception ex)
             {
-                _logger.LogError(ex, "Error in UpdateEmergencyStatus");
+                _logger.LogError(ex, "Error updating emergency status");
                 throw;
             }
         }

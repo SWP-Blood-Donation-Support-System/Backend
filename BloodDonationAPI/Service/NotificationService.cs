@@ -57,6 +57,15 @@ namespace BloodDonationAPI.Service
             }
         }
 
+        private string NormalizeProvinceName(string? input)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return string.Empty;
+            var s = input.Trim().ToLower();
+            if (s.Contains("hồ chí minh") || s.Contains("sài gòn") || s.Contains("tp.hcm") || s.Contains("tp. hcm") || s.Contains("tp. hồ chí minh") || s.Contains("thành phố hồ chí minh"))
+                return "TP. HCM";
+            return s;
+        }
+
         public async Task<string> CreateNotificationForEmergency(int emergencyId)
         {
             try
@@ -71,22 +80,28 @@ namespace BloodDonationAPI.Service
                 if (emergency.EmergencyStatus != "Đã xét duyệt")
                     return "Emergency must be approved first.";
 
-                // Check if notification already exists
-                var existingNotification = await _context.Notifications
-                    .FirstOrDefaultAsync(n => n.EmergencyId == emergencyId);
+                // Kiểm tra kho máu có đủ không
+                var availableBlood = await _context.BloodDetails
+                    .Where(b => b.BloodType == emergency.BloodType && 
+                               b.BloodDetailStatus == "Còn hạn" && 
+                               b.Volume > 0)
+                    .SumAsync(b => b.Volume);
 
-                if (existingNotification != null)
-                    return "Notification already exists for this emergency.";
+                // Nếu đủ máu trong kho thì không gửi thông báo
+                if (availableBlood >= emergency.RequiredUnits)
+                {
+                    return "Sufficient blood available in inventory. No notification needed.";
+                }
 
-                // Lấy tỉnh thành từ địa chỉ bệnh viện
-                var hospitalProvince = emergency.Hospital.HospitalAddress?.Split(',').LastOrDefault()?.Trim();
+                // Lấy tỉnh thành từ địa chỉ bệnh viện và chuẩn hóa
+                var hospitalProvince = NormalizeProvinceName(emergency.Hospital.HospitalAddress?.Split(',').LastOrDefault());
                 // Lấy user phù hợp nhóm máu, có địa chỉ và ProfileStatus là "Sẵn sàng hiến máu"
                 var users = await _context.Users
                     .Where(u => u.BloodType == emergency.BloodType && u.Address != null && u.ProfileStatus == "Sẵn sàng hiến máu")
                     .ToListAsync();
-                // Lọc lại bằng LINQ to Objects
+                // Lọc lại bằng LINQ to Objects với chuẩn hóa địa chỉ
                 var matchingUsers = users
-                    .Where(u => u.Address.Split(',').LastOrDefault()?.Trim() == hospitalProvince)
+                    .Where(u => NormalizeProvinceName(u.Address.Split(',').LastOrDefault()) == hospitalProvince)
                     .ToList();
 
                 var notification = new Notification
@@ -291,9 +306,10 @@ namespace BloodDonationAPI.Service
                 EmergencyId = emergencyId,
                 NotificationStatus = "Đã gửi",
                 NotificationTitle = $"Đơn khẩn cấp của bạn đã được xử lý",
-                NotificationContent = $"Đơn khẩn cấp của bạn đã được chấp thuận và lượng máu đang được chuyển đến tại {emergency.Hospital?.HospitalName}",
+                NotificationContent = $"Đơn khẩn cấp của bạn đã được chấp thuận và lượng máu đang được chuyển đến tại {emergency.Hospital.HospitalName}",
                 NotificationDate = DateOnly.FromDateTime(DateTime.Now)
             };
+
             _context.Notifications.Add(notification);
             await _context.SaveChangesAsync();
 
@@ -301,14 +317,52 @@ namespace BloodDonationAPI.Service
             {
                 NotificationId = notification.NotificationId,
                 Username = emergency.Username,
-                ResponseStatus = null,
+                ResponseStatus = "Chưa phản hồi",
                 ResponseDate = null,
                 ResponseGo = null,
                 ResponseTime = null
             };
             _context.NotificationRecipients.Add(recipient);
             await _context.SaveChangesAsync();
-            return "User notification for blood transferring created successfully.";
+
+            return "User notification created successfully.";
+        }
+
+        public async Task<string> CreateUserNotificationApprovedButInsufficientBlood(int emergencyId)
+        {
+            var emergency = await _context.Emergencies
+                .Include(e => e.Hospital)
+                .FirstOrDefaultAsync(e => e.EmergencyId == emergencyId);
+            if (emergency == null)
+                return "Emergency not found.";
+            if (string.IsNullOrEmpty(emergency.Username))
+                return "Emergency creator not found.";
+
+            var notification = new Notification
+            {
+                EmergencyId = emergencyId,
+                NotificationStatus = "Đã gửi",
+                NotificationTitle = "Đơn khẩn cấp đã được xét duyệt",
+                NotificationContent = "Đơn khẩn cấp của bạn đã được xét duyệt nhưng vì lượng máu bạn yêu cầu không đủ hoặc khoảng cách vận chuyển máu xa nên chúng tôi đã gửi thông báo đến các người hiến tặng có cùng nhóm máu mà bạn yêu cầu và cùng tỉnh thành nơi bạn đang cư trú.",
+                NotificationDate = DateOnly.FromDateTime(DateTime.Now)
+            };
+
+            _context.Notifications.Add(notification);
+            await _context.SaveChangesAsync();
+
+            var recipient = new NotificationRecipient
+            {
+                NotificationId = notification.NotificationId,
+                Username = emergency.Username,
+                ResponseStatus = "Chưa phản hồi",
+                ResponseDate = null,
+                ResponseGo = null,
+                ResponseTime = null
+            };
+            _context.NotificationRecipients.Add(recipient);
+            await _context.SaveChangesAsync();
+
+            return "User notification for approved but insufficient blood created successfully.";
         }
     }
 } 
