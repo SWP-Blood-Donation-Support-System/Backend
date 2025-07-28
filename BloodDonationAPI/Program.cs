@@ -102,6 +102,7 @@ namespace BloodDonationAPI
             builder.Services.AddScoped(typeof(IRepository<>), typeof(GenericRepository<>));
 
             // ✅ Đăng ký BackgroundService
+            builder.Services.AddSingleton<ReminderSettings>();
             builder.Services.AddHostedService<DonationReminderService>();
             builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
                 .AddJwtBearer(options =>

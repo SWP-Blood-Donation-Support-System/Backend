@@ -6,37 +6,69 @@ namespace BloodDonationAPI.Service
     public class DonationReminderService : BackgroundService
     {
         private readonly IServiceScopeFactory _scopeFactory;
+        private readonly ReminderSettings _reminderSettings;
 
-        public DonationReminderService(IServiceScopeFactory scopeFactory)
+        public DonationReminderService(IServiceScopeFactory scopeFactory, ReminderSettings settings)
         {
             _scopeFactory = scopeFactory;
+            _reminderSettings = settings;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             while (!stoppingToken.IsCancellationRequested)
             {
-                using (var scope = _scopeFactory.CreateScope())
+                try
                 {
-                    var bloodDonationProcessServiece = scope.ServiceProvider.GetRequiredService<IBloodDonationProcessService>();
-                    var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
-                    var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
-                    var context = scope.ServiceProvider.GetRequiredService<BloodDonationSystemContext>();
+                    using (var scope = _scopeFactory.CreateScope())
+                    {
+                        var bloodDonationProcessServiece = scope.ServiceProvider.GetRequiredService<IBloodDonationProcessService>();
+                        var eventService = scope.ServiceProvider.GetRequiredService<IEventService>();
+                        var emailService = scope.ServiceProvider.GetRequiredService<IEmailService>();
+                        var context = scope.ServiceProvider.GetRequiredService<BloodDonationSystemContext>();
 
-                    // Existing functionality
-                    await bloodDonationProcessServiece.UpdateEligibleUsersAsync();
-                    await eventService.CancelPastEventsAsync();
-                    
-                    // 🆕 New functionality: Send event reminder emails
-                    await SendEventReminderEmailsAsync(context, emailService);
+                        // ✅ Logic xử lý
+                        await bloodDonationProcessServiece.UpdateEligibleUsersAsync();
+                        await eventService.CancelPastEventsAsync();
+                        await SendEventReminderEmailsAsync(context, emailService);
+                    }
+
+                    Console.WriteLine($"🕒 Waiting {_reminderSettings.ReminderInterval.TotalMinutes} minutes...");
+
+                    // ✅ Tạo token gộp để Task.Delay có thể bị huỷ
+                    using var linkedCts = CancellationTokenSource.CreateLinkedTokenSource(
+                        stoppingToken, _reminderSettings.Token);
+
+                    // ✅ Delay theo thời gian hiện tại
+                    await Task.Delay(_reminderSettings.ReminderInterval, linkedCts.Token);
                 }
+                catch (OperationCanceledException)
+                {
+                    if (stoppingToken.IsCancellationRequested)
+                    {
+                        Console.WriteLine("🛑 Background service is stopping...");
+                        break;
+                    }
 
-                // Chạy mỗi 24 giờ
-                await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
-                
-                // 👉 Đổi thành TimeSpan.FromSeconds(30) nếu bạn đang test
-                 //await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
-            }
+                    Console.WriteLine("⏱ Reminder interval changed — restarting loop immediately...");
+                    // Không break — sẽ quay lại while ngay lập tức với thời gian mới
+                }
+                catch (Exception ex)
+                {
+                    Console.WriteLine($"❌ Unexpected error: {ex.Message}");
+                }
+         
+
+        ////thay đổi thời gian thông qua API
+        //await Task.Delay(_reminderSettings.ReminderInterval, stoppingToken);
+
+
+        // Chạy mỗi 24 giờ
+        //await Task.Delay(TimeSpan.FromHours(24), stoppingToken);
+
+        // 👉 Đổi thành TimeSpan.FromSeconds(30) nếu bạn đang test
+        //await Task.Delay(TimeSpan.FromSeconds(30), stoppingToken);
+    }
         }
 
         private async Task SendEventReminderEmailsAsync(BloodDonationSystemContext context, IEmailService emailService)
